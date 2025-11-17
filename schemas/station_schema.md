@@ -50,23 +50,24 @@ This file defines global settings for Lofield FM that apply across all shows.
 
 ### default_ratios
 
-Minimum music requirements for all shows.
+Station-wide music and talk ratio limits. Music is capped at a maximum to ensure talk and banter dominate the station.
 
 ```json
 {
-  "min_music_fraction": number,
-  "max_talk_fraction": number,
+  "max_music_fraction": number,
+  "min_talk_fraction": number,
   "description": string
 }
 ```
 
-- **min_music_fraction** (number, required): Minimum music percentage (0.0-1.0)
-  - Must be at least 0.60 (60%)
-  - Individual shows can increase but not decrease
+- **max_music_fraction** (number, required): Maximum music percentage (0.0-1.0)
+  - Set to 0.60 (60%) to cap music and ensure talk dominates
+  - Individual shows must not exceed this limit
 
-- **max_talk_fraction** (number, required): Maximum talk percentage (0.0-1.0)
-  - Must be at most 0.40 (40%)
-  - Inverse of min_music_fraction
+- **min_talk_fraction** (number, required): Minimum talk percentage (0.0-1.0)
+  - Set to 0.40 (40%) to ensure adequate banter and discussion
+  - Individual shows must meet or exceed this minimum
+  - Equals 1.0 - max_music_fraction
 
 ### default_timing
 
@@ -234,9 +235,9 @@ Request moderation settings.
 
 ## Validation Rules
 
-1. `min_music_fraction` must be ≥ 0.60
-2. `max_talk_fraction` must be ≤ 0.40
-3. `min_music_fraction + max_talk_fraction` must equal 1.0
+1. `max_music_fraction` must be ≤ 0.60 (music capped at 60%)
+2. `min_talk_fraction` must be ≥ 0.40 (at least 40% talk required)
+3. `max_music_fraction + min_talk_fraction` must equal 1.0
 4. `timezone` must be valid IANA timezone
 5. Season months must cover all 12 months exactly once
 6. All numeric values must be positive

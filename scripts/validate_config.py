@@ -104,7 +104,8 @@ def validate_music_ratios():
     if not station:
         return ["Failed to load station.json"]
     
-    min_music = station['default_ratios']['min_music_fraction']
+    max_music = station['default_ratios']['max_music_fraction']
+    min_talk = station['default_ratios']['min_talk_fraction']
     
     show_files = sorted(Path('config/shows').glob('*.json'))
     for show_file in show_files:
@@ -116,9 +117,13 @@ def validate_music_ratios():
         music_fraction = show['ratios']['music_fraction']
         talk_fraction = show['ratios']['talk_fraction']
         
-        # Check minimum music requirement
-        if music_fraction < min_music:
-            errors.append(f"{show_id}: Music {music_fraction} below minimum {min_music}")
+        # Check maximum music requirement (music capped at 60%)
+        if music_fraction > max_music:
+            errors.append(f"{show_id}: Music {music_fraction} exceeds maximum {max_music}")
+        
+        # Check minimum talk requirement (at least 40% talk)
+        if talk_fraction < min_talk:
+            errors.append(f"{show_id}: Talk {talk_fraction} below minimum {min_talk}")
         
         # Check ratios sum to 1.0
         total = music_fraction + talk_fraction

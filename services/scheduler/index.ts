@@ -106,9 +106,10 @@ class SchedulerService {
       `Queue status: ${queuedMinutes.toFixed(1)}/${this.config.bufferMinutes} minutes`,
     );
 
-    // If we're running low on content, generate more
-    if (queuedMinutes < this.config.bufferMinutes * 0.5) {
-      console.log("Queue running low, generating new content...");
+    // If we're running low on content (less than 50% of buffer), generate more
+    const bufferThreshold = this.config.bufferMinutes * 0.5;
+    if (queuedMinutes < bufferThreshold) {
+      console.log(`Queue running low (${queuedMinutes.toFixed(1)} < ${bufferThreshold} minutes), generating new content...`);
       await this.generateNextSegments();
     }
   }
@@ -118,53 +119,143 @@ class SchedulerService {
    * STUB: This is where AI integration will happen
    */
   private async generateNextSegments() {
-    // Determine which show is currently active
-    const currentShow = await this.getCurrentShow();
-    
-    if (!currentShow) {
-      console.log("No active show found, skipping content generation");
-      return;
+    try {
+      // Determine which show is currently active
+      const currentShow = await this.getCurrentShow();
+      
+      if (!currentShow) {
+        console.log("No active show found, skipping content generation");
+        return;
+      }
+
+      console.log(`Generating content for show: ${currentShow.name}`);
+
+      // Calculate how many minutes of content we need to generate
+      const now = new Date();
+      const bufferTime = new Date(now.getTime() + this.config.bufferMinutes * 60000);
+      
+      const queuedSegments = await prisma.segment.findMany({
+        where: {
+          startTime: {
+            gte: now,
+            lte: bufferTime,
+          },
+        },
+      });
+
+      const queuedMinutes = queuedSegments.reduce((total, segment) => {
+        const duration = (segment.endTime.getTime() - segment.startTime.getTime()) / 60000;
+        return total + duration;
+      }, 0);
+
+      let minutesNeeded = this.config.bufferMinutes * 0.5 - queuedMinutes;
+      
+      if (minutesNeeded <= 0) {
+        console.log("Buffer is sufficient, no generation needed");
+        return;
+      }
+
+      console.log(`Need to generate ${minutesNeeded.toFixed(1)} minutes of content`);
+
+      // STUB: Get top-voted requests
+      const topRequests = await this.getTopRequests(5);
+      console.log(`Found ${topRequests.length} top requests to process`);
+
+      // STUB: For each request, we would:
+      // 1. Normalize the request using LLM
+      // 2. Generate music using text-to-music AI
+      // 3. Generate presenter commentary using LLM + TTS
+      // 4. Create segments in the database
+
+      let generatedMinutes = 0;
+      for (const request of topRequests) {
+        if (generatedMinutes >= minutesNeeded) {
+          console.log(`Generated sufficient content (${generatedMinutes.toFixed(1)} minutes), stopping`);
+          break;
+        }
+        
+        console.log(`[STUB] Would process request: "${request.rawText}"`);
+        // await this.processRequest(request, currentShow);
+        
+        // STUB: Assume each request generates ~3.5 minutes of content (3 min music + 0.5 min talk)
+        const estimatedDuration = 3.5;
+        generatedMinutes += estimatedDuration;
+        console.log(`  [STUB] Would generate ~${estimatedDuration} minutes (total: ${generatedMinutes.toFixed(1)}/${minutesNeeded.toFixed(1)})`);
+      }
+
+      console.log(`[STUB] Content generation completed (stubbed, would have generated ${generatedMinutes.toFixed(1)} minutes)`);
+    } catch (error) {
+      console.error("Error in generateNextSegments:", error);
+      throw error;
     }
-
-    console.log(`Generating content for show: ${currentShow.name}`);
-
-    // STUB: Get top-voted requests
-    const topRequests = await this.getTopRequests(5);
-    console.log(`Found ${topRequests.length} top requests to process`);
-
-    // STUB: For each request, we would:
-    // 1. Normalize the request using LLM
-    // 2. Generate music using text-to-music AI
-    // 3. Generate presenter commentary using LLM + TTS
-    // 4. Create segments in the database
-
-    for (const request of topRequests) {
-      console.log(`[STUB] Would process request: "${request.rawText}"`);
-      // await this.processRequest(request, currentShow);
-    }
-
-    console.log("[STUB] Content generation completed (stubbed)");
   }
 
   /**
-   * Get the currently active show
+   * Get the currently active show based on current day and time
    */
   private async getCurrentShow() {
-    const now = new Date();
-    const currentHour = now.getHours();
+    try {
+      const now = new Date();
+      const currentDay = now.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
+      const currentHour = now.getUTCHours();
+      const currentMinute = now.getUTCMinutes();
+      const currentTimeMinutes = currentHour * 60 + currentMinute; // Convert to minutes since midnight
 
-    const show = await prisma.show.findFirst({
-      where: {
-        startHour: {
-          lte: currentHour,
-        },
-      },
-      orderBy: {
-        startHour: "desc",
-      },
-    });
+      const dayMap: { [key: number]: string } = {
+        0: "sun",
+        1: "mon",
+        2: "tue",
+        3: "wed",
+        4: "thu",
+        5: "fri",
+        6: "sat",
+      };
+      const currentDayStr = dayMap[currentDay];
 
-    return show;
+      console.log(`Looking for show active on ${currentDayStr} at ${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')} UTC`);
+
+      // Get all shows
+      const shows = await prisma.show.findMany();
+
+      // Parse each show's config and find the one that matches current time
+      for (const show of shows) {
+        try {
+          const config = JSON.parse(show.configJson);
+          const schedule = config.schedule;
+
+          // Check if current day is in the show's schedule
+          if (!schedule.days.includes(currentDayStr)) {
+            continue;
+          }
+
+          // Parse start and end times (format: "HH:MM")
+          const [startHour, startMinute] = schedule.start_time_utc.split(":").map(Number);
+          const [endHour, endMinute] = schedule.end_time_utc.split(":").map(Number);
+          
+          const startTimeMinutes = startHour * 60 + startMinute;
+          const endTimeMinutes = endHour * 60 + endMinute;
+
+          // Check if current time is within show time range
+          // Handle case where show spans midnight (e.g., 21:00 to 03:00)
+          const isInRange = endTimeMinutes > startTimeMinutes
+            ? currentTimeMinutes >= startTimeMinutes && currentTimeMinutes < endTimeMinutes
+            : currentTimeMinutes >= startTimeMinutes || currentTimeMinutes < endTimeMinutes;
+
+          if (isInRange) {
+            console.log(`Found active show: ${show.name} (${schedule.start_time_utc} - ${schedule.end_time_utc} UTC)`);
+            return show;
+          }
+        } catch (error) {
+          console.error(`Error parsing config for show ${show.id}:`, error);
+        }
+      }
+
+      console.log("No show found for current time");
+      return null;
+    } catch (error) {
+      console.error("Error in getCurrentShow:", error);
+      throw error;
+    }
   }
 
   /**
@@ -187,51 +278,73 @@ class SchedulerService {
    * STUB: Process a request and generate content
    * This is where the actual AI calls would happen
    */
-  private async processRequest(request: any, show: any) {
-    // 1. Normalize request with LLM
-    console.log("  [STUB] Normalizing request with LLM...");
-    const normalizedPrompt = await this.normalizeRequestWithLLM(request.rawText);
+  private async processRequest(request: unknown, show: unknown) {
+    try {
+      // 1. Normalize request with LLM
+      console.log("  [STUB] Normalizing request with LLM...");
+      const normalizedPrompt = await this.normalizeRequestWithLLM(
+        (request as { rawText: string }).rawText
+      );
 
-    // 2. Generate music
-    console.log("  [STUB] Generating music with text-to-music AI...");
-    const audioFile = await this.generateMusic(normalizedPrompt);
+      // 2. Generate music
+      console.log("  [STUB] Generating music with text-to-music AI...");
+      const audioFile = await this.generateMusic(normalizedPrompt);
 
-    // 3. Generate presenter commentary
-    console.log("  [STUB] Generating presenter commentary...");
-    const commentaryFile = await this.generateCommentary(request, show);
+      // 3. Generate presenter commentary
+      console.log("  [STUB] Generating presenter commentary...");
+      const commentaryFile = await this.generateCommentary(request, show);
 
-    // 4. Create segments in database
-    console.log("  [STUB] Creating segments in database...");
-    // await this.createSegments(audioFile, commentaryFile, request, show);
+      // 4. Create segments in database
+      console.log("  [STUB] Creating segments in database...");
+      // await this.createSegments(audioFile, commentaryFile, request, show);
+    } catch (error) {
+      console.error("  [ERROR] Failed to process request:", error);
+      throw error;
+    }
   }
 
   /**
    * STUB: Normalize request using LLM
    */
   private async normalizeRequestWithLLM(rawText: string): Promise<string> {
-    // This would call an LLM API (OpenAI, Anthropic, etc.)
-    // For now, just return the raw text
-    return rawText;
+    try {
+      // This would call an LLM API (OpenAI, Anthropic, etc.)
+      // For now, just return the raw text
+      return rawText;
+    } catch (error) {
+      console.error("  [ERROR] LLM normalization failed:", error);
+      throw error;
+    }
   }
 
   /**
    * STUB: Generate music using text-to-music AI
    */
   private async generateMusic(prompt: string): Promise<string> {
-    // This would call a text-to-music API (MusicGen, Stable Audio, etc.)
-    // For now, return a placeholder path
-    return "placeholder_music.mp3";
+    try {
+      // This would call a text-to-music API (MusicGen, Stable Audio, etc.)
+      // For now, return a placeholder path
+      return "placeholder_music.mp3";
+    } catch (error) {
+      console.error("  [ERROR] Music generation failed:", error);
+      throw error;
+    }
   }
 
   /**
    * STUB: Generate presenter commentary using LLM + TTS
    */
-  private async generateCommentary(request: any, show: any): Promise<string> {
-    // This would:
-    // 1. Use LLM to generate script
-    // 2. Use TTS to convert to audio
-    // For now, return a placeholder path
-    return "placeholder_commentary.mp3";
+  private async generateCommentary(request: unknown, show: unknown): Promise<string> {
+    try {
+      // This would:
+      // 1. Use LLM to generate script
+      // 2. Use TTS to convert to audio
+      // For now, return a placeholder path
+      return "placeholder_commentary.mp3";
+    } catch (error) {
+      console.error("  [ERROR] Commentary generation failed:", error);
+      throw error;
+    }
   }
 }
 

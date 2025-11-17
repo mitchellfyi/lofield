@@ -1,10 +1,23 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 interface ShowPageProps {
   params: Promise<{
     slug: string;
   }>;
 }
+
+// List of valid show slugs
+const VALID_SHOWS = [
+  "afternoon_push",
+  "early_hours",
+  "evening_wind_down",
+  "late_evening",
+  "lunchtime_wind_down",
+  "mid_morning_focus",
+  "morning_commute",
+  "night_shift",
+];
 
 // Generate metadata for SEO
 export async function generateMetadata({
@@ -21,20 +34,16 @@ export async function generateMetadata({
 
 // Pre-generate pages for known shows
 export async function generateStaticParams() {
-  return [
-    { slug: "afternoon_push" },
-    { slug: "early_hours" },
-    { slug: "evening_wind_down" },
-    { slug: "late_evening" },
-    { slug: "lunchtime_wind_down" },
-    { slug: "mid_morning_focus" },
-    { slug: "morning_commute" },
-    { slug: "night_shift" },
-  ];
+  return VALID_SHOWS.map((slug) => ({ slug }));
 }
 
 export default async function ShowPage({ params }: ShowPageProps) {
   const { slug } = await params;
+
+  // Redirect to 404 if the slug is not a valid show
+  if (!VALID_SHOWS.includes(slug)) {
+    notFound();
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import type { CreateRequestData } from "@/lib/types";
+import { moderateRequest } from "@/lib/moderation";
+import { classifyRequest } from "@/lib/classification";
 
 export async function GET(request: NextRequest) {
   try {
@@ -100,18 +102,68 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new request in database
+    // Step 1: Moderate the request
+    const moderationResult = await moderateRequest(body.text);
+
+    if (moderationResult.verdict === "rejected") {
+      // Create request in database but mark as rejected
+      const rejectedRequest = await prisma.request.create({
+        data: {
+          type: body.type,
+          rawText: body.text,
+          votes: 0,
+          status: "rejected",
+          moderationStatus: "rejected",
+        },
+      });
+
+      return NextResponse.json(
+        {
+          error: "Request rejected by moderation",
+          reasons: moderationResult.reasons,
+          id: rejectedRequest.id,
+        },
+        { status: 403 },
+      );
+    }
+
+    // Step 2: Classify the request (if moderation passed or needs rewrite)
+    const classification = await classifyRequest(body.text, body.type);
+
+    // Store normalized metadata as JSON string
+    const normalizedData = {
+      type: classification.type,
+      normalized: classification.normalized,
+      metadata: classification.metadata,
+      confidence: classification.confidence,
+    };
+
+    // Step 3: Create request in database with classification data
     const newRequest = await prisma.request.create({
       data: {
         type: body.type,
         rawText: body.text,
+        normalized: JSON.stringify(normalizedData),
         votes: 0,
         status: "pending",
-        moderationStatus: "pending",
+        moderationStatus:
+          moderationResult.verdict === "needs_rewrite"
+            ? "flagged"
+            : "approved",
       },
     });
 
-    return NextResponse.json(newRequest, { status: 201 });
+    return NextResponse.json(
+      {
+        ...newRequest,
+        moderation: {
+          verdict: moderationResult.verdict,
+          reasons: moderationResult.reasons,
+        },
+        classification: normalizedData,
+      },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("Error creating request:", error);
     return NextResponse.json(

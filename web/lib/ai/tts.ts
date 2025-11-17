@@ -131,21 +131,41 @@ async function generateTTSWithOpenAI(
 ): Promise<TTSResult> {
   const config = getAIConfig();
   const openai = getOpenAIClient();
-
-  // Map generic voice IDs to OpenAI voices
-  const voiceMap: Record<string, "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"> = {
+  
+  // Map voice IDs to OpenAI voices
+  // Supports both generic voice IDs and presenter-specific voice IDs
+  const openaiVoiceMap: Record<string, "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"> = {
+    // Generic voice IDs (backwards compatibility)
     "voice_1": "alloy",
     "voice_2": "echo",
     "voice_3": "fable",
     "voice_4": "onyx",
     "voice_5": "nova",
     "voice_6": "shimmer",
+    // Presenter-specific voice IDs mapped to OpenAI voices
+    // These can be customized based on presenter personalities
+    "voice_alex_contemplative": "onyx",
+    "voice_sam_quiet": "echo",
+    "voice_jordan_gentle": "nova",
+    "voice_casey_calm": "shimmer",
+    "voice_morgan_resigned": "fable",
+    "voice_riley_practical": "alloy",
+    "voice_taylor_focused": "onyx",
+    "voice_drew_quiet": "echo",
+    "voice_avery_conversational": "nova",
+    "voice_reese_friendly": "shimmer",
+    "voice_quinn_determined": "fable",
+    "voice_sage_steady": "alloy",
+    "voice_rowan_relaxed": "echo",
+    "voice_finley_easygoing": "nova",
+    "voice_harper_calm": "shimmer",
+    "voice_river_thoughtful": "onyx",
   };
 
-  const openaiVoice = voiceMap[request.voiceId] || "alloy";
+  const openaiVoice = openaiVoiceMap[request.voiceId] || "alloy";
   const ttsModel = config.tts.model || "tts-1";
 
-  console.log(`Generating TTS with OpenAI (model: ${ttsModel}, voice: ${openaiVoice}, ${request.text.length} chars)`);
+  console.log(`Generating TTS with OpenAI (model: ${ttsModel}, voice: ${openaiVoice} [${request.voiceId}], ${request.text.length} chars)`);
 
   try {
     const mp3 = await openai.audio.speech.create({

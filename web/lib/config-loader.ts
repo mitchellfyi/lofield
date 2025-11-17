@@ -41,9 +41,24 @@ interface StationConfig {
   moderation: Record<string, unknown>;
 }
 
+interface Presenter {
+  id: string;
+  name: string;
+  voice_id: string;
+  role: string;
+  persona: string;
+  shows: string[];
+  quirks: string[];
+}
+
+interface PresentersConfig {
+  presenters: Presenter[];
+}
+
 // Cache loaded configs to avoid repeated file reads
 let tagsConfigCache: TagsConfig | null = null;
 let stationConfigCache: StationConfig | null = null;
+let presentersConfigCache: PresentersConfig | null = null;
 
 /**
  * Get the path to the config directory.
@@ -146,9 +161,38 @@ Examples of Good Tone:
 }
 
 /**
+ * Load the presenters configuration from config/presenters.json
+ */
+export function loadPresentersConfig(): PresentersConfig {
+  if (presentersConfigCache) {
+    return presentersConfigCache;
+  }
+
+  const configPath = getConfigPath("presenters.json");
+  const data = readFileSync(configPath, "utf-8");
+  presentersConfigCache = JSON.parse(data);
+  return presentersConfigCache as PresentersConfig;
+}
+
+/**
+ * Get a mapping of presenter IDs to their voice IDs
+ */
+export function getPresenterVoiceMap(): Record<string, string> {
+  const config = loadPresentersConfig();
+  const voiceMap: Record<string, string> = {};
+  
+  for (const presenter of config.presenters) {
+    voiceMap[presenter.id] = presenter.voice_id;
+  }
+  
+  return voiceMap;
+}
+
+/**
  * Clear the config cache. Useful for testing.
  */
 export function clearConfigCache(): void {
   tagsConfigCache = null;
   stationConfigCache = null;
+  presentersConfigCache = null;
 }

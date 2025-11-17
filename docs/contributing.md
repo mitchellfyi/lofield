@@ -31,12 +31,13 @@ We're all just trying to make it through the day. Let's make it easier, not hard
 
 There are several ways to contribute to Lofield FM:
 
-1. **Propose new shows or schedule changes** (see [Proposing New Shows](#proposing-new-shows))
+- **Propose new shows or schedule changes** (see [Proposing New Shows](#proposing-new-shows))
 2. **Update or improve documentation** (style guide, town bible, etc.)
 3. **Report bugs or technical issues** (see [Reporting Bugs](#reporting-bugs))
 4. **Submit code fixes or improvements** (see [Submitting Code Changes](#submitting-code-changes))
 5. **Suggest new Lofield landmarks or running jokes**
 6. **Improve AI prompts and content generation logic**
+7. **Add new allowed tags or modify moderation thresholds** (see [Moderation and Classification](#moderation-and-classification))
 
 ---
 
@@ -238,6 +239,85 @@ Fixed stuff
 Update
 WIP
 ```
+
+---
+
+## Moderation and Classification
+
+Lofield FM uses AI-powered moderation and classification to ensure user-submitted requests are safe, appropriate, and aligned with the station's voice. If you want to extend or modify this system:
+
+### Adding New Allowed Tags
+
+1. **Update `config/tags.json`**: Add the new tag to the `allowed_topic_tags` array
+2. **Update `web/lib/classification.ts`**: Add the tag to the `ALLOWED_TAGS` constant
+3. **Validate configuration**: Run `python3 scripts/validate_config.py`
+4. **Test**: Submit a test request that should trigger the new tag
+
+**Example**:
+```json
+// In config/tags.json
+{
+  "allowed_topic_tags": [
+    "remote_work",
+    "your_new_tag",
+    ...
+  ]
+}
+```
+
+```typescript
+// In web/lib/classification.ts
+const ALLOWED_TAGS = [
+  "remote_work",
+  "your_new_tag",
+  ...
+];
+```
+
+### Modifying Moderation Rules
+
+To add new banned topics or adjust moderation thresholds:
+
+1. **Edit `web/lib/moderation.ts`**: Add new regex patterns or checks
+2. **Add appropriate error messages**: Explain why the content is rejected
+3. **Test thoroughly**: Ensure the new rules don't reject valid content
+4. **Update documentation**: Add examples to `docs/moderation.md`
+
+**Example**:
+```typescript
+// Check for cryptocurrency promotion
+if (lowerText.match(/\b(nft|defi|blockchain|web3)/i)) {
+  foundBannedTopics.push("crypto_promotion");
+  reasons.push("Cryptocurrency promotion is not allowed");
+}
+```
+
+### Testing Moderation Changes
+
+```bash
+# Test with a sample request
+curl -X POST http://localhost:3000/api/requests \
+  -H "Content-Type: application/json" \
+  -d '{"type":"music","text":"Your test request here"}'
+```
+
+### Adjusting Classification Logic
+
+To improve how requests are classified:
+
+1. **Edit the system prompt** in `web/lib/classification.ts`
+2. **Adjust temperature** for more/less creative interpretations
+3. **Modify fallback logic** for when the API is unavailable
+4. **Test with various request types**
+
+### Important Notes
+
+- **Fail open**: Moderation and classification fail open (allow content) if the API is unavailable to prevent service disruptions
+- **Rate limits**: Be mindful of OpenAI API rate limits when testing
+- **API keys**: Never commit API keys; use `.env` files
+- **Cost**: Each request incurs API costs; optimize prompts where possible
+
+For detailed documentation, see [docs/moderation.md](moderation.md).
 
 ---
 

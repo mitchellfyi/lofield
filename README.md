@@ -83,6 +83,17 @@ npm run lint
 npm run format
 ```
 
+**Dynamic Show Pages**: The app includes dynamic routes for each show at `/[slug]` (e.g., `/morning_commute`, `/afternoon_push`). These pages use:
+- **`generateStaticParams`** to pre-generate pages for all 8 shows at build time
+- **`generateMetadata`** for SEO-optimized titles and descriptions per show
+- **`notFound()`** to display a friendly 404 page for invalid show slugs
+
+**Error Handling**: Custom error pages provide a polished experience:
+- **`app/not-found.tsx`** - Friendly 404 page with Lofield FM humor
+- **`app/error.tsx`** - Error boundary for unexpected runtime errors
+
+**Styling**: The app uses Tailwind CSS v4 with the `@tailwindcss/postcss` plugin configured in `postcss.config.mjs`.
+
 ### Configuration
 
 **Configuration**: The station is defined by JSON configuration files in the `config/` directory. See [config/README.md](config/README.md) for an overview of the configuration system.

@@ -8,7 +8,15 @@
 import { PrismaClient } from "@prisma/client";
 import type { QueuedSegment, SchedulerConfig } from "./types";
 
-const prisma = new PrismaClient();
+// Allow prisma to be undefined for testing
+let prisma: PrismaClient | undefined;
+
+try {
+  prisma = new PrismaClient();
+} catch (error) {
+  // Prisma not initialized (e.g., in test environment without database)
+  console.warn("Prisma client not initialized - database operations will fail");
+}
 
 /**
  * Get queued segments within a time window
@@ -17,6 +25,9 @@ export async function getQueuedSegments(
   startTime: Date,
   endTime: Date
 ): Promise<QueuedSegment[]> {
+  if (!prisma) {
+    throw new Error("Prisma client not initialized");
+  }
   const segments = await prisma.segment.findMany({
     where: {
       startTime: {
@@ -29,7 +40,8 @@ export async function getQueuedSegments(
     },
   });
 
-  return segments.map((seg) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return segments.map((seg: any): QueuedSegment => ({
     id: seg.id,
     showId: seg.showId,
     type: seg.type as "music" | "talk" | "ident" | "handover",
@@ -120,6 +132,10 @@ export async function createSegment(segment: {
   trackId?: string;
   metadata?: Record<string, unknown>;
 }): Promise<string> {
+  if (!prisma) {
+    throw new Error("Prisma client not initialized");
+  }
+
   const created = await prisma.segment.create({
     data: {
       showId: segment.showId,
@@ -146,6 +162,10 @@ export async function createTrack(track: {
   artist: string;
   lengthSeconds: number;
 }): Promise<string> {
+  if (!prisma) {
+    throw new Error("Prisma client not initialized");
+  }
+
   const created = await prisma.track.create({
     data: {
       requestId: track.requestId ?? null,
@@ -163,6 +183,10 @@ export async function createTrack(track: {
  * Mark a request as used
  */
 export async function markRequestAsUsed(requestId: string): Promise<void> {
+  if (!prisma) {
+    throw new Error("Prisma client not initialized");
+  }
+
   await prisma.request.update({
     where: { id: requestId },
     data: {
@@ -176,6 +200,10 @@ export async function markRequestAsUsed(requestId: string): Promise<void> {
  * Get top-voted pending requests
  */
 export async function getTopRequests(limit: number = 10) {
+  if (!prisma) {
+    throw new Error("Prisma client not initialized");
+  }
+
   return await prisma.request.findMany({
     where: {
       status: "pending",
@@ -222,6 +250,10 @@ export async function getQueueStats(bufferMinutes: number): Promise<{
  * Delete old segments from the queue (cleanup)
  */
 export async function cleanupOldSegments(beforeDate: Date): Promise<number> {
+  if (!prisma) {
+    throw new Error("Prisma client not initialized");
+  }
+
   const result = await prisma.segment.deleteMany({
     where: {
       endTime: {

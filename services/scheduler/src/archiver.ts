@@ -10,7 +10,15 @@ import * as path from "path";
 import { PrismaClient } from "@prisma/client";
 import type { ArchiveIndex, QueuedSegment } from "./types";
 
-const prisma = new PrismaClient();
+// Allow prisma to be undefined for testing
+let prisma: PrismaClient | undefined;
+
+try {
+  prisma = new PrismaClient();
+} catch (error) {
+  // Prisma not initialized (e.g., in test environment without database)
+  console.warn("Prisma client not initialized - database operations will fail");
+}
 
 // In-memory index (in production, this would be persisted to database or file)
 const archiveIndex: ArchiveIndex[] = [];
@@ -112,6 +120,10 @@ export async function assembleShowEpisode(
   date: Date,
   outputPath: string
 ): Promise<string> {
+  if (!prisma) {
+    throw new Error("Prisma client not initialized");
+  }
+
   try {
     console.log(`Assembling episode for show ${showId} on ${date.toISOString()}`);
 

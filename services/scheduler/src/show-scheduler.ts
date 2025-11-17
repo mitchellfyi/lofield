@@ -8,7 +8,15 @@
 import { PrismaClient } from "@prisma/client";
 import type { Show, ShowConfig } from "./types";
 
-const prisma = new PrismaClient();
+// Allow prisma to be undefined for testing
+let prisma: PrismaClient | undefined;
+
+try {
+  prisma = new PrismaClient();
+} catch (error) {
+  // Prisma not initialized (e.g., in test environment without database)
+  console.warn("Prisma client not initialized - database operations will fail");
+}
 
 const DAY_MAP: { [key: number]: string } = {
   0: "sun",
@@ -24,6 +32,10 @@ const DAY_MAP: { [key: number]: string } = {
  * Get the currently active show based on current day and time
  */
 export async function getCurrentShow(): Promise<Show | null> {
+  if (!prisma) {
+    throw new Error("Prisma client not initialized");
+  }
+
   try {
     const now = new Date();
     const currentDay = now.getUTCDay(); // 0 = Sunday, 1 = Monday, etc.
@@ -92,6 +104,10 @@ export async function getCurrentShow(): Promise<Show | null> {
  * Get the next show after the current one
  */
 export async function getNextShow(currentShow: Show): Promise<Show | null> {
+  if (!prisma) {
+    throw new Error("Prisma client not initialized");
+  }
+
   try {
     const config: ShowConfig = JSON.parse(currentShow.configJson);
     const schedule = config.schedule;

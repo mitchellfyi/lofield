@@ -70,7 +70,7 @@ Show timing and frequency.
 
 ### ratios
 
-Music-to-talk balance for this show.
+Music-to-talk balance for this show. Music is capped at 60% to ensure banter and discussion dominate.
 
 ```json
 {
@@ -80,12 +80,12 @@ Music-to-talk balance for this show.
 ```
 
 - **music_fraction** (number, required): Percentage of show that is music (0.0-1.0)
-  - Must be ≥ 0.60 (station minimum)
-  - Example: `0.70` for 70% music
+  - Must be ≤ 0.60 (station maximum, music capped at 60%)
+  - Example: `0.50` for 50% music, `0.60` for 60% music
 
 - **talk_fraction** (number, required): Percentage of show that is talk (0.0-1.0)
-  - Must be ≤ 0.40 (station maximum)
-  - Example: `0.30` for 30% talk
+  - Must be ≥ 0.40 (station minimum, at least 40% talk required)
+  - Example: `0.50` for 50% talk, `0.60` for 60% talk
   - Must equal `1.0 - music_fraction`
 
 ### timing
@@ -304,14 +304,15 @@ Show-specific AI resource limits.
 ## Validation Rules
 
 1. `id` must match filename
-2. `music_fraction` must be ≥ 0.60
-3. `music_fraction + talk_fraction` must equal 1.0
-4. All presenter IDs must exist in `presenters.json`
-5. All topic tags must exist in `tags.json`
-6. Schedule times must not overlap with other shows
-7. `duration_hours` must be 3
-8. `handover.duration_seconds` must be 300
-9. TTS budget should align with talk_fraction
+2. `music_fraction` must be ≤ 0.60 (music capped at 60%)
+3. `talk_fraction` must be ≥ 0.40 (at least 40% talk required)
+4. `music_fraction + talk_fraction` must equal 1.0
+5. All presenter IDs must exist in `presenters.json`
+6. All topic tags must exist in `tags.json`
+7. Schedule times must not overlap with other shows
+8. `duration_hours` must be 3
+9. `handover.duration_seconds` must be 300
+10. TTS budget should align with talk_fraction
 
 ## Example
 

@@ -35,7 +35,16 @@ The humour is dry, self-deprecating, and occasionally dark (but never cruel). Th
 ```
 lofield/
 ├── README.md                 # This file
-├── web/                      # Next.js 16 frontend application
+├── BACKEND.md                # Backend services documentation
+├── web/                      # Next.js 16 frontend & API
+│   ├── app/                  # Next.js app directory
+│   │   ├── api/              # API routes (requests, now-playing, queue, etc.)
+│   │   └── ...               # Pages and components
+│   ├── lib/                  # Utilities and database client
+│   ├── prisma/               # Database schema and migrations
+│   └── ...
+├── services/                 # Backend services
+│   └── scheduler/            # Content generation scheduler
 ├── config/                   # Station configuration files
 │   ├── station.json         # Global station settings
 │   ├── presenters.json      # All presenter definitions
@@ -50,6 +59,17 @@ lofield/
     ├── style_guide.md        # Voice, tone, and content guidelines
     └── town_bible.md         # Lofield town lore and landmarks
 ```
+
+## Tech Stack
+
+### Backend
+- **Framework**: Next.js 16 API Routes (TypeScript)
+- **Database**: PostgreSQL with Prisma ORM
+- **Real-time**: Server-Sent Events for live updates
+- **Scheduler**: Node.js service for content generation
+- **Streaming**: Icecast (or Node-based alternative)
+
+See [BACKEND.md](BACKEND.md) for comprehensive backend documentation.
 
 ## Getting Started
 
@@ -81,6 +101,57 @@ npm start
 ```bash
 npm run lint
 npm run format
+```
+
+### Backend Development
+
+The backend uses Next.js API Routes with Prisma and PostgreSQL. See [BACKEND.md](BACKEND.md) for full documentation.
+
+**Quick start**:
+```bash
+cd web
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your database credentials
+
+# Generate Prisma client
+npx prisma generate
+
+# Run migrations
+npx prisma migrate dev
+
+# Seed the database
+npx tsx prisma/seed/seed.ts
+
+# Start development server (includes API)
+npm run dev
+```
+
+**API Endpoints**:
+- `GET/POST /api/requests` - Submit and list requests
+- `POST /api/requests/{id}/vote` - Upvote requests
+- `GET /api/now-playing` - Current segment metadata
+- `GET /api/queue` - Upcoming segments
+- `GET /api/archive` - Past broadcasts
+- `GET /api/events` - Real-time updates via SSE
+
+**Database Management**:
+```bash
+# View/edit data in Prisma Studio
+npx prisma studio
+
+# Create new migration
+npx prisma migrate dev --name <migration_name>
+```
+
+**Scheduler Service**:
+```bash
+cd services/scheduler
+npx tsx index.ts
 ```
 
 **Dynamic Show Pages**: The app includes dynamic routes for each show at `/[slug]` (e.g., `/morning_commute`, `/afternoon_push`). These pages use:

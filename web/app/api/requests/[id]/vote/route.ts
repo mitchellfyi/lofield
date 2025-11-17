@@ -1,12 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params;
+  try {
+    const { id } = await params;
 
-  // In the stub implementation, we'll just return success
-  // The actual upvote count will be managed by the parent requests array
-  return NextResponse.json({ success: true, id });
+    // Check if request exists
+    const existingRequest = await prisma.request.findUnique({
+      where: { id },
+    });
+
+    if (!existingRequest) {
+      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
+
+    // Increment the vote count
+    const updatedRequest = await prisma.request.update({
+      where: { id },
+      data: {
+        votes: {
+          increment: 1,
+        },
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      id: updatedRequest.id,
+      votes: updatedRequest.votes,
+    });
+  } catch (error) {
+    console.error("Error upvoting request:", error);
+    return NextResponse.json(
+      { error: "Failed to upvote request" },
+      { status: 500 },
+    );
+  }
 }

@@ -7,6 +7,11 @@ import type { Request } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
+// TODO: When backend is fully implemented, this component should:
+// - Connect to real-time WebSocket or SSE for live updates instead of polling
+// - Handle pagination for large request lists
+// - Support filtering by request type or status
+// - Display more detailed request metadata (show compatibility, presenter preferences)
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface RequestFeedProps {
@@ -39,6 +44,10 @@ export function RequestFeed({ refreshKey = 0 }: RequestFeedProps) {
         false
       );
 
+      // TODO: Once backend is fully implemented, enhance vote handling to:
+      // - Prevent duplicate votes from the same user (track voted IDs in localStorage or session)
+      // - Show user feedback if vote fails (rate limited, already voted, etc.)
+      // - Implement vote removal/downvote functionality if desired
       const response = await fetch(
         `${API_URL}/api/requests/${requestId}/vote`,
         {
@@ -54,6 +63,7 @@ export function RequestFeed({ refreshKey = 0 }: RequestFeedProps) {
       await mutate();
     } catch (err) {
       console.error("Failed to vote:", err);
+      // TODO: When connected to real backend, show user-friendly error message
       // Revert optimistic update on error
       await mutate();
     } finally {

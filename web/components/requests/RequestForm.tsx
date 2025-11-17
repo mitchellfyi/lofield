@@ -43,6 +43,10 @@ export function RequestForm({ onSubmitSuccess }: RequestFormProps) {
         text: text.trim(),
       };
 
+      // TODO: Once backend is fully implemented, enhance error handling to:
+      // - Display specific error messages from the API (e.g., moderation failures, rate limiting)
+      // - Handle network timeouts gracefully
+      // - Show more detailed success feedback (e.g., estimated queue position)
       const response = await fetch(`${API_URL}/api/requests`, {
         method: "POST",
         headers: {
@@ -62,6 +66,7 @@ export function RequestForm({ onSubmitSuccess }: RequestFormProps) {
       setText("");
       onSubmitSuccess?.();
     } catch {
+      // TODO: When connected to real backend, parse and display specific error messages
       setFeedback({
         type: "error",
         message: "Failed to submit request. Please try again.",

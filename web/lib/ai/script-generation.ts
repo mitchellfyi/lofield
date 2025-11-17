@@ -27,7 +27,7 @@ let openaiClient: OpenAI | null = null;
 function getOpenAIClient(): OpenAI {
   if (!process.env.OPENAI_API_KEY) {
     throw new ScriptGenerationError(
-      "OPENAI_API_KEY not set",
+      "OPENAI_API_KEY environment variable is not set. Please add OPENAI_API_KEY to your .env file. Get your API key from: https://platform.openai.com/api-keys",
       { provider: "openai" }
     );
   }
@@ -57,7 +57,21 @@ export async function generateScript(
   request: ScriptGenerationRequest
 ): Promise<ScriptGenerationResult> {
   // Check cache first
-  const cached = scriptCache.get(request);
+  // Normalize cache key by excluding transient contextInfo fields (currentTime, previousTrack, nextTrack)
+  // to allow reuse of scripts with similar characteristics
+  const cacheKey = {
+    segmentType: request.segmentType,
+    showStyle: request.showStyle,
+    topic: request.topic,
+    trackInfo: request.trackInfo,
+    // Include only non-transient context: season and weather
+    season: request.contextInfo?.season,
+    weather: request.contextInfo?.weather,
+    presenterIds: request.presenterIds,
+    durationSeconds: request.durationSeconds,
+  };
+  
+  const cached = scriptCache.get(cacheKey);
   if (cached) {
     console.log(`Script cache hit for ${request.segmentType} / ${request.showStyle}`);
     return { ...cached, cached: true };
@@ -78,7 +92,7 @@ export async function generateScript(
 
     // Cache successful result
     if (result.success && result.transcript) {
-      scriptCache.set(request, result, {
+      scriptCache.set(cacheKey, result, {
         segmentType: request.segmentType,
         showStyle: request.showStyle,
         generatedAt: new Date().toISOString(),
@@ -312,14 +326,14 @@ Examples: "Lofield FM. Now playing on a frequency that probably doesn't exist."
  */
 function getShowContext(showStyle: string): string {
   const contexts: Record<string, string> = {
-    morning_commute: "Morning Commute (The Fictional One): 6-9 AM. Upbeat but realistic. Topics: morning routines, commute (even if fictional), coffee, starting the day.",
-    deep_work: "Deep Work (According to Calendar Blocks): 9 AM-12 PM. Focused, minimal interruptions. Topics: concentration, meetings, productivity theater.",
-    lunch_club: "Lunch Club (Allegedly Social): 12-3 PM. Slightly lighter, mid-day energy. Topics: lunch breaks, pretending to socialize, inbox management.",
-    survival: "Survival Mode (Technically Still Operational): 3-6 PM. Late afternoon energy dip. Topics: afternoon slump, existential meetings, counting down to end of day.",
-    commute: "Evening Commute (Another One): 6-9 PM. Winding down, lighter mood. Topics: end of workday, disconnecting, evening plans (or lack thereof).",
-    night_school: "Night School (For People Who Read Documentation): 9 PM-12 AM. Thoughtful, reflective. Topics: learning, side projects, documentation, curiosity.",
-    night_shift: "Night Shift (For People Who Can't Sleep Anyway): 12-3 AM. Quiet, contemplative. Topics: insomnia, late-night thoughts, unconventional schedules.",
-    insomniac: "The Insomniac Sessions (Might As Well Be Productive): 3-6 AM. Very late/very early. Topics: inability to sleep, quiet hours, sunrise approaches.",
+    mild_panic_mornings: "Mild Panic Mornings: 6-9 AM. Controlled chaos, acknowledging morning panic without being cheerful about it. Topics: morning routines, inbox anxiety, meeting prep, coffee, first call of the day.",
+    deep_work_allegedly: "Deep Work, Allegedly: 6-9 AM (early hours). For people starting the work day very early. Gentle, soft energy, not quite awake yet. Topics: early morning focus, quiet hours, coffee, pre-dawn productivity.",
+    deep_work_calendar_blocks: "Deep Work (According to Calendar Blocks): 9 AM-12 PM. Focused work time, minimal interruptions (in theory). Topics: concentration, meetings, productivity theater, deep work aspirations vs reality.",
+    lunch_procrastination_club: "Lunch Procrastination Club: 12-3 PM. Mid-day energy, slightly lighter. Topics: lunch breaks, pretending to socialize, inbox management, afternoon procrastination.",
+    afternoon_survival_session: "Afternoon Survival Session: 3-6 PM. Late afternoon energy dip, technically still operational. Topics: afternoon slump, existential meetings, counting down to end of day, survival mode.",
+    commute_to_nowhere: "Commute to Nowhere: 6-9 PM. Evening wind-down, acknowledging the fictional commute. Topics: end of workday, disconnecting, evening plans (or lack thereof), pretending to have a commute.",
+    lofield_night_school: "Lofield Night School: 9 PM-12 AM. Thoughtful, reflective, for people who read documentation. Topics: learning, side projects, curiosity, late-night focus.",
+    insomniac_office: "Insomniac Office: 12-3 AM. Quiet, contemplative, for people who can't sleep anyway. Topics: insomnia, late-night thoughts, unconventional schedules, surreal 2am energy.",
   };
 
   return contexts[showStyle] || "General show context.";

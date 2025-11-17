@@ -28,7 +28,7 @@ let replicateClient: any = null;
 function getReplicateClient() {
   if (!process.env.REPLICATE_API_TOKEN) {
     throw new MusicGenerationError(
-      "REPLICATE_API_TOKEN not set",
+      "REPLICATE_API_TOKEN environment variable is not set. Please add REPLICATE_API_TOKEN to your .env file. Get your API token from: https://replicate.com/account",
       { provider: "replicate" }
     );
   }
@@ -245,10 +245,13 @@ async function downloadAudio(
   request: MusicGenerationRequest
 ): Promise<string> {
   const config = getAIConfig();
+  const fsPromises = fs.promises;
   
   // Ensure storage directory exists
-  if (!fs.existsSync(config.storage.audioPath)) {
-    fs.mkdirSync(config.storage.audioPath, { recursive: true });
+  try {
+    await fsPromises.mkdir(config.storage.audioPath, { recursive: true });
+  } catch {
+    // Directory may already exist, ignore error
   }
 
   // Generate filename
@@ -267,8 +270,8 @@ async function downloadAudio(
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Save to disk
-    fs.writeFileSync(filePath, buffer);
+    // Save to disk asynchronously
+    await fsPromises.writeFile(filePath, buffer);
 
     console.log(`Audio saved to: ${filePath}`);
     return filePath;

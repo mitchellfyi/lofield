@@ -3,12 +3,20 @@
 import { useState } from "react";
 import { SkipBack, RotateCcw } from "lucide-react";
 
+// Time-shift configuration
+const DEFAULT_STEP_SIZE_MINUTES = 5;
+
 interface TimeShiftProps {
   onTimeShift: (minutesBack: number) => void;
   maxMinutes?: number;
+  stepSize?: number;
 }
 
-export function TimeShift({ onTimeShift, maxMinutes = 120 }: TimeShiftProps) {
+export function TimeShift({
+  onTimeShift,
+  maxMinutes = 120,
+  stepSize = DEFAULT_STEP_SIZE_MINUTES,
+}: TimeShiftProps) {
   const [minutesBack, setMinutesBack] = useState(0);
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -49,16 +57,23 @@ export function TimeShift({ onTimeShift, maxMinutes = 120 }: TimeShiftProps) {
         </span>
       </div>
 
+      {/* Screen reader help text */}
+      <p className="text-xs text-muted-foreground" id="timeshift-description">
+        Rewind the stream to listen to earlier content. Drag the slider or use
+        arrow keys to navigate.
+      </p>
+
       <div className="flex items-center gap-3">
         <input
           type="range"
           min="0"
           max={maxMinutes}
-          step="5"
+          step={stepSize}
           value={minutesBack}
           onChange={handleSliderChange}
           className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-muted accent-primary"
           aria-label={`Time shift slider: ${formatTime(minutesBack)}`}
+          aria-describedby="timeshift-description"
           aria-valuemin={0}
           aria-valuemax={maxMinutes}
           aria-valuenow={minutesBack}

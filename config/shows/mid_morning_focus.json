@@ -1,0 +1,129 @@
+{
+  "id": "mid_morning_focus",
+  "name": "Mid-Morning Focus",
+  "description": "Peak focus time. The talk segments are brief and don't break concentration. This is the show for people who need background noise that stays in the background. Fewer requests read out, more music.",
+  "schedule": {
+    "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+    ],
+    "start_time_utc": "09:00",
+    "end_time_utc": "12:00",
+    "duration_hours": 3
+  },
+  "ratios": {
+    "music_fraction": 0.75,
+    "talk_fraction": 0.25
+  },
+  "timing": {
+    "max_link_seconds": 20,
+    "min_gap_between_links_seconds": 300,
+    "typical_track_length_seconds": 220
+  },
+  "presenters": {
+    "primary_duo": [
+      "taylor",
+      "drew"
+    ],
+    "duo_probability": 0.6,
+    "solo_probability": 0.4,
+    "notes": "Mix of duo and solo, minimal interruptions, respect the focus time"
+  },
+  "tone": {
+    "keywords": [
+      "calm",
+      "focused",
+      "minimal",
+      "respectful",
+      "brief",
+      "unobtrusive"
+    ],
+    "energy_level": "low to moderate",
+    "mood": "Focused, respecting concentration time, minimal chat"
+  },
+  "topics": {
+    "primary_tags": [
+      "focus_time",
+      "deep_work",
+      "concentration",
+      "productivity",
+      "flow_state",
+      "back_to_back_meetings"
+    ],
+    "banned_tags": [
+      "distracting",
+      "high_energy",
+      "chatty"
+    ],
+    "allow_listener_requests": true,
+    "typical_request_themes": [
+      "deep focus",
+      "coding flow",
+      "writing session",
+      "concentration mode"
+    ]
+  },
+  "commentary_style": {
+    "typical_intro_length_seconds": 15,
+    "longer_segment_frequency": "rare",
+    "longer_segment_length_seconds": 45,
+    "check_ins": [
+      "Focus time",
+      "Keeping it brief",
+      "Background mode engaged"
+    ],
+    "sample_lines": [
+      "That was 'Focus Mode' requested by Claire. Claire, we hope you're in the zone.",
+      "Coming up: three tracks in a row, no interruptions. You're welcome.",
+      "Brief intro, long track. That's the format.",
+      "That was 'Deep Work Vibes'. Next up, more of the same."
+    ]
+  },
+  "handover": {
+    "duration_seconds": 300,
+    "style": "Quick, efficient handover respecting the focus vibe",
+    "typical_themes": [
+      "How was the focus?",
+      "Productive morning?",
+      "Time for lunch soon"
+    ]
+  },
+  "season_overrides": {
+    "winter": {
+      "tone_adjustment": "Reference shorter days affecting energy, darker mornings to midday",
+      "additional_topics": [
+        "winter_focus",
+        "dark_days"
+      ]
+    },
+    "summer": {
+      "tone_adjustment": "Reference nice weather outside, temptation to not work",
+      "additional_topics": [
+        "summer_distraction",
+        "nice_weather_outside"
+      ]
+    }
+  },
+  "holiday_overrides": {
+    "christmas_period": {
+      "dates": [
+        "2025-12-24",
+        "2025-12-25",
+        "2025-12-26"
+      ],
+      "tone_adjustment": "Acknowledge reduced work, people taking time off",
+      "notes": "Keep it minimal, some people still working"
+    }
+  },
+  "ai_budget": {
+    "max_tokens_per_show": 6000,
+    "max_tts_seconds_per_show": 2700,
+    "max_music_minutes_per_show": 135,
+    "notes": "25% talk = 45 minutes = 2700 seconds of TTS maximum, 75% music = 135 minutes"
+  }
+}

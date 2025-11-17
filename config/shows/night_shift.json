@@ -1,0 +1,136 @@
+{
+  "id": "night_shift",
+  "name": "Night Shift",
+  "description": "The graveyard shift. For night owls, insomniacs, and anyone in a timezone that makes this a normal working hour. The conversation is low-key and doesn't demand much attention.",
+  "schedule": {
+    "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+    ],
+    "start_time_utc": "00:00",
+    "end_time_utc": "03:00",
+    "duration_hours": 3
+  },
+  "ratios": {
+    "music_fraction": 0.7,
+    "talk_fraction": 0.3
+  },
+  "timing": {
+    "max_link_seconds": 30,
+    "min_gap_between_links_seconds": 240,
+    "typical_track_length_seconds": 210
+  },
+  "presenters": {
+    "primary_duo": [
+      "alex",
+      "sam"
+    ],
+    "duo_probability": 0.8,
+    "solo_probability": 0.2,
+    "notes": "Mostly duo, occasional solo segments when the vibe calls for it"
+  },
+  "tone": {
+    "keywords": [
+      "quiet",
+      "contemplative",
+      "slightly surreal",
+      "comfortable with silence",
+      "low-key",
+      "timeless"
+    ],
+    "energy_level": "very low",
+    "mood": "Calm, accepting of the late hour, mildly philosophical"
+  },
+  "topics": {
+    "primary_tags": [
+      "late_night_work",
+      "insomnia",
+      "contemplative",
+      "timezone_confusion",
+      "quiet_hours",
+      "existential_thoughts"
+    ],
+    "banned_tags": [
+      "high_energy",
+      "morning_routine",
+      "upbeat"
+    ],
+    "allow_listener_requests": true,
+    "typical_request_themes": [
+      "late night coding",
+      "insomnia vibes",
+      "3am thoughts",
+      "quiet concentration"
+    ]
+  },
+  "commentary_style": {
+    "typical_intro_length_seconds": 20,
+    "longer_segment_frequency": "rare",
+    "longer_segment_length_seconds": 60,
+    "check_ins": [
+      "Anyone else still awake?",
+      "For everyone in a different timezone, good morning",
+      "It's the quiet hours"
+    ],
+    "sample_lines": [
+      "It's just gone 1am. If you're still working, we respect it. If you're not working and you're just awake, we respect that too.",
+      "That was 'Late Night Thoughts' by nobody in particular. Next up, more music for 3am scrolling.",
+      "The rest of the world is asleep. Or at least pretending to be."
+    ]
+  },
+  "handover": {
+    "duration_seconds": 300,
+    "style": "Brief, acknowledging the transition from late night to early morning",
+    "typical_themes": [
+      "How quiet was it?",
+      "Anyone actually awake?",
+      "The sun's not up yet"
+    ]
+  },
+  "season_overrides": {
+    "winter": {
+      "tone_adjustment": "Reference long dark nights, seasonal insomnia, the darkness outside",
+      "additional_topics": [
+        "winter_nights",
+        "seasonal_affective_disorder"
+      ]
+    },
+    "summer": {
+      "tone_adjustment": "Reference it being light outside at strange hours, confusion about time",
+      "additional_topics": [
+        "summer_insomnia",
+        "light_evenings"
+      ]
+    }
+  },
+  "holiday_overrides": {
+    "christmas_period": {
+      "dates": [
+        "2025-12-24",
+        "2025-12-25",
+        "2025-12-26"
+      ],
+      "tone_adjustment": "Brief acknowledgment of holidays, reference family time, time off",
+      "notes": "Keep it low-key, no Christmas music"
+    },
+    "new_year": {
+      "dates": [
+        "2025-12-31",
+        "2026-01-01"
+      ],
+      "tone_adjustment": "Acknowledge new year in deadpan way, no motivation energy",
+      "sample_line": "New year, same roadworks"
+    }
+  },
+  "ai_budget": {
+    "max_tokens_per_show": 8000,
+    "max_tts_seconds_per_show": 3240,
+    "max_music_minutes_per_show": 126,
+    "notes": "30% talk = 54 minutes = 3240 seconds of TTS maximum, 70% music = 126 minutes"
+  }
+}

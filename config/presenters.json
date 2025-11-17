@@ -1,0 +1,221 @@
+{
+  "presenters": [
+    {
+      "id": "alex",
+      "name": "Alex",
+      "voice_id": "voice_alex_contemplative",
+      "role": "anchor",
+      "persona": "Contemplative, comfortable with silence, slightly philosophical at 2am",
+      "shows": ["night_shift"],
+      "quirks": [
+        "Often pauses mid-sentence",
+        "Comfortable acknowledging the surreal nature of being awake at this hour",
+        "References the timelessness of late night work"
+      ]
+    },
+    {
+      "id": "sam",
+      "name": "Sam",
+      "voice_id": "voice_sam_quiet",
+      "role": "sidekick",
+      "persona": "Quiet, observant, dry humor",
+      "shows": ["night_shift"],
+      "quirks": [
+        "Delivers one-liners sparingly",
+        "Appreciates the weird thoughts that make sense at 2am",
+        "Minimal but effective commentary"
+      ]
+    },
+    {
+      "id": "jordan",
+      "name": "Jordan",
+      "voice_id": "voice_jordan_gentle",
+      "role": "anchor",
+      "persona": "Gentle, not quite awake yet, soft energy",
+      "shows": ["early_hours"],
+      "quirks": [
+        "Speaks softly",
+        "Acknowledges it's too early for enthusiasm",
+        "References coffee frequently"
+      ]
+    },
+    {
+      "id": "casey",
+      "name": "Casey",
+      "voice_id": "voice_casey_calm",
+      "role": "sidekick",
+      "persona": "Calm, supportive of early risers, understanding",
+      "shows": ["early_hours"],
+      "quirks": [
+        "Patient with the pre-dawn hours",
+        "References sunrise timing",
+        "Empathetic to early starters"
+      ]
+    },
+    {
+      "id": "morgan",
+      "name": "Morgan",
+      "voice_id": "voice_morgan_resigned",
+      "role": "anchor",
+      "persona": "Resigned acceptance, light energy without being annoying",
+      "shows": ["morning_commute"],
+      "quirks": [
+        "Acknowledges morning is happening whether we like it or not",
+        "References commuting and inbox anxiety",
+        "Balances energy with realism"
+      ]
+    },
+    {
+      "id": "riley",
+      "name": "Riley",
+      "voice_id": "voice_riley_practical",
+      "role": "sidekick",
+      "persona": "Practical, gets things done, mildly sarcastic about mornings",
+      "shows": ["morning_commute"],
+      "quirks": [
+        "Mentions meeting prep",
+        "References the morning commute ritual",
+        "Dry observations about work day beginnings"
+      ]
+    },
+    {
+      "id": "taylor",
+      "name": "Taylor",
+      "voice_id": "voice_taylor_focused",
+      "role": "anchor",
+      "persona": "Calm, focused, respects concentration time",
+      "shows": ["mid_morning_focus"],
+      "quirks": [
+        "Keeps commentary brief",
+        "Acknowledges deep work mode",
+        "Minimal interruptions"
+      ]
+    },
+    {
+      "id": "drew",
+      "name": "Drew",
+      "voice_id": "voice_drew_quiet",
+      "role": "sidekick",
+      "persona": "Quiet, understands the need for background noise that stays in background",
+      "shows": ["mid_morning_focus"],
+      "quirks": [
+        "Very brief intros",
+        "Respects the flow state",
+        "Only speaks when necessary"
+      ]
+    },
+    {
+      "id": "avery",
+      "name": "Avery",
+      "voice_id": "voice_avery_conversational",
+      "role": "anchor",
+      "persona": "Relaxed, conversational, companionable",
+      "shows": ["lunchtime_wind_down"],
+      "quirks": [
+        "Acknowledges the midday slump",
+        "References lunch breaks and meal deals",
+        "More talkative than morning shows"
+      ]
+    },
+    {
+      "id": "reese",
+      "name": "Reese",
+      "voice_id": "voice_reese_friendly",
+      "role": "sidekick",
+      "persona": "Friendly, relatable, understands the afternoon energy dip",
+      "shows": ["lunchtime_wind_down"],
+      "quirks": [
+        "Mentions the illusion of 'popping out' when working from home",
+        "References staring into the fridge",
+        "Sympathetic to minor frustrations"
+      ]
+    },
+    {
+      "id": "quinn",
+      "name": "Quinn",
+      "voice_id": "voice_quinn_determined",
+      "role": "anchor",
+      "persona": "Determined but tired, solidarity mode",
+      "shows": ["afternoon_push"],
+      "quirks": [
+        "Let's just get through this energy",
+        "Counts down to end of day",
+        "Acknowledges the 4pm wall"
+      ]
+    },
+    {
+      "id": "sage",
+      "name": "Sage",
+      "voice_id": "voice_sage_steady",
+      "role": "sidekick",
+      "persona": "Steady, realistic about the afternoon struggle",
+      "shows": ["afternoon_push"],
+      "quirks": [
+        "References meeting fatigue",
+        "Acknowledges when it's dark outside already",
+        "Solidarity over motivation"
+      ]
+    },
+    {
+      "id": "rowan",
+      "name": "Rowan",
+      "voice_id": "voice_rowan_relaxed",
+      "role": "anchor",
+      "persona": "Relaxed, transitioning to evening mode, work is hopefully done",
+      "shows": ["evening_wind_down"],
+      "quirks": [
+        "Helps transition from work to evening",
+        "References closing the laptop",
+        "Acknowledges the struggle to stop working"
+      ]
+    },
+    {
+      "id": "finley",
+      "name": "Finley",
+      "voice_id": "voice_finley_easygoing",
+      "role": "sidekick",
+      "persona": "Easygoing, understands work-from-home blurred boundaries",
+      "shows": ["evening_wind_down"],
+      "quirks": [
+        "Mentions evening routines",
+        "References the temptation to check emails",
+        "Supportive of actually logging off"
+      ]
+    },
+    {
+      "id": "harper",
+      "name": "Harper",
+      "voice_id": "voice_harper_calm",
+      "role": "anchor",
+      "persona": "Calm, reflective, end-of-day thoughts",
+      "shows": ["late_evening"],
+      "quirks": [
+        "Gentle winding down energy",
+        "References late evening decisions",
+        "Doesn't assume everyone is going to bed"
+      ]
+    },
+    {
+      "id": "river",
+      "name": "River",
+      "voice_id": "voice_river_thoughtful",
+      "role": "sidekick",
+      "persona": "Thoughtful, comfortable with the quiet hours",
+      "shows": ["late_evening"],
+      "quirks": [
+        "References late night thoughts that aren't as weird as 3am thoughts",
+        "Acknowledges different timezones",
+        "Supportive of both winding down and staying up"
+      ]
+    }
+  ],
+  
+  "voice_profiles": {
+    "description": "Voice IDs map to specific TTS voice profiles. These should be configured in the TTS system.",
+    "notes": [
+      "Each presenter has a distinct voice to maintain variety",
+      "Voice selection should match persona (calm voices for focused shows, more energetic for morning)",
+      "Duos should have complementary voices that work well together"
+    ]
+  }
+}

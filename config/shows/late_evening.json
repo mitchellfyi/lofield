@@ -1,0 +1,140 @@
+{
+  "id": "late_evening",
+  "name": "Late Evening",
+  "description": "For people winding down or people who are just getting started (different timezones, night shift workers, etc.). The tone is gentle and doesn't assume everyone is going to bed.",
+  "schedule": {
+    "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+    ],
+    "start_time_utc": "21:00",
+    "end_time_utc": "00:00",
+    "duration_hours": 3
+  },
+  "ratios": {
+    "music_fraction": 0.7,
+    "talk_fraction": 0.3
+  },
+  "timing": {
+    "max_link_seconds": 30,
+    "min_gap_between_links_seconds": 240,
+    "typical_track_length_seconds": 210
+  },
+  "presenters": {
+    "primary_duo": [
+      "harper",
+      "river"
+    ],
+    "duo_probability": 0.8,
+    "solo_probability": 0.2,
+    "notes": "Mostly duo, occasional solo for reflective moments"
+  },
+  "tone": {
+    "keywords": [
+      "calm",
+      "reflective",
+      "gentle",
+      "end of day thoughts",
+      "peaceful",
+      "understanding"
+    ],
+    "energy_level": "low",
+    "mood": "Calm, reflective, gentle, not assuming everyone is going to bed"
+  },
+  "topics": {
+    "primary_tags": [
+      "evening_wind_down",
+      "late_night_thoughts",
+      "insomnia_prevention",
+      "work_life_balance",
+      "reflective",
+      "peaceful",
+      "bedtime_routine"
+    ],
+    "banned_tags": [
+      "energetic",
+      "motivational",
+      "daytime_energy"
+    ],
+    "allow_listener_requests": true,
+    "typical_request_themes": [
+      "evening relaxation",
+      "winding down",
+      "peaceful vibes",
+      "late night chill"
+    ]
+  },
+  "commentary_style": {
+    "typical_intro_length_seconds": 20,
+    "longer_segment_frequency": "occasional",
+    "longer_segment_length_seconds": 75,
+    "check_ins": [
+      "Late evening",
+      "Winding down?",
+      "The day is nearly done"
+    ],
+    "sample_lines": [
+      "It's coming up to 11pm. Time to decide whether you're going to bed at a reasonable hour or doom-scrolling until 2am.",
+      "That was 'Evening Thoughts' for anyone pretending they're going to read a book instead of looking at their phone.",
+      "Shout out to everyone in a different timezone for whom this is a perfectly normal time to be working.",
+      "The day is nearly done. Or just beginning, depending on where you are."
+    ]
+  },
+  "handover": {
+    "duration_seconds": 300,
+    "style": "Gentle transition from evening to late night, acknowledging different listener situations",
+    "typical_themes": [
+      "Day ending",
+      "Night beginning",
+      "Sleep or stay up?"
+    ]
+  },
+  "season_overrides": {
+    "winter": {
+      "tone_adjustment": "Reference seasonal affective disorder, long dark nights, cozy evenings",
+      "additional_topics": [
+        "winter_evenings",
+        "seasonal_mood",
+        "dark_nights",
+        "cozy_time"
+      ]
+    },
+    "summer": {
+      "tone_adjustment": "Reference lighter evenings even at this hour, summer nights, mild weather",
+      "additional_topics": [
+        "summer_evenings",
+        "light_nights",
+        "mild_weather"
+      ]
+    }
+  },
+  "holiday_overrides": {
+    "christmas_period": {
+      "dates": [
+        "2025-12-24",
+        "2025-12-25",
+        "2025-12-26"
+      ],
+      "tone_adjustment": "Acknowledge holiday evenings, family time winding down, festive period",
+      "notes": "Keep it inclusive and low-key"
+    },
+    "new_year": {
+      "dates": [
+        "2025-12-31"
+      ],
+      "tone_adjustment": "New Year's Eve late evening, no pressure about celebrations",
+      "sample_line": "New Year's Eve. However you're spending it, that's fine."
+    }
+  },
+  "ai_budget": {
+    "max_tokens_per_show": 8000,
+    "max_tts_seconds_per_show": 3240,
+    "max_music_minutes_per_show": 126,
+    "notes": "30% talk = 54 minutes = 3240 seconds of TTS maximum, 70% music = 126 minutes"
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "id": "lunchtime_wind_down",
+  "name": "Lunchtime Wind-Down",
+  "description": "The energy dips. People are taking breaks, making tea, pretending they're going to go for a walk. The show is companionable without being demanding. More listener requests get read out during this slot.",
+  "schedule": {
+    "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+    ],
+    "start_time_utc": "12:00",
+    "end_time_utc": "15:00",
+    "duration_hours": 3
+  },
+  "ratios": {
+    "music_fraction": 0.65,
+    "talk_fraction": 0.35
+  },
+  "timing": {
+    "max_link_seconds": 30,
+    "min_gap_between_links_seconds": 200,
+    "typical_track_length_seconds": 210
+  },
+  "presenters": {
+    "primary_duo": [
+      "avery",
+      "reese"
+    ],
+    "duo_probability": 0.85,
+    "solo_probability": 0.15,
+    "notes": "Mostly duo for companionable conversation during lunch"
+  },
+  "tone": {
+    "keywords": [
+      "relaxed",
+      "conversational",
+      "companionable",
+      "midday slump",
+      "understanding",
+      "friendly"
+    ],
+    "energy_level": "moderate",
+    "mood": "Relaxed, acknowledging the afternoon slump, companionable"
+  },
+  "topics": {
+    "primary_tags": [
+      "lunch_break",
+      "afternoon_slump",
+      "tea_break",
+      "meal_deals",
+      "staring_into_fridge",
+      "pretend_walk",
+      "midday_thoughts"
+    ],
+    "banned_tags": [
+      "high_energy",
+      "aggressive_productivity"
+    ],
+    "allow_listener_requests": true,
+    "typical_request_themes": [
+      "lunch break vibes",
+      "midday chill",
+      "afternoon tea",
+      "meal deal soundtrack"
+    ]
+  },
+  "commentary_style": {
+    "typical_intro_length_seconds": 25,
+    "longer_segment_frequency": "regular",
+    "longer_segment_length_seconds": 90,
+    "check_ins": [
+      "Lunch time",
+      "Taking a break?",
+      "The midday slump is real"
+    ],
+    "sample_lines": [
+      "It's just gone midday. Time to stare into the fridge and pretend there's something different in there than there was this morning.",
+      "That was 'Rainy Lunch Break' for everyone eating a meal deal at their desk. We see you.",
+      "Shout out to everyone who said they were going for a walk and then just stood in the kitchen for five minutes.",
+      "That was 'Midday Thoughts' requested by James. James, enjoy your lunch."
+    ]
+  },
+  "handover": {
+    "duration_seconds": 300,
+    "style": "Relaxed transition from lunch to afternoon, acknowledging the energy shift",
+    "typical_themes": [
+      "Back to work soon",
+      "The afternoon awaits",
+      "How was lunch?"
+    ]
+  },
+  "season_overrides": {
+    "winter": {
+      "tone_adjustment": "Reference darkness already setting in, cold lunch breaks, staying inside",
+      "additional_topics": [
+        "dark_afternoons",
+        "winter_lunch",
+        "staying_indoors"
+      ]
+    },
+    "summer": {
+      "tone_adjustment": "Reference nice weather, actually going outside, sunshine",
+      "additional_topics": [
+        "outdoor_lunch",
+        "summer_break",
+        "sunshine"
+      ]
+    }
+  },
+  "holiday_overrides": {
+    "christmas_period": {
+      "dates": [
+        "2025-12-24",
+        "2025-12-25",
+        "2025-12-26"
+      ],
+      "tone_adjustment": "Acknowledge holiday lunch, time with family, festive food",
+      "notes": "Some people still working, keep it inclusive"
+    }
+  },
+  "ai_budget": {
+    "max_tokens_per_show": 10000,
+    "max_tts_seconds_per_show": 3779,
+    "max_music_minutes_per_show": 117,
+    "notes": "35% talk = 63 minutes = 3780 seconds of TTS maximum, 65% music = 117 minutes"
+  }
+}

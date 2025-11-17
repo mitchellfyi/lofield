@@ -1,0 +1,100 @@
+{
+  "name": "Lofield FM",
+  "tagline": "Background noise for people just trying to make it through the day.",
+  "timezone": "Europe/London",
+  "frequency": "A frequency that probably doesn't exist",
+  "description": "An AI-powered radio station for the fictional town of Lofield—a community of remote workers, freelancers, and digital nomads all trying to stay sane between video calls.",
+  
+  "default_ratios": {
+    "min_music_fraction": 0.60,
+    "max_talk_fraction": 0.40,
+    "description": "Station-wide minimum music requirement. Individual shows can increase music fraction but not decrease below this threshold."
+  },
+  
+  "default_timing": {
+    "max_link_seconds": 30,
+    "min_gap_between_links_seconds": 180,
+    "handover_duration_seconds": 300,
+    "station_ident_seconds": 10
+  },
+  
+  "default_tone": {
+    "keywords": [
+      "dry",
+      "understated",
+      "self-deprecating",
+      "matter-of-fact",
+      "gently sardonic",
+      "relatable",
+      "deadpan"
+    ],
+    "description": "Core Lofield FM voice shared by all presenters"
+  },
+  
+  "forbidden_styles": [
+    "motivational speeches",
+    "fake enthusiasm",
+    "shouting",
+    "over-the-top energy",
+    "cruel or mean-spirited",
+    "outdated slang",
+    "trying too hard to be cool"
+  ],
+  
+  "forbidden_topics": [
+    "politics",
+    "health advice",
+    "medical advice",
+    "finance advice",
+    "explicit content",
+    "divisive topics"
+  ],
+  
+  "seasons": {
+    "spring": {
+      "months": [3, 4, 5],
+      "description": "Lighter evenings, spring weather, back-to-normalcy energy",
+      "tone_adjustment": "Reference longer days, spring weather, renewed energy"
+    },
+    "summer": {
+      "months": [6, 7, 8],
+      "description": "Long evenings, people actually going outside, occasionally nice weather",
+      "tone_adjustment": "Reference outdoor activities, holiday time, lighter evenings"
+    },
+    "autumn": {
+      "months": [9, 10, 11],
+      "description": "Back-to-school energy, days getting shorter, cozy vibes",
+      "tone_adjustment": "Reference darker evenings, back-to-school even though listeners aren't in school, cozy indoor time"
+    },
+    "winter": {
+      "months": [12, 1, 2],
+      "description": "Dark evenings, cold weather, holiday season, seasonal affective disorder",
+      "tone_adjustment": "Reference darkness, cold, heating decisions, seasonal mood, holiday stress"
+    }
+  },
+  
+  "ai_budget": {
+    "max_tokens_per_hour": 50000,
+    "max_tts_seconds_per_hour": 1200,
+    "max_music_minutes_per_hour": 45,
+    "description": "Global AI resource limits to control costs and maintain sustainable operation",
+    "notes": [
+      "Token budget covers LLM calls for presenter scripts and music prompt normalization",
+      "TTS budget limits total presenter speech time per hour",
+      "Music budget ensures we don't over-generate content (60-minute shows need ~40-45 min music)"
+    ]
+  },
+  
+  "streaming": {
+    "buffer_minutes": 45,
+    "fallback_content_hours": 6,
+    "description": "Pre-generate content buffer and maintain fallback library for continuous operation"
+  },
+  
+  "moderation": {
+    "auto_filter_enabled": true,
+    "community_moderation_enabled": true,
+    "min_upvotes_for_priority": 5,
+    "description": "Request moderation and community voting settings"
+  }
+}

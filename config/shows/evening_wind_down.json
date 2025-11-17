@@ -1,0 +1,138 @@
+{
+  "id": "evening_wind_down",
+  "name": "Evening Wind-Down",
+  "description": "The work day is officially over (for most people). The show helps people transition from work mode to evening mode, acknowledging that this is harder when your office is also your home.",
+  "schedule": {
+    "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+    ],
+    "start_time_utc": "18:00",
+    "end_time_utc": "21:00",
+    "duration_hours": 3
+  },
+  "ratios": {
+    "music_fraction": 0.65,
+    "talk_fraction": 0.35
+  },
+  "timing": {
+    "max_link_seconds": 30,
+    "min_gap_between_links_seconds": 200,
+    "typical_track_length_seconds": 210
+  },
+  "presenters": {
+    "primary_duo": [
+      "rowan",
+      "finley"
+    ],
+    "duo_probability": 0.85,
+    "solo_probability": 0.15,
+    "notes": "Mostly duo for companionable evening transition"
+  },
+  "tone": {
+    "keywords": [
+      "relaxed",
+      "transitioning",
+      "easygoing",
+      "end of day",
+      "winding down",
+      "supportive"
+    ],
+    "energy_level": "moderate to low",
+    "mood": "Relaxed, helping transition from work to evening, acknowledging boundary struggles"
+  },
+  "topics": {
+    "primary_tags": [
+      "end_of_day",
+      "evening_routine",
+      "logging_off",
+      "work_life_balance",
+      "closing_laptop",
+      "dinner_time",
+      "finally_done"
+    ],
+    "banned_tags": [
+      "work_talk",
+      "productivity_advice"
+    ],
+    "allow_listener_requests": true,
+    "typical_request_themes": [
+      "evening chill",
+      "winding down",
+      "post-work vibes",
+      "relaxation mode"
+    ]
+  },
+  "commentary_style": {
+    "typical_intro_length_seconds": 25,
+    "longer_segment_frequency": "regular",
+    "longer_segment_length_seconds": 90,
+    "check_ins": [
+      "Work day over?",
+      "Time to log off",
+      "Evening mode activated"
+    ],
+    "sample_lines": [
+      "It's 6:30. Time to close the laptop. Or, you know, tell yourself you're going to close the laptop in ten minutes.",
+      "That was 'Logging Off' requested by Daniel. Daniel, we hope you actually managed to log off.",
+      "Shout out to everyone who's technically finished work but is still checking Slack. We see you.",
+      "The work day is done. Or it should be. We're not judging if you're still working."
+    ]
+  },
+  "handover": {
+    "duration_seconds": 300,
+    "style": "Relaxed evening handover, acknowledging the day is winding down",
+    "typical_themes": [
+      "Day done",
+      "Evening settling in",
+      "Time to relax"
+    ]
+  },
+  "season_overrides": {
+    "winter": {
+      "tone_adjustment": "Reference dark evenings, being dark since 4pm, cozy indoor time",
+      "additional_topics": [
+        "dark_evenings",
+        "winter_nights",
+        "cozy_indoors"
+      ]
+    },
+    "summer": {
+      "tone_adjustment": "Reference long summer evenings, still light outside, nice weather",
+      "additional_topics": [
+        "light_evenings",
+        "summer_nights",
+        "outdoor_evening"
+      ]
+    }
+  },
+  "holiday_overrides": {
+    "christmas_period": {
+      "dates": [
+        "2025-12-24",
+        "2025-12-25",
+        "2025-12-26"
+      ],
+      "tone_adjustment": "Acknowledge holiday evenings, family time, festive activities",
+      "notes": "Keep it inclusive for people working through holidays"
+    },
+    "new_year": {
+      "dates": [
+        "2025-12-31"
+      ],
+      "tone_adjustment": "New Year's Eve, low-key acknowledgment, no pressure to go out",
+      "sample_line": "New Year's Eve. Whether you're going out or staying in, both are fine."
+    }
+  },
+  "ai_budget": {
+    "max_tokens_per_show": 10000,
+    "max_tts_seconds_per_show": 3779,
+    "max_music_minutes_per_show": 117,
+    "notes": "35% talk = 63 minutes = 3780 seconds of TTS maximum, 65% music = 117 minutes"
+  }
+}

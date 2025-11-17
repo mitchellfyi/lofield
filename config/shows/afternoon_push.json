@@ -1,0 +1,132 @@
+{
+  "id": "afternoon_push",
+  "name": "Afternoon Push",
+  "description": "The final stretch of the work day. The show doesn't try to hype people up\u2014it just acknowledges that yes, it's 4pm, and yes, there are still emails to answer. Solidarity over motivation.",
+  "schedule": {
+    "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+    ],
+    "start_time_utc": "15:00",
+    "end_time_utc": "18:00",
+    "duration_hours": 3
+  },
+  "ratios": {
+    "music_fraction": 0.7,
+    "talk_fraction": 0.3
+  },
+  "timing": {
+    "max_link_seconds": 30,
+    "min_gap_between_links_seconds": 220,
+    "typical_track_length_seconds": 210
+  },
+  "presenters": {
+    "primary_duo": [
+      "quinn",
+      "sage"
+    ],
+    "duo_probability": 0.85,
+    "solo_probability": 0.15,
+    "notes": "Mostly duo for solidarity during the afternoon push"
+  },
+  "tone": {
+    "keywords": [
+      "determined",
+      "tired",
+      "solidarity",
+      "let's get through this",
+      "realistic",
+      "supportive"
+    ],
+    "energy_level": "moderate",
+    "mood": "Determined but tired, solidarity mode, acknowledging the afternoon struggle"
+  },
+  "topics": {
+    "primary_tags": [
+      "afternoon_slump",
+      "end_of_day_countdown",
+      "meeting_fatigue",
+      "notifications",
+      "email_overload",
+      "almost_done",
+      "final_push"
+    ],
+    "banned_tags": [
+      "overly_motivational",
+      "hustle_culture",
+      "grind"
+    ],
+    "allow_listener_requests": true,
+    "typical_request_themes": [
+      "afternoon focus",
+      "nearly there",
+      "last push",
+      "end of day countdown"
+    ]
+  },
+  "commentary_style": {
+    "typical_intro_length_seconds": 25,
+    "longer_segment_frequency": "occasional",
+    "longer_segment_length_seconds": 75,
+    "check_ins": [
+      "The afternoon push",
+      "Nearly there",
+      "Not quite done yet"
+    ],
+    "sample_lines": [
+      "It's 4pm. Not quite done, not quite giving up. Somewhere in between.",
+      "One more hour. You can do this. Or you can decide it's a tomorrow problem. Both are valid.",
+      "That was 'Final Push' requested by Emma. Emma, we're rooting for you in a very low-key way.",
+      "The roadworks are still there. So are we. Let's get through this."
+    ]
+  },
+  "handover": {
+    "duration_seconds": 300,
+    "style": "Tired but relieved handover, acknowledging the end of the work day approaching",
+    "typical_themes": [
+      "Nearly done",
+      "Time to wrap up",
+      "End of day energy"
+    ]
+  },
+  "season_overrides": {
+    "winter": {
+      "tone_adjustment": "Reference darkness falling early, demoralizing dark afternoons",
+      "additional_topics": [
+        "dark_afternoons",
+        "winter_darkness",
+        "seasonal_mood"
+      ]
+    },
+    "summer": {
+      "tone_adjustment": "Reference still being light outside, nice weather wasted indoors",
+      "additional_topics": [
+        "light_outside",
+        "summer_afternoons",
+        "wasted_sunshine"
+      ]
+    }
+  },
+  "holiday_overrides": {
+    "christmas_period": {
+      "dates": [
+        "2025-12-24",
+        "2025-12-25",
+        "2025-12-26"
+      ],
+      "tone_adjustment": "Acknowledge reduced work, people finishing early, holiday time",
+      "notes": "Some people still working through holidays"
+    }
+  },
+  "ai_budget": {
+    "max_tokens_per_show": 8000,
+    "max_tts_seconds_per_show": 3240,
+    "max_music_minutes_per_show": 126,
+    "notes": "30% talk = 54 minutes = 3240 seconds of TTS maximum, 70% music = 126 minutes"
+  }
+}

@@ -1,7 +1,7 @@
 {
-  "id": "evening_wind_down",
-  "name": "Evening Wind-Down",
-  "description": "The work day is officially over (for most people). The show helps people transition from work mode to evening mode, acknowledging that this is harder when your office is also your home.",
+  "id": "commute_to_nowhere",
+  "name": "Commute to Nowhere",
+  "description": "The work day is officially over for most people, but the banter acknowledges that boundaries are theoretical when your office is your home. The conversation helps people mentally transition while being realistic about the 'just one more thing' trap.",
   "schedule": {
     "days": [
       "mon",
@@ -17,8 +17,8 @@
     "duration_hours": 3
   },
   "ratios": {
-    "music_fraction": 0.65,
-    "talk_fraction": 0.35
+    "music_fraction": 0.5,
+    "talk_fraction": 0.5
   },
   "timing": {
     "max_link_seconds": 30,
@@ -36,52 +36,53 @@
   },
   "tone": {
     "keywords": [
-      "relaxed",
       "transitioning",
+      "ironically aware",
       "easygoing",
-      "end of day",
-      "winding down",
+      "realistic about boundaries",
+      "winding down (theoretically)",
       "supportive"
     ],
     "energy_level": "moderate to low",
-    "mood": "Relaxed, helping transition from work to evening, acknowledging boundary struggles"
+    "mood": "Transitioning to evening, ironically aware that 'logging off' is theoretical"
   },
   "topics": {
     "primary_tags": [
       "end_of_day",
-      "evening_routine",
-      "logging_off",
       "work_life_balance",
+      "logging_off",
+      "evening_routine",
       "closing_laptop",
       "dinner_time",
-      "finally_done"
+      "slack_messages"
     ],
     "banned_tags": [
-      "work_talk",
-      "productivity_advice"
+      "genuine_relaxation",
+      "productivity_advice",
+      "work_life_balance_tips"
     ],
     "allow_listener_requests": true,
     "typical_request_themes": [
-      "evening chill",
-      "winding down",
-      "post-work vibes",
-      "relaxation mode"
+      "evening guilt trip",
+      "pretending to wind down",
+      "post-work anxiety",
+      "theoretical relaxation"
     ]
   },
   "commentary_style": {
-    "typical_intro_length_seconds": 25,
+    "typical_intro_length_seconds": 35,
     "longer_segment_frequency": "regular",
-    "longer_segment_length_seconds": 90,
+    "longer_segment_length_seconds": 120,
     "check_ins": [
-      "Work day over?",
-      "Time to log off",
-      "Evening mode activated"
+      "Work day over? Sure.",
+      "Time to log off. (We'll check back later)",
+      "Evening mode: theoretically activated"
     ],
     "sample_lines": [
-      "It's 6:30. Time to close the laptop. Or, you know, tell yourself you're going to close the laptop in ten minutes.",
-      "That was 'Logging Off' requested by Daniel. Daniel, we hope you actually managed to log off.",
-      "Shout out to everyone who's technically finished work but is still checking Slack. We see you.",
-      "The work day is done. Or it should be. We're not judging if you're still working."
+      "It's 6:30. Time to close the laptop. We'll check in again at 9pm to see if you actually did.",
+      "That was 'Logging Off' requested by Daniel. Daniel, if you're reading this while 'taking a quick break,' you're not fooling anyone.",
+      "Evening commute time. For those who work from home, that's walking to the kitchen and back.",
+      "The workday ended an hour ago. Your Slack status knows this. You know this. We all know how this ends."
     ]
   },
   "handover": {
@@ -130,9 +131,9 @@
     }
   },
   "ai_budget": {
-    "max_tokens_per_show": 10000,
-    "max_tts_seconds_per_show": 3779,
-    "max_music_minutes_per_show": 117,
-    "notes": "35% talk = 63 minutes = 3780 seconds of TTS maximum, 65% music = 117 minutes"
+    "max_tokens_per_show": 15000,
+    "max_tts_seconds_per_show": 5400,
+    "max_music_minutes_per_show": 90,
+    "notes": "50% talk = 90 minutes = 5400 seconds of TTS maximum, 50% music = 90 minutes"
   }
 }

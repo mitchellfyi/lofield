@@ -1,7 +1,7 @@
 {
-  "id": "morning_commute",
-  "name": "Morning Commute",
-  "description": "For people starting their work day, whether that's a commute to an office or a commute from bed to desk. The show acknowledges that mornings are not everyone's favorite time without being aggressively cheerful about it.",
+  "id": "mild_panic_mornings",
+  "name": "Mild Panic Mornings",
+  "description": "For people starting their work day with varying degrees of panic about what awaits them. The show acknowledges morning anxiety without being cheerful about it. The banter focuses on shared morning struggles and the performance of looking prepared.",
   "schedule": {
     "days": [
       "mon",
@@ -17,8 +17,8 @@
     "duration_hours": 3
   },
   "ratios": {
-    "music_fraction": 0.65,
-    "talk_fraction": 0.35
+    "music_fraction": 0.5,
+    "talk_fraction": 0.5
   },
   "timing": {
     "max_link_seconds": 30,
@@ -36,14 +36,15 @@
   },
   "tone": {
     "keywords": [
+      "controlled chaos",
       "resigned acceptance",
-      "light energy",
-      "not annoying",
+      "mild anxiety",
       "realistic",
-      "balanced"
+      "balanced",
+      "solidarity over enthusiasm"
     ],
     "energy_level": "moderate",
-    "mood": "Acknowledging that mornings happen, with light energy but no fake enthusiasm"
+    "mood": "Controlled chaos, acknowledging morning panic without being cheerful about it"
   },
   "topics": {
     "primary_tags": [
@@ -69,19 +70,20 @@
     ]
   },
   "commentary_style": {
-    "typical_intro_length_seconds": 25,
+    "typical_intro_length_seconds": 35,
     "longer_segment_frequency": "regular",
-    "longer_segment_length_seconds": 90,
+    "longer_segment_length_seconds": 120,
     "check_ins": [
       "Morning's happening",
-      "For everyone pretending they've read their emails",
-      "The work day begins"
+      "For everyone pretending to have it together",
+      "The work day begins, ready or not"
     ],
     "sample_lines": [
-      "It's 7:30. Time to pretend you've read all your emails.",
-      "Shout out to everyone whose first meeting is at 9am. You have an hour and a half to mentally prepare.",
-      "The 7:42 to London is delayed. Shocking exactly no one.",
-      "That was 'Morning Coffee' requested by Sarah. Sarah, we hope the caffeine is kicking in."
+      "It's 7:30. Time to open your inbox and immediately regret it.",
+      "Shout out to everyone whose first meeting is at 9am and who definitely hasn't looked at the agenda.",
+      "The 7:42 to London is delayed. In other news, water is wet.",
+      "That was 'Morning Coffee Ritual' for Sarah who requested it. Sarah, may your Wi-Fi hold and your camera stay off.",
+      "Three unread email threads from yesterday. Today's going great already."
     ]
   },
   "handover": {
@@ -136,9 +138,9 @@
     }
   },
   "ai_budget": {
-    "max_tokens_per_show": 10000,
-    "max_tts_seconds_per_show": 3779,
-    "max_music_minutes_per_show": 117,
-    "notes": "35% talk = 63 minutes = 3780 seconds of TTS maximum, 65% music = 117 minutes"
+    "max_tokens_per_show": 15000,
+    "max_tts_seconds_per_show": 5400,
+    "max_music_minutes_per_show": 90,
+    "notes": "50% talk = 90 minutes = 5400 seconds of TTS maximum, 50% music = 90 minutes"
   }
 }

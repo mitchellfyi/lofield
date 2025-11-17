@@ -1,7 +1,7 @@
 {
-  "id": "late_evening",
-  "name": "Late Evening",
-  "description": "For people winding down or people who are just getting started (different timezones, night shift workers, etc.). The tone is gentle and doesn't assume everyone is going to bed.",
+  "id": "lofield_night_school",
+  "name": "Lofield Night School",
+  "description": "For people winding down or people who are just getting started (timezones, night workers, insomniacs). The tone is gentle and self-aware about the gap between intentions (early night) and reality (still on your phone at midnight). The banter is reflective without being heavy.",
   "schedule": {
     "days": [
       "mon",
@@ -17,8 +17,8 @@
     "duration_hours": 3
   },
   "ratios": {
-    "music_fraction": 0.7,
-    "talk_fraction": 0.3
+    "music_fraction": 0.55,
+    "talk_fraction": 0.45
   },
   "timing": {
     "max_link_seconds": 30,
@@ -38,51 +38,52 @@
     "keywords": [
       "calm",
       "reflective",
-      "gentle",
-      "end of day thoughts",
-      "peaceful",
+      "slightly resigned",
+      "self-aware",
+      "gentle mockery",
       "understanding"
     ],
     "energy_level": "low",
-    "mood": "Calm, reflective, gentle, not assuming everyone is going to bed"
+    "mood": "Calm but slightly resigned, evening thoughts and work-life balance irony"
   },
   "topics": {
     "primary_tags": [
       "evening_wind_down",
       "late_night_thoughts",
-      "insomnia_prevention",
       "work_life_balance",
+      "side_projects",
       "reflective",
-      "peaceful",
-      "bedtime_routine"
+      "bedtime_routine",
+      "procrastination"
     ],
     "banned_tags": [
       "energetic",
       "motivational",
-      "daytime_energy"
+      "productive_evening",
+      "genuine_bedtime_routine"
     ],
     "allow_listener_requests": true,
     "typical_request_themes": [
-      "evening relaxation",
-      "winding down",
-      "peaceful vibes",
-      "late night chill"
+      "evening existential thoughts",
+      "pretending to wind down",
+      "late night career regrets",
+      "theoretical early night"
     ]
   },
   "commentary_style": {
-    "typical_intro_length_seconds": 20,
-    "longer_segment_frequency": "occasional",
-    "longer_segment_length_seconds": 75,
+    "typical_intro_length_seconds": 35,
+    "longer_segment_frequency": "regular",
+    "longer_segment_length_seconds": 120,
     "check_ins": [
-      "Late evening",
-      "Winding down?",
-      "The day is nearly done"
+      "Late evening contemplation time",
+      "Winding down? We'll see.",
+      "The day is theoretically done"
     ],
     "sample_lines": [
-      "It's coming up to 11pm. Time to decide whether you're going to bed at a reasonable hour or doom-scrolling until 2am.",
-      "That was 'Evening Thoughts' for anyone pretending they're going to read a book instead of looking at their phone.",
-      "Shout out to everyone in a different timezone for whom this is a perfectly normal time to be working.",
-      "The day is nearly done. Or just beginning, depending on where you are."
+      "It's coming up to 11pm. Time to decide whether you're going to bed at a reasonable hour or researching something extremely specific until 2am.",
+      "That was 'Evening Thoughts' for anyone pretending they're going to read instead of scroll.",
+      "Work-life balance. We've heard of it. Technically.",
+      "For everyone planning to start that side project tonight: we believe in you. But also, maybe just watch TV."
     ]
   },
   "handover": {
@@ -132,9 +133,9 @@
     }
   },
   "ai_budget": {
-    "max_tokens_per_show": 8000,
-    "max_tts_seconds_per_show": 3240,
-    "max_music_minutes_per_show": 126,
-    "notes": "30% talk = 54 minutes = 3240 seconds of TTS maximum, 70% music = 126 minutes"
+    "max_tokens_per_show": 13500,
+    "max_tts_seconds_per_show": 4860,
+    "max_music_minutes_per_show": 99,
+    "notes": "45% talk = 81 minutes = 4860 seconds of TTS maximum, 55% music = 99 minutes"
   }
 }

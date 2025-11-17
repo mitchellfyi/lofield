@@ -68,7 +68,7 @@ Queue: Track ready for playout
 
 **Example Generation Flow**:
 ```
-Context: Show = "Mid-Morning Focus", Time = 10:23, Next track = "Rainy Coding Session"
+Context: Show = "Deep Work (According to Calendar Blocks)", Time = 10:23, Next track = "Rainy Coding Session"
   ↓
 LLM: "That was 'Deep Work Mode' for anyone who's been staring at the same line of code for twenty minutes. Up next, 'Rainy Coding Session' requested by Alex in Bristol. Alex, we hope the syntax is making more sense now than it was earlier."
   ↓
@@ -113,7 +113,7 @@ The playout engine is the core scheduling system that maintains the 24/7 broadca
 
 **Responsibilities**:
 - Maintain the 3-hour show schedule
-- Ensure correct music-to-talk ratio for each show (60% music minimum)
+- Ensure correct music-to-talk ratio for each show (40-60% talk, max 60% music)
 - Queue music tracks and presenter segments in the correct order
 - Handle handover segments between shows
 - Insert station idents at appropriate intervals

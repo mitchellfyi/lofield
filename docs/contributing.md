@@ -55,7 +55,7 @@ Include the following in your proposal:
 - **Name**: What's the show called?
 - **Time Slot**: When does it air? (must fit the 3-hour block structure)
 - **Mood**: What's the vibe? (calm, energetic, contemplative, etc.)
-- **Music-to-Talk Ratio**: How much music vs. talk? (must be at least 60% music)
+- **Music-to-Talk Ratio**: How much music vs. talk? (typically 40-60% talk, music no more than 60%)
 - **Typical Topics**: What will the presenters talk about?
 - **Presenter Names**: Suggest names for the duo (should be gender-neutral and not overly quirky)
 - **Seasonal Considerations**: Does the show change with seasons or holidays?
@@ -101,7 +101,7 @@ To add a new landmark, running joke, or location to [docs/town_bible.md](town_bi
 To modify [docs/schedule.md](schedule.md):
 
 1. Ensure the overall structure (eight 3-hour shows) remains consistent
-2. Keep the music-to-talk ratios within guidelines (60% music minimum)
+2. Keep the music-to-talk ratios within guidelines (40-60% talk, max 60% music)
 3. Maintain the tone and style of existing shows
 
 ### Architecture Updates
@@ -139,12 +139,12 @@ Open an issue with the following information:
 Title: Playout engine skips tracks at show handover
 
 Description:
-At the 18:00 handover between Afternoon Push and Evening Wind-Down, the playout engine sometimes skips the first track of the new show and goes straight to presenter commentary.
+At the 18:00 handover between Afternoon Survival Session and Commute to Nowhere, the playout engine sometimes skips the first track of the new show and goes straight to presenter commentary.
 
 Steps to Reproduce:
 1. Listen to the station at 17:55
 2. Wait for the 18:00 handover
-3. Observe that the first Evening Wind-Down track is missing
+3. Observe that the first Commute to Nowhere track is missing
 
 Environment: Chrome on macOS, listening via web player
 

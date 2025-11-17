@@ -8,16 +8,18 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const statusParam = searchParams.get("status");
-    
+
     // Validate status parameter
     const validStatuses = ["pending", "approved", "rejected", "used"];
     if (statusParam && !validStatuses.includes(statusParam)) {
       return NextResponse.json(
-        { error: `Invalid status parameter: must be one of ${validStatuses.join(", ")}` },
+        {
+          error: `Invalid status parameter: must be one of ${validStatuses.join(", ")}`,
+        },
         { status: 400 }
       );
     }
-    
+
     // Parse and validate limit parameter
     const limitParam = searchParams.get("limit");
     let limit = 20; // default
@@ -37,7 +39,7 @@ export async function GET(request: NextRequest) {
       }
       limit = parsedLimit;
     }
-    
+
     // Parse and validate offset parameter
     const offsetParam = searchParams.get("offset");
     let offset = 0; // default
@@ -71,7 +73,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching requests:", error);
     return NextResponse.json(
       { error: "Failed to fetch requests" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -84,21 +86,21 @@ export async function POST(request: NextRequest) {
     if (!body.type || !body.text) {
       return NextResponse.json(
         { error: "Missing required fields: type and text" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     if (body.text.length < 10) {
       return NextResponse.json(
         { error: "Text must be at least 10 characters" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     if (!["music", "talk"].includes(body.type)) {
       return NextResponse.json(
         { error: "Type must be either 'music' or 'talk'" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -123,7 +125,7 @@ export async function POST(request: NextRequest) {
           reasons: moderationResult.reasons,
           id: rejectedRequest.id,
         },
-        { status: 403 },
+        { status: 403 }
       );
     }
 
@@ -147,9 +149,7 @@ export async function POST(request: NextRequest) {
         votes: 0,
         status: "pending",
         moderationStatus:
-          moderationResult.verdict === "needs_rewrite"
-            ? "flagged"
-            : "approved",
+          moderationResult.verdict === "needs_rewrite" ? "flagged" : "approved",
       },
     });
 
@@ -162,13 +162,13 @@ export async function POST(request: NextRequest) {
         },
         classification: normalizedData,
       },
-      { status: 201 },
+      { status: 201 }
     );
   } catch (error) {
     console.error("Error creating request:", error);
     return NextResponse.json(
       { error: "Failed to create request" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

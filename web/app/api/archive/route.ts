@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const startTimeParam = searchParams.get("start_time");
     const endTimeParam = searchParams.get("end_time");
     const showId = searchParams.get("show_id");
-    
+
     // Parse and validate limit parameter
     const limitParam = searchParams.get("limit");
     let limit = 20; // default
@@ -28,14 +28,14 @@ export async function GET(request: NextRequest) {
       }
       limit = parsedLimit;
     }
-    
+
     // Build query filters
     interface WhereClause {
       startTime?: { gte: Date };
       endTime?: { lte: Date };
       showId?: string;
     }
-    
+
     const where: WhereClause = {};
 
     // Parse and validate start_time parameter
@@ -43,7 +43,10 @@ export async function GET(request: NextRequest) {
       const startTime = new Date(startTimeParam);
       if (isNaN(startTime.getTime())) {
         return NextResponse.json(
-          { error: "Invalid start_time parameter: must be a valid ISO 8601 date" },
+          {
+            error:
+              "Invalid start_time parameter: must be a valid ISO 8601 date",
+          },
           { status: 400 }
         );
       }
@@ -55,7 +58,9 @@ export async function GET(request: NextRequest) {
       const endTime = new Date(endTimeParam);
       if (isNaN(endTime.getTime())) {
         return NextResponse.json(
-          { error: "Invalid end_time parameter: must be a valid ISO 8601 date" },
+          {
+            error: "Invalid end_time parameter: must be a valid ISO 8601 date",
+          },
           { status: 400 }
         );
       }
@@ -95,28 +100,29 @@ export async function GET(request: NextRequest) {
 
     // Filter to only include segments that have been played
     const playedSegments = segments.filter(
-      (segment: { playlogEntries: unknown[] }) => segment.playlogEntries.length > 0,
+      (segment: { playlogEntries: unknown[] }) =>
+        segment.playlogEntries.length > 0
     );
 
     // Transform to archive format
-    const archiveItems: ArchiveSegment[] = playedSegments.map((segment: {
-      id: string;
-      show: { name: string };
-      startTime: Date;
-      endTime: Date;
-      type: string;
-      filePath: string | null;
-    }) => ({
-      id: segment.id,
-      showName: segment.show.name,
-      startTime: segment.startTime.toISOString(),
-      endTime: segment.endTime.toISOString(),
-      type: segment.type,
-      // In a real implementation, this would point to the actual audio file
-      streamUrl: segment.filePath
-        ? `/audio/${segment.filePath}`
-        : undefined,
-    }));
+    const archiveItems: ArchiveSegment[] = playedSegments.map(
+      (segment: {
+        id: string;
+        show: { name: string };
+        startTime: Date;
+        endTime: Date;
+        type: string;
+        filePath: string | null;
+      }) => ({
+        id: segment.id,
+        showName: segment.show.name,
+        startTime: segment.startTime.toISOString(),
+        endTime: segment.endTime.toISOString(),
+        type: segment.type,
+        // In a real implementation, this would point to the actual audio file
+        streamUrl: segment.filePath ? `/audio/${segment.filePath}` : undefined,
+      })
+    );
 
     return NextResponse.json({
       total: archiveItems.length,
@@ -126,7 +132,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching archive:", error);
     return NextResponse.json(
       { error: "Failed to fetch archive data" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

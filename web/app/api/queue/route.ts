@@ -5,7 +5,7 @@ import type { QueueItem } from "@/lib/types";
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    
+
     // Parse and validate minutes parameter
     const minutesParam = searchParams.get("minutes");
     let minutesAhead = 60; // default
@@ -17,15 +17,19 @@ export async function GET(request: NextRequest) {
           { status: 400 }
         );
       }
-      if (parsedMinutes > 1440) { // max 24 hours
+      if (parsedMinutes > 1440) {
+        // max 24 hours
         return NextResponse.json(
-          { error: "Invalid minutes parameter: maximum value is 1440 (24 hours)" },
+          {
+            error:
+              "Invalid minutes parameter: maximum value is 1440 (24 hours)",
+          },
           { status: 400 }
         );
       }
       minutesAhead = parsedMinutes;
     }
-    
+
     // Parse and validate limit parameter (optional)
     const limitParam = searchParams.get("limit");
     let limit: number | undefined;
@@ -45,7 +49,7 @@ export async function GET(request: NextRequest) {
       }
       limit = parsedLimit;
     }
-    
+
     const now = new Date();
     const futureTime = new Date(now.getTime() + minutesAhead * 60000);
 
@@ -68,31 +72,33 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform to queue items
-    const queueItems: QueueItem[] = upcomingSegments.map((segment: {
-      id: string;
-      type: string;
-      startTime: Date;
-      endTime: Date;
-      track: { title: string } | null;
-    }) => {
-      const duration = Math.floor(
-        (segment.endTime.getTime() - segment.startTime.getTime()) / 1000,
-      );
+    const queueItems: QueueItem[] = upcomingSegments.map(
+      (segment: {
+        id: string;
+        type: string;
+        startTime: Date;
+        endTime: Date;
+        track: { title: string } | null;
+      }) => {
+        const duration = Math.floor(
+          (segment.endTime.getTime() - segment.startTime.getTime()) / 1000
+        );
 
-      const item: QueueItem = {
-        segmentId: segment.id,
-        type: segment.type as "music" | "talk" | "ident" | "handover",
-        scheduledTime: segment.startTime.toISOString(),
-        duration,
-      };
+        const item: QueueItem = {
+          segmentId: segment.id,
+          type: segment.type as "music" | "talk" | "ident" | "handover",
+          scheduledTime: segment.startTime.toISOString(),
+          duration,
+        };
 
-      // Add track title if available
-      if (segment.track) {
-        item.title = segment.track.title;
+        // Add track title if available
+        if (segment.track) {
+          item.title = segment.track.title;
+        }
+
+        return item;
       }
-
-      return item;
-    });
+    );
 
     return NextResponse.json({
       queueLength: queueItems.length,
@@ -103,7 +109,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching queue:", error);
     return NextResponse.json(
       { error: "Failed to fetch queue data" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

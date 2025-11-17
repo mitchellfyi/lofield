@@ -61,22 +61,20 @@ const _BANNED_TOPICS = [
 
 /**
  * Moderates user-submitted request text for safety and compliance with station guidelines.
- * 
+ *
  * Uses OpenAI Moderation API to detect:
  * - Hate speech
  * - Harassment
  * - Self-harm
  * - Sexual content
  * - Violence
- * 
+ *
  * Also checks against station-specific banned topics (politics, medical advice, etc.)
- * 
+ *
  * @param text - The user-submitted request text
  * @returns ModerationResult with verdict and reasons
  */
-export async function moderateRequest(
-  text: string,
-): Promise<ModerationResult> {
+export async function moderateRequest(text: string): Promise<ModerationResult> {
   if (!text || text.trim().length === 0) {
     return {
       verdict: "rejected",
@@ -89,8 +87,7 @@ export async function moderateRequest(
 
   try {
     // Check if moderation is enabled
-    const moderationEnabled =
-      process.env.AUTO_MODERATION_ENABLED !== "false";
+    const moderationEnabled = process.env.AUTO_MODERATION_ENABLED !== "false";
 
     if (!moderationEnabled) {
       return {
@@ -151,52 +148,46 @@ export async function moderateRequest(
     // Check for politics
     if (
       lowerText.match(
-        /\b(election|vote|government|political|politician|policy|parliament|minister|mp\b|conservative|labour|liberal|democrat|republican)/i,
+        /\b(election|vote|government|political|politician|policy|parliament|minister|mp\b|conservative|labour|liberal|democrat|republican)/i
       )
     ) {
       foundBannedTopics.push("politics");
-      reasons.push(
-        "Political content is not allowed (see style guide)",
-      );
+      reasons.push("Political content is not allowed (see style guide)");
     }
 
     // Check for medical/health advice
     if (
       lowerText.match(
-        /\b(diagnos(is|e|ed)|treatment|medication|medicine|cure|disease|illness|symptom|doctor|prescription|therapy|mental health advice)/i,
+        /\b(diagnos(is|e|ed)|treatment|medication|medicine|cure|disease|illness|symptom|doctor|prescription|therapy|mental health advice)/i
       )
     ) {
       foundBannedTopics.push("health_advice");
       reasons.push(
-        "Medical or health advice is not allowed (we're not qualified)",
+        "Medical or health advice is not allowed (we're not qualified)"
       );
     }
 
     // Check for financial advice
     if (
       lowerText.match(
-        /\b(invest|stock|trading|crypto|bitcoin|ethereum|financial advice|get rich|money making scheme)/i,
+        /\b(invest|stock|trading|crypto|bitcoin|ethereum|financial advice|get rich|money making scheme)/i
       )
     ) {
       foundBannedTopics.push("finance_advice");
-      reasons.push(
-        "Financial or investment advice is not allowed",
-      );
+      reasons.push("Financial or investment advice is not allowed");
     }
 
     // Check for spam/advertising
     if (
       lowerText.match(
-        /\b(buy now|click here|limited time|act now|visit my|subscribe to|follow me|check out my)/i,
+        /\b(buy now|click here|limited time|act now|visit my|subscribe to|follow me|check out my)/i
       ) ||
       lowerText.includes("http://") ||
       lowerText.includes("https://") ||
       lowerText.includes("www.")
     ) {
       foundBannedTopics.push("spam");
-      reasons.push(
-        "Promotional content, spam, or URLs are not allowed",
-      );
+      reasons.push("Promotional content, spam, or URLs are not allowed");
     }
 
     if (foundBannedTopics.length > 0) {
@@ -212,7 +203,7 @@ export async function moderateRequest(
     // e.g., overly emotional, motivational, or trying too hard
     if (
       lowerText.match(
-        /\b(motivate|inspire|you can do it|believe in yourself|chase your dreams|never give up)/i,
+        /\b(motivate|inspire|you can do it|believe in yourself|chase your dreams|never give up)/i
       )
     ) {
       return {
@@ -236,9 +227,7 @@ export async function moderateRequest(
     // This prevents service outages from blocking all requests
     return {
       verdict: "allowed",
-      reasons: [
-        "Moderation service temporarily unavailable, request allowed",
-      ],
+      reasons: ["Moderation service temporarily unavailable, request allowed"],
     };
   }
 }

@@ -14,7 +14,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should classify music requests in fallback mode", async () => {
       const result = await classifyRequest(
         "Smooth lofi beats for a rainy morning coding session",
-        "music",
+        "music"
       );
 
       expect(result.type).toBe("music_prompt");
@@ -30,7 +30,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should extract basic music metadata", async () => {
       const result = await classifyRequest(
         "Jazz music for afternoon work",
-        "music",
+        "music"
       );
 
       const metadata = result.metadata as Record<string, unknown>;
@@ -42,10 +42,7 @@ describe("classifyRequest - Fallback Mode", () => {
     });
 
     it("should handle music keywords", async () => {
-      const result = await classifyRequest(
-        "Chill beats for coding",
-        "music",
-      );
+      const result = await classifyRequest("Chill beats for coding", "music");
 
       const metadata = result.metadata as Record<string, unknown>;
       expect(result.type).toBe("music_prompt");
@@ -57,7 +54,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should classify talk topic requests in fallback mode", async () => {
       const result = await classifyRequest(
         "Let's talk about back-to-back video calls",
-        "talk",
+        "talk"
       );
 
       expect(result.type).toBe("talk_topic");
@@ -70,7 +67,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should extract basic talk metadata", async () => {
       const result = await classifyRequest(
         "Discuss remote work challenges",
-        "talk",
+        "talk"
       );
 
       const metadata = result.metadata as Record<string, unknown>;
@@ -83,7 +80,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should handle talk keywords", async () => {
       const result = await classifyRequest(
         "Talk about WiFi problems during meetings",
-        "talk",
+        "talk"
       );
 
       const metadata = result.metadata as Record<string, unknown>;
@@ -96,7 +93,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should classify as music when music keywords are present", async () => {
       const result = await classifyRequest(
         "Piano melody for concentration",
-        "music",
+        "music"
       );
 
       expect(result.type).toBe("music_prompt");
@@ -105,33 +102,24 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should classify as talk when talk keywords are present", async () => {
       const result = await classifyRequest(
         "Discuss remote work challenges",
-        "talk",
+        "talk"
       );
 
       expect(result.type).toBe("talk_topic");
     });
 
     it("should respect user type hint when keywords are ambiguous", async () => {
-      const musicResult = await classifyRequest(
-        "Something for work",
-        "music",
-      );
+      const musicResult = await classifyRequest("Something for work", "music");
       expect(musicResult.type).toBe("music_prompt");
 
-      const talkResult = await classifyRequest(
-        "Something for work",
-        "talk",
-      );
+      const talkResult = await classifyRequest("Something for work", "talk");
       expect(talkResult.type).toBe("talk_topic");
     });
   });
 
   describe("Tag Extraction", () => {
     it("should extract morning tags", async () => {
-      const result = await classifyRequest(
-        "Morning coffee music",
-        "music",
-      );
+      const result = await classifyRequest("Morning coffee music", "music");
 
       const metadata = result.metadata as Record<string, unknown>;
       expect(metadata.tags).toContain("morning_routine");
@@ -140,7 +128,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should extract coffee tags", async () => {
       const result = await classifyRequest(
         "Music for my coffee break",
-        "music",
+        "music"
       );
 
       const metadata = result.metadata as Record<string, unknown>;
@@ -148,10 +136,7 @@ describe("classifyRequest - Fallback Mode", () => {
     });
 
     it("should extract coding tags", async () => {
-      const result = await classifyRequest(
-        "Music for coding session",
-        "music",
-      );
+      const result = await classifyRequest("Music for coding session", "music");
 
       const metadata = result.metadata as Record<string, unknown>;
       expect(metadata.tags).toContain("coding_session");
@@ -160,7 +145,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should extract meeting tags", async () => {
       const result = await classifyRequest(
         "Music for endless meetings",
-        "music",
+        "music"
       );
 
       const metadata = result.metadata as Record<string, unknown>;
@@ -168,20 +153,14 @@ describe("classifyRequest - Fallback Mode", () => {
     });
 
     it("should extract work tags", async () => {
-      const result = await classifyRequest(
-        "Music for work from home",
-        "music",
-      );
+      const result = await classifyRequest("Music for work from home", "music");
 
       const metadata = result.metadata as Record<string, unknown>;
       expect(metadata.tags).toContain("remote_work");
     });
 
     it("should extract rain tags", async () => {
-      const result = await classifyRequest(
-        "Rainy day music",
-        "music",
-      );
+      const result = await classifyRequest("Rainy day music", "music");
 
       const metadata = result.metadata as Record<string, unknown>;
       expect(metadata.tags).toContain("rainy_day");
@@ -190,7 +169,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should extract focus tags", async () => {
       const result = await classifyRequest(
         "Music for focus and concentration",
-        "music",
+        "music"
       );
 
       const metadata = result.metadata as Record<string, unknown>;
@@ -198,20 +177,14 @@ describe("classifyRequest - Fallback Mode", () => {
     });
 
     it("should provide default tags when no keywords match", async () => {
-      const result = await classifyRequest(
-        "Some music please",
-        "music",
-      );
+      const result = await classifyRequest("Some music please", "music");
 
       const metadata = result.metadata as Record<string, unknown>;
       expect(metadata.tags).toContain("lofi_vibes");
     });
 
     it("should provide default tags for talk when no keywords match", async () => {
-      const result = await classifyRequest(
-        "Something to discuss",
-        "talk",
-      );
+      const result = await classifyRequest("Something to discuss", "talk");
 
       const metadata = result.metadata as Record<string, unknown>;
       expect(metadata.tags).toContain("remote_work");
@@ -220,10 +193,7 @@ describe("classifyRequest - Fallback Mode", () => {
 
   describe("Metadata Structure", () => {
     it("should return music metadata with correct structure", async () => {
-      const result = await classifyRequest(
-        "Chill music",
-        "music",
-      );
+      const result = await classifyRequest("Chill music", "music");
 
       const metadata = result.metadata as Record<string, unknown>;
       expect(metadata.mood).toBeInstanceOf(Array);
@@ -234,10 +204,7 @@ describe("classifyRequest - Fallback Mode", () => {
     });
 
     it("should return talk metadata with correct structure", async () => {
-      const result = await classifyRequest(
-        "Let's talk",
-        "talk",
-      );
+      const result = await classifyRequest("Let's talk", "talk");
 
       const metadata = result.metadata as Record<string, unknown>;
       expect(typeof metadata.topic).toBe("string");
@@ -249,18 +216,16 @@ describe("classifyRequest - Fallback Mode", () => {
 
   describe("Edge Cases", () => {
     it("should handle short requests", async () => {
-      const result = await classifyRequest(
-        "Music please",
-        "music",
-      );
+      const result = await classifyRequest("Music please", "music");
 
       expect(result.type).toBe("music_prompt");
       expect(result.normalized).toBeDefined();
     });
 
     it("should handle long requests", async () => {
-      const longRequest = "I would really love some smooth chill lofi beats that I can listen to while I'm working on my coding project in the morning with my coffee after I wake up early and need to focus on deep work without distractions";
-      
+      const longRequest =
+        "I would really love some smooth chill lofi beats that I can listen to while I'm working on my coding project in the morning with my coffee after I wake up early and need to focus on deep work without distractions";
+
       const result = await classifyRequest(longRequest, "music");
 
       expect(result.type).toBe("music_prompt");
@@ -268,10 +233,7 @@ describe("classifyRequest - Fallback Mode", () => {
     });
 
     it("should return normalized text", async () => {
-      const result = await classifyRequest(
-        "Some music",
-        "music",
-      );
+      const result = await classifyRequest("Some music", "music");
 
       expect(result.normalized).toBeTruthy();
       expect(result.normalized.length).toBeGreaterThan(0);
@@ -280,10 +242,7 @@ describe("classifyRequest - Fallback Mode", () => {
 
   describe("Confidence Scores", () => {
     it("should return confidence score in fallback mode", async () => {
-      const result = await classifyRequest(
-        "Music for work",
-        "music",
-      );
+      const result = await classifyRequest("Music for work", "music");
 
       expect(result.confidence).toBeGreaterThan(0);
       expect(result.confidence).toBeLessThanOrEqual(1);

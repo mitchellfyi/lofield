@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Music, MessageSquare, Send } from "lucide-react";
 import type { CreateRequestData } from "@/lib/types";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+
 interface RequestFormProps {
   onSubmitSuccess?: () => void;
 }
@@ -41,7 +43,7 @@ export function RequestForm({ onSubmitSuccess }: RequestFormProps) {
         text: text.trim(),
       };
 
-      const response = await fetch("/api/requests", {
+      const response = await fetch(`${API_URL}/api/requests`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -5,6 +5,8 @@ import useSWR from "swr";
 import { ArrowUp, Music, MessageSquare } from "lucide-react";
 import type { Request } from "@/lib/types";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface RequestFeedProps {
@@ -13,11 +15,11 @@ interface RequestFeedProps {
 
 export function RequestFeed({ refreshKey = 0 }: RequestFeedProps) {
   const { data, error, mutate } = useSWR<Request[]>(
-    `/api/requests?status=pending&_key=${refreshKey}`,
+    `${API_URL}/api/requests?status=pending&_key=${refreshKey}`,
     fetcher,
     {
       refreshInterval: 30000, // Refresh every 30 seconds
-    },
+    }
   );
 
   const [votingIds, setVotingIds] = useState<Set<string>>(new Set());
@@ -32,14 +34,17 @@ export function RequestFeed({ refreshKey = 0 }: RequestFeedProps) {
       mutate(
         (currentData) =>
           currentData?.map((req) =>
-            req.id === requestId ? { ...req, upvotes: req.upvotes + 1 } : req,
+            req.id === requestId ? { ...req, upvotes: req.upvotes + 1 } : req
           ),
-        false,
+        false
       );
 
-      const response = await fetch(`/api/requests/${requestId}/vote`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `${API_URL}/api/requests/${requestId}/vote`,
+        {
+          method: "POST",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to vote");
@@ -72,10 +77,7 @@ export function RequestFeed({ refreshKey = 0 }: RequestFeedProps) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="animate-pulse rounded-lg border bg-card p-4"
-          >
+          <div key={i} className="animate-pulse rounded-lg border bg-card p-4">
             <div className="flex items-start gap-3">
               <div className="h-10 w-10 rounded-md bg-muted"></div>
               <div className="flex-1 space-y-2">

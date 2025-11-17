@@ -15,7 +15,10 @@ export async function GET(request: NextRequest) {
       };
 
       // Send initial connection confirmation
-      sendEvent({ type: "connected", timestamp: new Date().toISOString() }, "connected");
+      sendEvent(
+        { type: "connected", timestamp: new Date().toISOString() },
+        "connected"
+      );
 
       // Function to fetch and send current now-playing data
       const sendNowPlaying = async () => {
@@ -59,7 +62,7 @@ export async function GET(request: NextRequest) {
               artist: null,
               requestText: null,
             };
-            
+
             sendEvent(nowPlaying, "now-playing");
           }
         } catch (error) {

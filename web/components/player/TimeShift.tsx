@@ -8,10 +8,7 @@ interface TimeShiftProps {
   maxMinutes?: number;
 }
 
-export function TimeShift({
-  onTimeShift,
-  maxMinutes = 120,
-}: TimeShiftProps) {
+export function TimeShift({ onTimeShift, maxMinutes = 120 }: TimeShiftProps) {
   const [minutesBack, setMinutesBack] = useState(0);
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,8 +26,11 @@ export function TimeShift({
     if (minutes === 0) return "Live";
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
-    if (hours > 0) {
+
+    if (hours > 0 && mins > 0) {
       return `${hours}h ${mins}m ago`;
+    } else if (hours > 0) {
+      return `${hours}h ago`;
     }
     return `${mins}m ago`;
   };
@@ -58,7 +58,11 @@ export function TimeShift({
           value={minutesBack}
           onChange={handleSliderChange}
           className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-muted accent-primary"
-          aria-label="Time shift slider"
+          aria-label={`Time shift slider: ${formatTime(minutesBack)}`}
+          aria-valuemin={0}
+          aria-valuemax={maxMinutes}
+          aria-valuenow={minutesBack}
+          aria-valuetext={formatTime(minutesBack)}
         />
         <button
           onClick={goLive}

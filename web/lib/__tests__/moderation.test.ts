@@ -15,28 +15,28 @@ describe("moderateRequest - Station Rules (No API)", () => {
   describe("Allowed Content", () => {
     it("should allow clean music requests", async () => {
       const result = await moderateRequest(
-        "Smooth lofi beats for a rainy afternoon coding session",
+        "Smooth lofi beats for a rainy afternoon coding session"
       );
       expect(result.verdict).toBe("allowed");
     });
 
     it("should allow clean talk topic requests", async () => {
       const result = await moderateRequest(
-        "Let's talk about the struggle of back-to-back video calls",
+        "Let's talk about the struggle of back-to-back video calls"
       );
       expect(result.verdict).toBe("allowed");
     });
 
     it("should allow work-related topics", async () => {
       const result = await moderateRequest(
-        "Music for getting through endless meetings",
+        "Music for getting through endless meetings"
       );
       expect(result.verdict).toBe("allowed");
     });
 
     it("should allow references to Lofield landmarks", async () => {
       const result = await moderateRequest(
-        "Something about the eternal roadworks on the High Street",
+        "Something about the eternal roadworks on the High Street"
       );
       expect(result.verdict).toBe("allowed");
     });
@@ -45,55 +45,55 @@ describe("moderateRequest - Station Rules (No API)", () => {
   describe("Rejected Content - Station-Specific Rules", () => {
     it("should reject political content", async () => {
       const result = await moderateRequest(
-        "Music to listen to while watching the election results",
+        "Music to listen to while watching the election results"
       );
       expect(result.verdict).toBe("rejected");
       expect(result.reasons).toContain(
-        "Political content is not allowed (see style guide)",
+        "Political content is not allowed (see style guide)"
       );
       expect(result.categories).toContain("politics");
     });
 
     it("should reject medical advice", async () => {
       const result = await moderateRequest(
-        "Can you play something to help with my anxiety diagnosis?",
+        "Can you play something to help with my anxiety diagnosis?"
       );
       expect(result.verdict).toBe("rejected");
       expect(result.reasons).toContain(
-        "Medical or health advice is not allowed (we're not qualified)",
+        "Medical or health advice is not allowed (we're not qualified)"
       );
       expect(result.categories).toContain("health_advice");
     });
 
     it("should reject financial advice", async () => {
       const result = await moderateRequest(
-        "Play some beats while I trade Bitcoin",
+        "Play some beats while I trade Bitcoin"
       );
       expect(result.verdict).toBe("rejected");
       expect(result.reasons).toContain(
-        "Financial or investment advice is not allowed",
+        "Financial or investment advice is not allowed"
       );
       expect(result.categories).toContain("finance_advice");
     });
 
     it("should reject spam with URLs", async () => {
       const result = await moderateRequest(
-        "Check out my beats at http://example.com",
+        "Check out my beats at http://example.com"
       );
       expect(result.verdict).toBe("rejected");
       expect(result.reasons).toContain(
-        "Promotional content, spam, or URLs are not allowed",
+        "Promotional content, spam, or URLs are not allowed"
       );
       expect(result.categories).toContain("spam");
     });
 
     it("should reject promotional content", async () => {
       const result = await moderateRequest(
-        "Buy now! Limited time offer! Click here!",
+        "Buy now! Limited time offer! Click here!"
       );
       expect(result.verdict).toBe("rejected");
       expect(result.reasons).toContain(
-        "Promotional content, spam, or URLs are not allowed",
+        "Promotional content, spam, or URLs are not allowed"
       );
     });
   });
@@ -101,22 +101,22 @@ describe("moderateRequest - Station Rules (No API)", () => {
   describe("Borderline Content - Needs Rewrite", () => {
     it("should flag overly motivational content", async () => {
       const result = await moderateRequest(
-        "You can do it! Motivational beats to chase your dreams!",
+        "You can do it! Motivational beats to chase your dreams!"
       );
       expect(result.verdict).toBe("needs_rewrite");
       expect(result.reasons).toContain(
-        "Content is too motivational for Lofield FM's dry, understated tone",
+        "Content is too motivational for Lofield FM's dry, understated tone"
       );
       expect(result.categories).toContain("tone_mismatch");
     });
 
     it("should flag inspirational content", async () => {
       const result = await moderateRequest(
-        "Believe in yourself! Never give up on your goals!",
+        "Believe in yourself! Never give up on your goals!"
       );
       expect(result.verdict).toBe("needs_rewrite");
       expect(result.reasons).toContain(
-        "Content is too motivational for Lofield FM's dry, understated tone",
+        "Content is too motivational for Lofield FM's dry, understated tone"
       );
     });
   });

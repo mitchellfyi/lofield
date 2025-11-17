@@ -24,7 +24,9 @@ export async function generateMetadata({
   params,
 }: ShowPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const title = slug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  const title = slug
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (l) => l.toUpperCase());
 
   return {
     title: `${title} – Lofield FM`,

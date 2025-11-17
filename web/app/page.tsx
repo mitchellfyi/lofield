@@ -6,23 +6,25 @@ import { TimeShift } from "@/components/player/TimeShift";
 import { RequestForm } from "@/components/requests/RequestForm";
 import { RequestFeed } from "@/components/requests/RequestFeed";
 
+// Get stream URLs from environment variables with fallbacks
+const STREAM_URL = process.env.NEXT_PUBLIC_STREAM_URL || "https://stream.lofield.fm/live.mp3";
+const ARCHIVE_BASE_URL = process.env.NEXT_PUBLIC_ARCHIVE_BASE_URL || "https://stream.lofield.fm/archive";
+
 export default function Home() {
-  const [audioUrl, setAudioUrl] = useState(
-    "https://stream.lofield.fm/live.mp3",
-  );
+  const [audioUrl, setAudioUrl] = useState(STREAM_URL);
   const [isLive, setIsLive] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleTimeShift = (minutesBack: number) => {
     if (minutesBack === 0) {
       // Go back to live
-      setAudioUrl("https://stream.lofield.fm/live.mp3");
+      setAudioUrl(STREAM_URL);
       setIsLive(true);
     } else {
       // Time-shifted URL (this would be provided by the API in a real implementation)
       const timestamp = Date.now() - minutesBack * 60 * 1000;
       setAudioUrl(
-        `https://stream.lofield.fm/archive/${timestamp}.mp3`,
+        `${ARCHIVE_BASE_URL}/${timestamp}.mp3`,
       );
       setIsLive(false);
     }

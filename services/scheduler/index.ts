@@ -12,9 +12,13 @@
  * Actual AI service calls will be implemented in future iterations.
  */
 
+import { config } from "dotenv";
 import { PrismaClient } from "@prisma/client";
 import * as fs from "fs";
 import * as path from "path";
+
+// Load environment variables from .env file
+config();
 
 const prisma = new PrismaClient();
 
@@ -350,11 +354,29 @@ class SchedulerService {
 
 // Main entry point
 async function main() {
+  // Load configuration from environment variables with defaults
   const config: SchedulerConfig = {
-    bufferMinutes: parseInt(process.env.SCHEDULER_BUFFER_MINUTES || "45"),
-    checkIntervalSeconds: parseInt(process.env.SCHEDULER_CHECK_INTERVAL || "60"),
+    bufferMinutes: parseInt(process.env.SCHEDULER_BUFFER_MINUTES || "45", 10),
+    checkIntervalSeconds: parseInt(process.env.SCHEDULER_CHECK_INTERVAL || "60", 10),
     audioStoragePath: process.env.AUDIO_STORAGE_PATH || "/tmp/lofield/audio",
   };
+
+  // Validate configuration
+  if (isNaN(config.bufferMinutes) || config.bufferMinutes < 1) {
+    console.error("Invalid SCHEDULER_BUFFER_MINUTES: must be a positive number");
+    process.exit(1);
+  }
+
+  if (isNaN(config.checkIntervalSeconds) || config.checkIntervalSeconds < 1) {
+    console.error("Invalid SCHEDULER_CHECK_INTERVAL: must be a positive number");
+    process.exit(1);
+  }
+
+  console.log("Configuration loaded:");
+  console.log(`  Buffer minutes: ${config.bufferMinutes}`);
+  console.log(`  Check interval: ${config.checkIntervalSeconds}s`);
+  console.log(`  Audio storage path: ${config.audioStoragePath}`);
+  console.log("");
 
   const scheduler = new SchedulerService(config);
 

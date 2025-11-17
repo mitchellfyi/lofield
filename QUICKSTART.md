@@ -141,11 +141,24 @@ In a new terminal:
 
 ```bash
 cd services/scheduler
+
+# Install dependencies (if not already done)
 npm install
+
+# Configure environment
+cp .env.example .env
+# Edit .env and set DATABASE_URL to match your web/.env
+
+# Start the scheduler
 npm start
 ```
 
 The scheduler will monitor the queue and log its activity. Currently, it's a skeleton that monitors but doesn't generate content yet (AI integration pending).
+
+**Configuration**: The scheduler can be configured via environment variables in `services/scheduler/.env`:
+- `SCHEDULER_BUFFER_MINUTES`: How far ahead to maintain the queue (default: 45 minutes)
+- `SCHEDULER_CHECK_INTERVAL`: How often to check the queue (default: 60 seconds)
+- `AUDIO_STORAGE_PATH`: Where to store generated audio files (default: /tmp/lofield/audio)
 
 ### 9. (Optional) View Database
 

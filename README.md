@@ -35,6 +35,7 @@ The humour is dry, self-deprecating, and occasionally dark (but never cruel). Th
 ```
 lofield/
 ├── README.md                 # This file
+├── web/                      # Next.js 16 frontend application
 ├── config/                   # Station configuration files
 │   ├── station.json         # Global station settings
 │   ├── presenters.json      # All presenter definitions
@@ -52,7 +53,37 @@ lofield/
 
 ## Getting Started
 
-This project is currently in development. 
+This project is currently in development.
+
+### Frontend Development
+
+The web frontend is built with Next.js 16 and lives in the `web/` directory.
+
+**Installation**:
+```bash
+cd web
+npm install
+```
+
+**Development**:
+```bash
+npm run dev
+```
+Then open [http://localhost:3000](http://localhost:3000) in your browser.
+
+**Building for production**:
+```bash
+npm run build
+npm start
+```
+
+**Linting and formatting**:
+```bash
+npm run lint
+npm run format
+```
+
+### Configuration
 
 **Configuration**: The station is defined by JSON configuration files in the `config/` directory. See [config/README.md](config/README.md) for an overview of the configuration system.
 

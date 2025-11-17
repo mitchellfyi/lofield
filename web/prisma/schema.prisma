@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Request submissions from listeners (music requests, talk topics)
+model Request {
+  id                String   @id @default(cuid())
+  userId            String?  // Optional: user identifier (for authenticated users)
+  type              String   // "music" or "talk"
+  rawText           String   // Original user-submitted text
+  normalized        String?  // LLM-normalized prompt (populated after processing)
+  votes             Int      @default(0)
+  status            String   @default("pending") // "pending", "approved", "rejected", "used"
+  createdAt         DateTime @default(now())
+  usedAt            DateTime? // When this request was actually used in a show
+  moderationStatus  String   @default("pending") // "pending", "approved", "rejected", "flagged"
+  
+  // Relations
+  tracks            Track[]
+  segments          Segment[]
+  
+  @@index([status, votes])
+  @@index([createdAt])
+}
+
+// Generated music tracks from approved requests
+model Track {
+  id                String   @id @default(cuid())
+  requestId         String?  // Optional: link to the request that generated this track
+  filePath          String   // Path to the audio file
+  title             String   // Track title
+  artist            String   @default("Lofield FM") // Usually "Lofield FM" or requester name
+  lengthSeconds     Int      // Track duration in seconds
+  createdAt         DateTime @default(now())
+  
+  // Relations
+  request           Request?  @relation(fields: [requestId], references: [id])
+  segments          Segment[]
+  
+  @@index([createdAt])
+}
+
+// Audio segments that make up the continuous broadcast
+model Segment {
+  id                String   @id @default(cuid())
+  showId            String   // Reference to the show this segment belongs to
+  type              String   // "music", "talk", "ident", "handover"
+  filePath          String   // Path to the audio file
+  startTime         DateTime // Scheduled start time
+  endTime           DateTime // Scheduled end time
+  requestId         String?  // Optional: link to the request if applicable
+  trackId           String?  // Optional: link to the track if this is a music segment
+  metadata          String?  // JSON string with additional metadata
+  
+  // Relations
+  show              Show     @relation(fields: [showId], references: [id])
+  request           Request? @relation(fields: [requestId], references: [id])
+  track             Track?   @relation(fields: [trackId], references: [id])
+  playlogEntries    Playlog[]
+  
+  @@index([startTime, endTime])
+  @@index([showId])
+}
+
+// Show definitions (matches the show configurations in config/shows/*.json)
+model Show {
+  id                String   @id // Matches show ID from config
+  name              String   // Show name
+  description       String?  // Show description
+  startHour         Int      // Start hour (0-23)
+  durationHours     Int      // Duration in hours
+  talkFraction      Float    // Talk ratio (0.0-1.0)
+  musicFraction     Float    // Music ratio (0.0-1.0)
+  presenterIds      String   // JSON array of presenter IDs for this show
+  configJson        String   // Full JSON configuration from config/shows/*.json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  // Relations
+  segments          Segment[]
+  
+  @@index([startHour])
+}
+
+// Presenter definitions (matches presenters from config/presenters.json)
+model Presenter {
+  id                String   @id // Matches presenter ID from config
+  name              String   // Presenter name
+  voiceId           String?  // TTS voice identifier
+  personaJson       String   // Full JSON configuration with personality, traits, etc.
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// Playlog for tracking what has been broadcast
+model Playlog {
+  id                String   @id @default(cuid())
+  segmentId         String   // Segment that was played
+  playedAt          DateTime @default(now()) // When it was actually played
+  
+  // Relations
+  segment           Segment  @relation(fields: [segmentId], references: [id])
+  
+  @@index([playedAt])
+  @@index([segmentId])
+}

@@ -1,45 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { Request, CreateRequestData } from "@/lib/types";
-
-// Dummy data store (in-memory, will reset on server restart)
-const requests: Request[] = [
-  {
-    id: "1",
-    type: "music",
-    text: "Chill sunset vibes with jazzy piano and lo-fi beats",
-    upvotes: 12,
-    status: "pending",
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: "2",
-    type: "talk",
-    text: "Tips for staying productive while working from home",
-    upvotes: 8,
-    status: "pending",
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-  },
-  {
-    id: "3",
-    type: "music",
-    text: "Rainy day coffee shop atmosphere with soft guitar",
-    upvotes: 15,
-    status: "pending",
-    createdAt: new Date(Date.now() - 1800000).toISOString(),
-  },
-];
+import { prisma } from "@/lib/db";
+import type { CreateRequestData } from "@/lib/types";
 
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const status = searchParams.get("status");
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const status = searchParams.get("status");
+    const limit = parseInt(searchParams.get("limit") || "50");
+    const offset = parseInt(searchParams.get("offset") || "0");
 
-  let filteredRequests = requests;
+    // Build query filters
+    const where = status ? { status } : {};
 
-  if (status) {
-    filteredRequests = requests.filter((req) => req.status === status);
+    // Fetch requests from database
+    const requests = await prisma.request.findMany({
+      where,
+      orderBy: [
+        { votes: "desc" }, // Sort by votes (highest first)
+        { createdAt: "desc" }, // Then by creation date (newest first)
+      ],
+      take: limit,
+      skip: offset,
+    });
+
+    return NextResponse.json(requests);
+  } catch (error) {
+    console.error("Error fetching requests:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch requests" },
+      { status: 500 },
+    );
   }
-
-  return NextResponse.json(filteredRequests);
 }
 
 export async function POST(request: NextRequest) {
@@ -49,7 +40,7 @@ export async function POST(request: NextRequest) {
     // Validate request
     if (!body.type || !body.text) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields: type and text" },
         { status: 400 },
       );
     }
@@ -61,23 +52,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new request
-    const newRequest: Request = {
-      id: Date.now().toString(),
-      type: body.type,
-      text: body.text,
-      upvotes: 0,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-    };
+    if (!["music", "talk"].includes(body.type)) {
+      return NextResponse.json(
+        { error: "Type must be either 'music' or 'talk'" },
+        { status: 400 },
+      );
+    }
 
-    requests.push(newRequest);
+    // Create new request in database
+    const newRequest = await prisma.request.create({
+      data: {
+        type: body.type,
+        rawText: body.text,
+        votes: 0,
+        status: "pending",
+        moderationStatus: "pending",
+      },
+    });
 
     return NextResponse.json(newRequest, { status: 201 });
-  } catch {
+  } catch (error) {
+    console.error("Error creating request:", error);
     return NextResponse.json(
-      { error: "Invalid request body" },
-      { status: 400 },
+      { error: "Failed to create request" },
+      { status: 500 },
     );
   }
 }

@@ -35,6 +35,13 @@ The humour is dry, self-deprecating, and occasionally dark (but never cruel). Th
 ```
 lofield/
 ├── README.md                 # This file
+├── config/                   # Station configuration files
+│   ├── station.json         # Global station settings
+│   ├── presenters.json      # All presenter definitions
+│   ├── tags.json            # Topic and holiday tags
+│   └── shows/               # Individual show configurations (8 files)
+├── schemas/                  # Configuration schema documentation
+├── scripts/                  # Validation and utility scripts
 └── docs/
     ├── architecture.md       # Technical pipeline overview
     ├── contributing.md       # How to contribute
@@ -45,9 +52,13 @@ lofield/
 
 ## Getting Started
 
-This project is currently in development. For technical details about how the AI pipeline works, see [docs/architecture.md](docs/architecture.md).
+This project is currently in development. 
 
-To understand the station's voice and humour, read [docs/style_guide.md](docs/style_guide.md).
+**Configuration**: The station is defined by JSON configuration files in the `config/` directory. See [config/README.md](config/README.md) for an overview of the configuration system.
+
+**Technical details**: For information about how the AI pipeline works, see [docs/architecture.md](docs/architecture.md).
+
+**Voice and tone**: To understand the station's voice and humour, read [docs/style_guide.md](docs/style_guide.md).
 
 To learn about the fictional world of Lofield, check out [docs/town_bible.md](docs/town_bible.md).
 

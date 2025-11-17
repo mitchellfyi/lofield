@@ -11,14 +11,14 @@ config/
 ├── presenters.json       # All presenter definitions
 ├── tags.json            # Topic tags, banned content, and holidays
 └── shows/               # Individual show configurations
-    ├── night_shift.json           → insomniac_office.json           (00:00-03:00)
-    ├── early_hours.json           → deep_work_allegedly.json        (03:00-06:00)
-    ├── morning_commute.json       → mild_panic_mornings.json        (06:00-09:00)
-    ├── mid_morning_focus.json     → deep_work_calendar_blocks.json  (09:00-12:00)
-    ├── lunchtime_wind_down.json   → lunch_procrastination_club.json (12:00-15:00)
-    ├── afternoon_push.json        → afternoon_survival_session.json (15:00-18:00)
-    ├── evening_wind_down.json     → commute_to_nowhere.json         (18:00-21:00)
-    └── late_evening.json          → lofield_night_school.json       (21:00-00:00)
+    ├── night_shift.json           (insomniac_office, 00:00-03:00)
+    ├── early_hours.json           (deep_work_allegedly, 03:00-06:00)
+    ├── morning_commute.json       (mild_panic_mornings, 06:00-09:00)
+    ├── mid_morning_focus.json     (deep_work_calendar_blocks, 09:00-12:00)
+    ├── lunchtime_wind_down.json   (lunch_procrastination_club, 12:00-15:00)
+    ├── afternoon_push.json        (afternoon_survival_session, 15:00-18:00)
+    ├── evening_wind_down.json     (commute_to_nowhere, 18:00-21:00)
+    └── late_evening.json          (lofield_night_school, 21:00-00:00)
 ```
 
 ## Configuration Files

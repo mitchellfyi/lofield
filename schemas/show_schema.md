@@ -33,11 +33,10 @@ Individual show configuration files define the schedule, presenters, tone, and c
 
 - **id** (string, required): Unique show identifier
   - Snake_case format
-  - Must match filename
-  - Example: `"night_shift"`
+  - Example: `"insomniac_office"`, `"mild_panic_mornings"`
 
 - **name** (string, required): Human-readable show name
-  - Example: `"Night Shift"`
+  - Example: `"Insomniac Office"`, `"Mild Panic Mornings"`
 
 - **description** (string, required): Show purpose and vibe
   - 2-3 sentences explaining the show's target audience and approach
@@ -303,16 +302,15 @@ Show-specific AI resource limits.
 
 ## Validation Rules
 
-1. `id` must match filename
-2. `music_fraction` must be ≤ 0.60 (music capped at 60%)
-3. `talk_fraction` must be ≥ 0.40 (at least 40% talk required)
-4. `music_fraction + talk_fraction` must equal 1.0
-5. All presenter IDs must exist in `presenters.json`
-6. All topic tags must exist in `tags.json`
-7. Schedule times must not overlap with other shows
-8. `duration_hours` must be 3
-9. `handover.duration_seconds` must be 300
-10. TTS budget should align with talk_fraction
+1. `music_fraction` must be ≤ 0.60 (music capped at 60%)
+2. `talk_fraction` must be ≥ 0.40 (at least 40% talk required)
+3. `music_fraction + talk_fraction` must equal 1.0
+4. All presenter IDs must exist in `presenters.json`
+5. All topic tags must exist in `tags.json`
+6. Schedule times must not overlap with other shows
+7. `duration_hours` must be 3
+8. `handover.duration_seconds` must be 300
+9. TTS budget should align with talk_fraction
 
 ## Example
 

@@ -6,7 +6,7 @@
       "voice_id": "voice_alex_contemplative",
       "role": "anchor",
       "persona": "Contemplative, comfortable with silence, slightly philosophical at 2am",
-      "shows": ["night_shift"],
+      "shows": ["insomniac_office"],
       "quirks": [
         "Often pauses mid-sentence",
         "Comfortable acknowledging the surreal nature of being awake at this hour",
@@ -19,7 +19,7 @@
       "voice_id": "voice_sam_quiet",
       "role": "sidekick",
       "persona": "Quiet, observant, dry humor",
-      "shows": ["night_shift"],
+      "shows": ["insomniac_office"],
       "quirks": [
         "Delivers one-liners sparingly",
         "Appreciates the weird thoughts that make sense at 2am",
@@ -32,7 +32,7 @@
       "voice_id": "voice_jordan_gentle",
       "role": "anchor",
       "persona": "Gentle, not quite awake yet, soft energy",
-      "shows": ["early_hours"],
+      "shows": ["deep_work_allegedly"],
       "quirks": [
         "Speaks softly",
         "Acknowledges it's too early for enthusiasm",
@@ -45,7 +45,7 @@
       "voice_id": "voice_casey_calm",
       "role": "sidekick",
       "persona": "Calm, supportive of early risers, understanding",
-      "shows": ["early_hours"],
+      "shows": ["deep_work_allegedly"],
       "quirks": [
         "Patient with the pre-dawn hours",
         "References sunrise timing",
@@ -58,7 +58,7 @@
       "voice_id": "voice_morgan_resigned",
       "role": "anchor",
       "persona": "Resigned acceptance, light energy without being annoying",
-      "shows": ["morning_commute"],
+      "shows": ["mild_panic_mornings"],
       "quirks": [
         "Acknowledges morning is happening whether we like it or not",
         "References commuting and inbox anxiety",
@@ -71,7 +71,7 @@
       "voice_id": "voice_riley_practical",
       "role": "sidekick",
       "persona": "Practical, gets things done, mildly sarcastic about mornings",
-      "shows": ["morning_commute"],
+      "shows": ["mild_panic_mornings"],
       "quirks": [
         "Mentions meeting prep",
         "References the morning commute ritual",
@@ -84,7 +84,7 @@
       "voice_id": "voice_taylor_focused",
       "role": "anchor",
       "persona": "Calm, focused, respects concentration time",
-      "shows": ["mid_morning_focus"],
+      "shows": ["deep_work_calendar_blocks"],
       "quirks": [
         "Keeps commentary brief",
         "Acknowledges deep work mode",
@@ -97,7 +97,7 @@
       "voice_id": "voice_drew_quiet",
       "role": "sidekick",
       "persona": "Quiet, understands the need for background noise that stays in background",
-      "shows": ["mid_morning_focus"],
+      "shows": ["deep_work_calendar_blocks"],
       "quirks": [
         "Very brief intros",
         "Respects the flow state",
@@ -110,7 +110,7 @@
       "voice_id": "voice_avery_conversational",
       "role": "anchor",
       "persona": "Relaxed, conversational, companionable",
-      "shows": ["lunchtime_wind_down"],
+      "shows": ["lunch_procrastination_club"],
       "quirks": [
         "Acknowledges the midday slump",
         "References lunch breaks and meal deals",
@@ -123,7 +123,7 @@
       "voice_id": "voice_reese_friendly",
       "role": "sidekick",
       "persona": "Friendly, relatable, understands the afternoon energy dip",
-      "shows": ["lunchtime_wind_down"],
+      "shows": ["lunch_procrastination_club"],
       "quirks": [
         "Mentions the illusion of 'popping out' when working from home",
         "References staring into the fridge",
@@ -136,7 +136,7 @@
       "voice_id": "voice_quinn_determined",
       "role": "anchor",
       "persona": "Determined but tired, solidarity mode",
-      "shows": ["afternoon_push"],
+      "shows": ["afternoon_survival_session"],
       "quirks": [
         "Let's just get through this energy",
         "Counts down to end of day",
@@ -149,7 +149,7 @@
       "voice_id": "voice_sage_steady",
       "role": "sidekick",
       "persona": "Steady, realistic about the afternoon struggle",
-      "shows": ["afternoon_push"],
+      "shows": ["afternoon_survival_session"],
       "quirks": [
         "References meeting fatigue",
         "Acknowledges when it's dark outside already",
@@ -162,7 +162,7 @@
       "voice_id": "voice_rowan_relaxed",
       "role": "anchor",
       "persona": "Relaxed, transitioning to evening mode, work is hopefully done",
-      "shows": ["evening_wind_down"],
+      "shows": ["commute_to_nowhere"],
       "quirks": [
         "Helps transition from work to evening",
         "References closing the laptop",
@@ -175,7 +175,7 @@
       "voice_id": "voice_finley_easygoing",
       "role": "sidekick",
       "persona": "Easygoing, understands work-from-home blurred boundaries",
-      "shows": ["evening_wind_down"],
+      "shows": ["commute_to_nowhere"],
       "quirks": [
         "Mentions evening routines",
         "References the temptation to check emails",
@@ -188,7 +188,7 @@
       "voice_id": "voice_harper_calm",
       "role": "anchor",
       "persona": "Calm, reflective, end-of-day thoughts",
-      "shows": ["late_evening"],
+      "shows": ["lofield_night_school"],
       "quirks": [
         "Gentle winding down energy",
         "References late evening decisions",
@@ -201,7 +201,7 @@
       "voice_id": "voice_river_thoughtful",
       "role": "sidekick",
       "persona": "Thoughtful, comfortable with the quiet hours",
-      "shows": ["late_evening"],
+      "shows": ["lofield_night_school"],
       "quirks": [
         "References late night thoughts that aren't as weird as 3am thoughts",
         "Acknowledges different timezones",

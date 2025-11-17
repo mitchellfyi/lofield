@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { getAllowedTags, getStyleGuideExcerpt } from "./config-loader";
 
 let openaiClient: OpenAI | null = null;
 
@@ -38,135 +39,9 @@ export interface ClassificationResult {
   confidence: number; // 0-1
 }
 
-// Load allowed tags from config
-const ALLOWED_TAGS = [
-  "remote_work",
-  "morning_routine",
-  "coffee",
-  "focus_time",
-  "deep_work",
-  "procrastination",
-  "lunch_break",
-  "afternoon_slump",
-  "end_of_day",
-  "work_from_home",
-  "video_calls",
-  "meetings",
-  "inbox_anxiety",
-  "notifications",
-  "wifi_problems",
-  "technical_difficulties",
-  "lofi_vibes",
-  "rainy_day",
-  "coding_session",
-  "writing_session",
-  "study_session",
-  "creative_work",
-  "late_night_work",
-  "early_morning",
-  "quiet_hours",
-  "sunrise",
-  "early_start",
-  "commute",
-  "work_start",
-  "meeting_prep",
-  "first_call",
-  "petty_grievances",
-  "minor_frustrations",
-  "relatable_struggles",
-  "coworking",
-  "freelancing",
-  "digital_nomad",
-  "timezone_confusion",
-  "seasonal_mood",
-  "winter_blues",
-  "summer_evenings",
-  "rainy_weather",
-  "obscure_history",
-  "local_landmarks",
-  "lofield_lore",
-  "roadworks",
-  "the_hub",
-  "station_references",
-  "nostalgic",
-  "contemplative",
-  "chill_beats",
-  "ambient_sounds",
-  "nature_sounds",
-  "urban_ambience",
-  "vinyl_crackle",
-  "jazz_elements",
-  "piano_focus",
-  "guitar_melodies",
-  "soft_percussion",
-  "evening_wind_down",
-  "evening_routine",
-  "logging_off",
-  "closing_laptop",
-  "dinner_time",
-  "finally_done",
-  "insomnia",
-  "late_night_thoughts",
-  "insomnia_prevention",
-  "reflective",
-  "peaceful",
-  "bedtime_routine",
-  "existential_thoughts",
-  "productivity_myths",
-  "work_life_balance",
-  "virtual_meetings",
-  "slack_messages",
-  "email_overload",
-  "deadline_stress",
-  "client_calls",
-  "side_projects",
-  "hobby_coding",
-  "tea_break",
-  "snack_time",
-  "meal_deals",
-  "cooking_at_desk",
-  "staring_into_fridge",
-  "pretending_to_work",
-  "actually_working",
-  "flow_state",
-  "concentration",
-  "productivity",
-  "back_to_back_meetings",
-  "pretend_walk",
-  "midday_thoughts",
-  "end_of_day_countdown",
-  "meeting_fatigue",
-  "almost_done",
-  "final_push",
-  "context_switching",
-  "multitasking",
-  "single_tasking",
-  "pomodoro_technique",
-  "distraction_free",
-  "background_noise",
-  "white_noise",
-  "cafe_sounds",
-  "keyboard_typing",
-  "mouse_clicking",
-  "comfortable_silence",
-];
-
-const STYLE_GUIDE_EXCERPT = `
-Lofield FM Voice and Tone:
-- Dry and understated: No shouting, no fake enthusiasm
-- Self-deprecating: We're all in this together, and "this" is mildly absurd
-- Slightly dark but never cruel
-- Relatable: Speaking to remote work culture
-- Matter-of-fact about the AI
-
-CONTENT GUIDELINES:
-✓ DO: Reference remote work pain points, Lofield landmarks, maintain show-specific personality
-✗ DON'T: Give motivational speeches, offer health/medical advice, discuss politics, be cruel, include explicit content
-
-Examples of Good Tone:
-- "That was 'Rainfall on a Tuesday,' requested by Sarah in Sheffield. Sarah, we hope your Wi-Fi is holding up. Statistically speaking, it probably isn't."
-- "Next up, a track inspired by the experience of joining a video call and realizing you're the only one with your camera on."
-`;
+// Load allowed tags and style guide from centralized config
+// These are loaded dynamically from config/tags.json and config/station.json
+// to ensure consistency with the rest of the system
 
 /**
  * Classifies a user request as either a music prompt or talk topic,
@@ -187,13 +62,17 @@ export async function classifyRequest(
   }
 
   try {
+    // Load allowed tags and style guide from config
+    const allowedTags = getAllowedTags();
+    const styleGuideExcerpt = getStyleGuideExcerpt();
+
     const systemPrompt = `You are a content classifier for Lofield FM, an AI-powered radio station with a dry, understated tone.
 
-${STYLE_GUIDE_EXCERPT}
+${styleGuideExcerpt}
 
 Your task is to classify user requests and extract structured metadata.
 
-Allowed tags: ${ALLOWED_TAGS.join(", ")}
+Allowed tags: ${allowedTags.join(", ")}
 
 Return a JSON object with this structure:
 {
@@ -254,7 +133,7 @@ Classify this request and return JSON.`;
     // Filter tags to only include allowed ones
     if (result.metadata.tags) {
       result.metadata.tags = result.metadata.tags.filter((tag) =>
-        ALLOWED_TAGS.includes(tag)
+        allowedTags.includes(tag)
       );
     }
 

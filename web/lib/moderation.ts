@@ -22,42 +22,9 @@ export interface ModerationResult {
   categories?: string[];
 }
 
-// Banned topics from config/tags.json - used for documentation reference
-// Actual moderation checks are implemented using pattern matching below
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _BANNED_TOPICS = [
-  "politics",
-  "political_commentary",
-  "elections",
-  "government_policy",
-  "health_advice",
-  "medical_advice",
-  "diagnoses",
-  "treatments",
-  "medications",
-  "finance_advice",
-  "investment_tips",
-  "stock_trading",
-  "crypto",
-  "get_rich_quick",
-  "explicit_content",
-  "profanity",
-  "sexual_content",
-  "violence",
-  "gore",
-  "hate_speech",
-  "discrimination",
-  "harassment",
-  "bullying",
-  "religious_debate",
-  "conspiracy_theories",
-  "misinformation",
-  "spam",
-  "advertising",
-  "self_promotion",
-  "clickbait",
-  "sensationalism",
-];
+// Banned topics are loaded from config/tags.json
+// The actual moderation checks are implemented using pattern matching below
+// to detect variations and avoid false negatives
 
 /**
  * Moderates user-submitted request text for safety and compliance with station guidelines.

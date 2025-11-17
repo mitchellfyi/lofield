@@ -68,10 +68,10 @@ The humour on Lofield FM comes from:
 
 ## Music-to-Talk Ratio
 
-- Talk segments should never exceed 40% of any show (music is at least 60%)
-- Keep presenter intros short: 15-30 seconds per track
-- Longer chat segments (1-2 minutes) are fine occasionally, but should be the exception
-- Handovers between presenters are exactly 5 minutes
+- Talk segments should typically be 40–60% of each show (music is no more than 60%)
+- Keep presenter intros focused but conversational: 30-45 seconds per track
+- Longer chat segments (2-3 minutes) are encouraged to build banter and discussion
+- Handovers between presenters are exactly 5 minutes and should actively encourage listeners to get back to work
 
 ## Station Idents and Imaging
 

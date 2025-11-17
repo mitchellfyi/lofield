@@ -28,6 +28,7 @@ export function getAIConfig(): AIModuleConfig {
     },
     tts: {
       provider: (process.env.TTS_PROVIDER as "elevenlabs" | "openai" | "google") || "openai",
+      model: process.env.TTS_MODEL || "tts-1", // OpenAI model: "tts-1" or "tts-1-hd"
       defaultVoice: process.env.TTS_DEFAULT_VOICE,
       cacheEnabled: process.env.TTS_CACHE_ENABLED !== "false",
       cacheTTL: parseInt(process.env.TTS_CACHE_TTL || "86400", 10), // 24 hours

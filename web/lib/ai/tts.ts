@@ -28,7 +28,7 @@ let openaiClient: OpenAI | null = null;
 function getOpenAIClient(): OpenAI {
   if (!process.env.OPENAI_API_KEY) {
     throw new TTSError(
-      "OPENAI_API_KEY not set",
+      "OPENAI_API_KEY environment variable is not set. Please add OPENAI_API_KEY to your .env file. Get your API key from: https://platform.openai.com/api-keys",
       { provider: "openai" }
     );
   }
@@ -58,7 +58,12 @@ export async function generateTTS(
   request: TTSRequest
 ): Promise<TTSResult> {
   // Check cache first
-  const cacheKey = { text: request.text, voiceId: request.voiceId };
+  // Cache key includes text, voiceId, and speed to avoid incorrect cache hits
+  const cacheKey = { 
+    text: request.text, 
+    voiceId: request.voiceId,
+    speed: request.speed || 1.0
+  };
   const cached = ttsCache.get(cacheKey);
   if (cached) {
     console.log(`TTS cache hit for voice: ${request.voiceId}`);
@@ -124,25 +129,47 @@ async function generateTTSInternal(
 async function generateTTSWithOpenAI(
   request: TTSRequest
 ): Promise<TTSResult> {
+  const config = getAIConfig();
   const openai = getOpenAIClient();
-
-  // Map generic voice IDs to OpenAI voices
-  const voiceMap: Record<string, "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"> = {
+  
+  // Map voice IDs to OpenAI voices
+  // Supports both generic voice IDs and presenter-specific voice IDs
+  const openaiVoiceMap: Record<string, "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"> = {
+    // Generic voice IDs (backwards compatibility)
     "voice_1": "alloy",
     "voice_2": "echo",
     "voice_3": "fable",
     "voice_4": "onyx",
     "voice_5": "nova",
     "voice_6": "shimmer",
+    // Presenter-specific voice IDs mapped to OpenAI voices
+    // These can be customized based on presenter personalities
+    "voice_alex_contemplative": "onyx",
+    "voice_sam_quiet": "echo",
+    "voice_jordan_gentle": "nova",
+    "voice_casey_calm": "shimmer",
+    "voice_morgan_resigned": "fable",
+    "voice_riley_practical": "alloy",
+    "voice_taylor_focused": "onyx",
+    "voice_drew_quiet": "echo",
+    "voice_avery_conversational": "nova",
+    "voice_reese_friendly": "shimmer",
+    "voice_quinn_determined": "fable",
+    "voice_sage_steady": "alloy",
+    "voice_rowan_relaxed": "echo",
+    "voice_finley_easygoing": "nova",
+    "voice_harper_calm": "shimmer",
+    "voice_river_thoughtful": "onyx",
   };
 
-  const openaiVoice = voiceMap[request.voiceId] || "alloy";
+  const openaiVoice = openaiVoiceMap[request.voiceId] || "alloy";
+  const ttsModel = config.tts.model || "tts-1";
 
-  console.log(`Generating TTS with OpenAI (voice: ${openaiVoice}, ${request.text.length} chars)`);
+  console.log(`Generating TTS with OpenAI (model: ${ttsModel}, voice: ${openaiVoice} [${request.voiceId}], ${request.text.length} chars)`);
 
   try {
     const mp3 = await openai.audio.speech.create({
-      model: "tts-1",
+      model: ttsModel as "tts-1" | "tts-1-hd",
       voice: openaiVoice,
       input: request.text,
       speed: request.speed || 1.0,
@@ -194,7 +221,7 @@ async function generateTTSWithElevenLabs(
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
     throw new TTSError(
-      "ELEVENLABS_API_KEY not set",
+      "ELEVENLABS_API_KEY environment variable is not set. Please add ELEVENLABS_API_KEY to your .env file. Get your API key from: https://elevenlabs.io",
       { provider: "elevenlabs" }
     );
   }
@@ -275,10 +302,13 @@ async function saveAudioBuffer(
   extension: string
 ): Promise<string> {
   const config = getAIConfig();
+  const fsPromises = fs.promises;
   
   // Ensure storage directory exists
-  if (!fs.existsSync(config.storage.audioPath)) {
-    fs.mkdirSync(config.storage.audioPath, { recursive: true });
+  try {
+    await fsPromises.mkdir(config.storage.audioPath, { recursive: true });
+  } catch {
+    // Directory may already exist, ignore error
   }
 
   // Generate filename
@@ -292,7 +322,7 @@ async function saveAudioBuffer(
 
   try {
     const buffer = Buffer.from(arrayBuffer);
-    fs.writeFileSync(filePath, buffer);
+    await fsPromises.writeFile(filePath, buffer);
 
     console.log(`TTS audio saved to: ${filePath}`);
     return filePath;

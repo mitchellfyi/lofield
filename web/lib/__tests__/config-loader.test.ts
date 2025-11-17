@@ -4,6 +4,8 @@ import {
   getStyleGuideExcerpt,
   loadTagsConfig,
   loadStationConfig,
+  loadPresentersConfig,
+  getPresenterVoiceMap,
   clearConfigCache,
 } from "../config-loader";
 
@@ -225,6 +227,57 @@ describe("config-loader", () => {
       // Should be exact same references (cached)
       expect(tags1).toEqual(tags2);
       expect(banned1).toEqual(banned2);
+    });
+  });
+
+  describe("loadPresentersConfig", () => {
+    it("should load presenters configuration from config/presenters.json", () => {
+      const config = loadPresentersConfig();
+
+      expect(config).toBeDefined();
+      expect(config.presenters).toBeInstanceOf(Array);
+      expect(config.presenters.length).toBeGreaterThan(0);
+    });
+
+    it("should cache the loaded configuration", () => {
+      const config1 = loadPresentersConfig();
+      const config2 = loadPresentersConfig();
+
+      // Should return the same cached object
+      expect(config1).toBe(config2);
+    });
+
+    it("should have valid presenter structure", () => {
+      const config = loadPresentersConfig();
+      const firstPresenter = config.presenters[0];
+
+      expect(firstPresenter).toHaveProperty("id");
+      expect(firstPresenter).toHaveProperty("name");
+      expect(firstPresenter).toHaveProperty("voice_id");
+      expect(firstPresenter).toHaveProperty("role");
+      expect(firstPresenter).toHaveProperty("persona");
+      expect(firstPresenter).toHaveProperty("shows");
+      expect(firstPresenter).toHaveProperty("quirks");
+    });
+  });
+
+  describe("getPresenterVoiceMap", () => {
+    it("should return a mapping of presenter IDs to voice IDs", () => {
+      const voiceMap = getPresenterVoiceMap();
+
+      expect(voiceMap).toBeDefined();
+      expect(typeof voiceMap).toBe("object");
+      expect(Object.keys(voiceMap).length).toBeGreaterThan(0);
+    });
+
+    it("should have consistent presenter IDs and voice IDs", () => {
+      const voiceMap = getPresenterVoiceMap();
+      const presenters = loadPresentersConfig().presenters;
+
+      // Check that all presenters are in the voice map
+      for (const presenter of presenters) {
+        expect(voiceMap[presenter.id]).toBe(presenter.voice_id);
+      }
     });
   });
 

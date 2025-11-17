@@ -48,14 +48,14 @@ export type SegmentType =
   | "ident"; // 5-10 seconds: Brief station ID
 
 export type ShowStyle =
-  | "morning_commute" // The Fictional One
-  | "deep_work" // According to Calendar Blocks
-  | "lunch_club" // Allegedly Social
-  | "survival" // Technically Still Operational
-  | "commute" // Another One
-  | "night_school" // For People Who Read Documentation
-  | "night_shift" // For People Who Can't Sleep Anyway
-  | "insomniac"; // Might As Well Be Productive
+  | "mild_panic_mornings" // Mild Panic Mornings (6-9 AM)
+  | "deep_work_allegedly" // Deep Work, Allegedly (6-9 AM early hours)
+  | "deep_work_calendar_blocks" // Deep Work (According to Calendar Blocks) (9 AM-12 PM)
+  | "lunch_procrastination_club" // Lunch Procrastination Club (12-3 PM)
+  | "afternoon_survival_session" // Afternoon Survival Session (3-6 PM)
+  | "commute_to_nowhere" // Commute to Nowhere (6-9 PM)
+  | "lofield_night_school" // Lofield Night School (9 PM-12 AM)
+  | "insomniac_office"; // Insomniac Office (12-3 AM)
 
 export interface ScriptGenerationRequest {
   segmentType: SegmentType;
@@ -167,6 +167,7 @@ export interface AIModuleConfig {
   };
   tts: {
     provider: "elevenlabs" | "openai" | "google";
+    model?: string; // OpenAI model: "tts-1" or "tts-1-hd"
     defaultVoice?: string;
     cacheEnabled: boolean;
     cacheTTL: number;

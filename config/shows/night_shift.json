@@ -1,7 +1,7 @@
 {
-  "id": "night_shift",
-  "name": "Night Shift",
-  "description": "The graveyard shift. For night owls, insomniacs, and anyone in a timezone that makes this a normal working hour. The conversation is low-key and doesn't demand much attention.",
+  "id": "insomniac_office",
+  "name": "Insomniac Office",
+  "description": "The graveyard shift for night owls, insomniacs, and anyone whose timezone makes this normal. The conversation acknowledges the surreal nature of working at 2am with dry humor about productivity expectations.",
   "schedule": {
     "days": [
       "mon",
@@ -17,8 +17,8 @@
     "duration_hours": 3
   },
   "ratios": {
-    "music_fraction": 0.7,
-    "talk_fraction": 0.3
+    "music_fraction": 0.5,
+    "talk_fraction": 0.5
   },
   "timing": {
     "max_link_seconds": 30,
@@ -38,13 +38,13 @@
     "keywords": [
       "quiet",
       "contemplative",
-      "slightly surreal",
+      "darkly humorous",
       "comfortable with silence",
       "low-key",
-      "timeless"
+      "self-aware about absurdity"
     ],
     "energy_level": "very low",
-    "mood": "Calm, accepting of the late hour, mildly philosophical"
+    "mood": "Calm, accepting of the late hour, darkly humorous about late-night work"
   },
   "topics": {
     "primary_tags": [
@@ -69,18 +69,19 @@
     ]
   },
   "commentary_style": {
-    "typical_intro_length_seconds": 20,
-    "longer_segment_frequency": "rare",
-    "longer_segment_length_seconds": 60,
+    "typical_intro_length_seconds": 35,
+    "longer_segment_frequency": "regular",
+    "longer_segment_length_seconds": 120,
     "check_ins": [
-      "Anyone else still awake?",
+      "Anyone else questioning their life choices?",
       "For everyone in a different timezone, good morning",
-      "It's the quiet hours"
+      "It's the quiet hours before chaos"
     ],
     "sample_lines": [
-      "It's just gone 1am. If you're still working, we respect it. If you're not working and you're just awake, we respect that too.",
-      "That was 'Late Night Thoughts' by nobody in particular. Next up, more music for 3am scrolling.",
-      "The rest of the world is asleep. Or at least pretending to be."
+      "It's just gone 1am. If you're still working, we respect the hustle. If you're not working and just awake, we respect that even more.",
+      "That was 'Late Night Thoughts' for everyone pretending tomorrow's deadline isn't actually today now.",
+      "The rest of the world is asleep. We're here. This is fine.",
+      "For everyone working across timezones: you're doing great. Or at least, you're doing it."
     ]
   },
   "handover": {
@@ -128,9 +129,9 @@
     }
   },
   "ai_budget": {
-    "max_tokens_per_show": 8000,
-    "max_tts_seconds_per_show": 3240,
-    "max_music_minutes_per_show": 126,
-    "notes": "30% talk = 54 minutes = 3240 seconds of TTS maximum, 70% music = 126 minutes"
+    "max_tokens_per_show": 15000,
+    "max_tts_seconds_per_show": 5400,
+    "max_music_minutes_per_show": 90,
+    "notes": "50% talk = 90 minutes = 5400 seconds of TTS maximum, 50% music = 90 minutes"
   }
 }

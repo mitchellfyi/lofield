@@ -1,7 +1,7 @@
 {
-  "id": "early_hours",
-  "name": "Early Hours",
-  "description": "For early risers and people who need to get work done before the rest of the world wakes up. The tone is soft and doesn't push too hard. This is not a 'seize the day' show\u2014it's more 'the day is happening whether we like it or not.'",
+  "id": "deep_work_allegedly",
+  "name": "Deep Work, Allegedly",
+  "description": "For early risers who convinced themselves they'd be productive before 6am. The tone is soft and self-aware about the ridiculousness of productivity optimization. Not a 'seize the day' show—more 'the day is happening, whether that was a good idea or not.'",
   "schedule": {
     "days": [
       "mon",
@@ -17,8 +17,8 @@
     "duration_hours": 3
   },
   "ratios": {
-    "music_fraction": 0.7,
-    "talk_fraction": 0.3
+    "music_fraction": 0.55,
+    "talk_fraction": 0.45
   },
   "timing": {
     "max_link_seconds": 30,
@@ -37,14 +37,14 @@
   "tone": {
     "keywords": [
       "gentle",
-      "waking up slowly",
+      "slightly delirious",
       "soft",
-      "not quite ready",
-      "patient",
-      "understanding"
+      "self-aware",
+      "questioning decisions",
+      "understanding absurdity"
     ],
     "energy_level": "low",
-    "mood": "Soft, not fully caffeinated yet, acknowledging it's early"
+    "mood": "Soft, not fully caffeinated yet, acknowledging the absurdity of being productive at this hour"
   },
   "topics": {
     "primary_tags": [
@@ -69,18 +69,19 @@
     ]
   },
   "commentary_style": {
-    "typical_intro_length_seconds": 20,
-    "longer_segment_frequency": "occasional",
-    "longer_segment_length_seconds": 60,
+    "typical_intro_length_seconds": 35,
+    "longer_segment_frequency": "regular",
+    "longer_segment_length_seconds": 120,
     "check_ins": [
       "Good morning. Or just 'morning,' really.",
-      "For everyone up before the sun",
-      "The coffee's on"
+      "For everyone who thought this would be a good idea",
+      "The coffee's essential"
     ],
     "sample_lines": [
       "Good morning. Or just 'morning,' really. 'Good' is ambitious at 4am.",
-      "The sun's not up yet, but you are. That's either dedication or poor planning.",
-      "That was 'Pre-Dawn Focus' for anyone who's been awake since before it was socially acceptable."
+      "The sun's not up yet, but you are. Congratulations or condolences, depending.",
+      "That was 'Focus Before Dawn' for everyone who thought this would be a good idea last night.",
+      "Deep work hours, they said. It'll be peaceful, they said. They didn't mention the existential dread."
     ]
   },
   "handover": {
@@ -122,9 +123,9 @@
     }
   },
   "ai_budget": {
-    "max_tokens_per_show": 8000,
-    "max_tts_seconds_per_show": 3240,
-    "max_music_minutes_per_show": 126,
-    "notes": "30% talk = 54 minutes = 3240 seconds of TTS maximum, 70% music = 126 minutes"
+    "max_tokens_per_show": 13500,
+    "max_tts_seconds_per_show": 4860,
+    "max_music_minutes_per_show": 99,
+    "notes": "45% talk = 81 minutes = 4860 seconds of TTS maximum, 55% music = 99 minutes"
   }
 }

@@ -1,7 +1,7 @@
 {
-  "id": "mid_morning_focus",
-  "name": "Mid-Morning Focus",
-  "description": "Peak focus time. The talk segments are brief and don't break concentration. This is the show for people who need background noise that stays in the background. Fewer requests read out, more music.",
+  "id": "deep_work_calendar_blocks",
+  "name": "Deep Work (According to Calendar Blocks)",
+  "description": "Peak 'should be focusing' time. The banter acknowledges that blocking out focus time and actually focusing are two different things. This is the show for people with 'Do Not Disturb' on who are still somehow in three conversations.",
   "schedule": {
     "days": [
       "mon",
@@ -17,8 +17,8 @@
     "duration_hours": 3
   },
   "ratios": {
-    "music_fraction": 0.75,
-    "talk_fraction": 0.25
+    "music_fraction": 0.6,
+    "talk_fraction": 0.4
   },
   "timing": {
     "max_link_seconds": 20,
@@ -36,52 +36,52 @@
   },
   "tone": {
     "keywords": [
-      "calm",
-      "focused",
-      "minimal",
-      "respectful",
-      "brief",
-      "unobtrusive"
+      "aspirationally focused",
+      "realistically distracted",
+      "self-aware",
+      "ironic",
+      "productivity theater",
+      "gentle mockery"
     ],
     "energy_level": "low to moderate",
-    "mood": "Focused, respecting concentration time, minimal chat"
+    "mood": "Aspirationally focused, realistically aware that deep work is mostly a myth"
   },
   "topics": {
     "primary_tags": [
       "focus_time",
       "deep_work",
-      "concentration",
-      "productivity",
-      "flow_state",
-      "back_to_back_meetings"
+      "meetings",
+      "productivity_myths",
+      "slack_messages",
+      "back_to_back_meetings",
+      "pretending_to_work"
     ],
     "banned_tags": [
-      "distracting",
-      "high_energy",
-      "chatty"
+      "genuinely_motivational",
+      "overly_optimistic"
     ],
     "allow_listener_requests": true,
     "typical_request_themes": [
-      "deep focus",
-      "coding flow",
-      "writing session",
-      "concentration mode"
+      "deep focus attempt",
+      "coding while distracted",
+      "productivity guilt",
+      "focus time irony"
     ]
   },
   "commentary_style": {
-    "typical_intro_length_seconds": 15,
-    "longer_segment_frequency": "rare",
-    "longer_segment_length_seconds": 45,
+    "typical_intro_length_seconds": 35,
+    "longer_segment_frequency": "regular",
+    "longer_segment_length_seconds": 120,
     "check_ins": [
-      "Focus time",
-      "Keeping it brief",
-      "Background mode engaged"
+      "Focus time, allegedly",
+      "Deep work hours, in theory",
+      "For everyone with 'busy' on their calendar"
     ],
     "sample_lines": [
-      "That was 'Focus Mode' requested by Claire. Claire, we hope you're in the zone.",
-      "Coming up: three tracks in a row, no interruptions. You're welcome.",
-      "Brief intro, long track. That's the format.",
-      "That was 'Deep Work Vibes'. Next up, more of the same."
+      "That was 'Focus Mode' requested by Claire. Claire, we hope your calendar block is holding.",
+      "Coming up: three tracks in a row. No guarantees your Slack will respect that.",
+      "Deep work hours, according to the productivity books you bought but haven't read.",
+      "For everyone with 'busy' on their calendar who's currently looking at memes: we see you."
     ]
   },
   "handover": {
@@ -121,9 +121,9 @@
     }
   },
   "ai_budget": {
-    "max_tokens_per_show": 6000,
-    "max_tts_seconds_per_show": 2700,
-    "max_music_minutes_per_show": 135,
-    "notes": "25% talk = 45 minutes = 2700 seconds of TTS maximum, 75% music = 135 minutes"
+    "max_tokens_per_show": 12000,
+    "max_tts_seconds_per_show": 4320,
+    "max_music_minutes_per_show": 108,
+    "notes": "40% talk = 72 minutes = 4320 seconds of TTS maximum, 60% music = 108 minutes"
   }
 }

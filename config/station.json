@@ -6,9 +6,9 @@
   "description": "An AI-powered radio station for the fictional town of Lofield—a community of remote workers, freelancers, and digital nomads all trying to stay sane between video calls.",
   
   "default_ratios": {
-    "min_music_fraction": 0.60,
-    "max_talk_fraction": 0.40,
-    "description": "Station-wide minimum music requirement. Individual shows can increase music fraction but not decrease below this threshold."
+    "min_music_fraction": 0.40,
+    "max_talk_fraction": 0.60,
+    "description": "Station-wide ratio guidelines. Shows should have 40-60% talk and 40-60% music, with music typically not exceeding 60%."
   },
   
   "default_timing": {

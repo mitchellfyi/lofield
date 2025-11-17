@@ -1,7 +1,7 @@
 {
-  "id": "lunchtime_wind_down",
-  "name": "Lunchtime Wind-Down",
-  "description": "The energy dips. People are taking breaks, making tea, pretending they're going to go for a walk. The show is companionable without being demanding. More listener requests get read out during this slot.",
+  "id": "lunch_procrastination_club",
+  "name": "Lunch Procrastination Club",
+  "description": "The energy dips and so does the pretense of productivity. This is companionable banter about the gap between 'I should take a proper lunch' and 'I'm eating last night's leftovers while on Slack.' More conversational, more listener requests, more solidarity about the afternoon ahead.",
   "schedule": {
     "days": [
       "mon",
@@ -17,8 +17,8 @@
     "duration_hours": 3
   },
   "ratios": {
-    "music_fraction": 0.65,
-    "talk_fraction": 0.35
+    "music_fraction": 0.45,
+    "talk_fraction": 0.55
   },
   "timing": {
     "max_link_seconds": 30,
@@ -39,12 +39,12 @@
       "relaxed",
       "conversational",
       "companionable",
-      "midday slump",
-      "understanding",
-      "friendly"
+      "midday slump awareness",
+      "realistic about boundaries",
+      "solidarity"
     ],
     "energy_level": "moderate",
-    "mood": "Relaxed, acknowledging the afternoon slump, companionable"
+    "mood": "Relaxed but aware of the afternoon looming, midday slump in full effect"
   },
   "topics": {
     "primary_tags": [
@@ -54,34 +54,36 @@
       "meal_deals",
       "staring_into_fridge",
       "pretend_walk",
-      "midday_thoughts"
+      "midday_thoughts",
+      "procrastination"
     ],
     "banned_tags": [
       "high_energy",
-      "aggressive_productivity"
+      "aggressive_productivity",
+      "lunch_goals"
     ],
     "allow_listener_requests": true,
     "typical_request_themes": [
-      "lunch break vibes",
-      "midday chill",
-      "afternoon tea",
-      "meal deal soundtrack"
+      "lunch procrastination",
+      "midday existential crisis",
+      "afternoon tea and dread",
+      "meal deal sadness"
     ]
   },
   "commentary_style": {
-    "typical_intro_length_seconds": 25,
-    "longer_segment_frequency": "regular",
-    "longer_segment_length_seconds": 90,
+    "typical_intro_length_seconds": 40,
+    "longer_segment_frequency": "frequent",
+    "longer_segment_length_seconds": 150,
     "check_ins": [
-      "Lunch time",
-      "Taking a break?",
-      "The midday slump is real"
+      "Lunch time, theoretically",
+      "Taking a break from pretending to work?",
+      "The midday slump has arrived"
     ],
     "sample_lines": [
-      "It's just gone midday. Time to stare into the fridge and pretend there's something different in there than there was this morning.",
-      "That was 'Rainy Lunch Break' for everyone eating a meal deal at their desk. We see you.",
-      "Shout out to everyone who said they were going for a walk and then just stood in the kitchen for five minutes.",
-      "That was 'Midday Thoughts' requested by James. James, enjoy your lunch."
+      "It's just gone midday. Time to stare into the fridge and pretend there's something appetizing that doesn't require effort.",
+      "That was 'Rainy Lunch Break' for everyone eating a meal deal at their desk. We see you. We are you.",
+      "Afternoon meetings start in 45 minutes. Enjoy your lunch-shaped anxiety window.",
+      "Someone on LinkedIn is posting about their lunchtime 5K. Someone else is eating crisps in bed. Guess which one is more relatable."
     ]
   },
   "handover": {
@@ -123,9 +125,9 @@
     }
   },
   "ai_budget": {
-    "max_tokens_per_show": 10000,
-    "max_tts_seconds_per_show": 3779,
-    "max_music_minutes_per_show": 117,
-    "notes": "35% talk = 63 minutes = 3780 seconds of TTS maximum, 65% music = 117 minutes"
+    "max_tokens_per_show": 16500,
+    "max_tts_seconds_per_show": 5940,
+    "max_music_minutes_per_show": 81,
+    "notes": "55% talk = 99 minutes = 5940 seconds of TTS maximum, 45% music = 81 minutes"
   }
 }

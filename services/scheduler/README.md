@@ -38,6 +38,10 @@ The scheduler operates on a simple loop:
 # Install dependencies
 npm install
 
+# Configure environment variables
+cp .env.example .env
+# Edit .env and set your DATABASE_URL and other settings
+
 # Make sure database is running
 cd ../..
 docker-compose up -d postgres
@@ -53,12 +57,34 @@ npm start
 
 ### Environment Variables
 
-The scheduler reads from the same `.env` file in the `web/` directory:
+Create a `.env` file in the scheduler directory (or set these in your shell environment):
 
-- `DATABASE_URL`: PostgreSQL connection string
-- `SCHEDULER_BUFFER_MINUTES`: How far ahead to generate content (default: 45)
-- `SCHEDULER_CHECK_INTERVAL`: How often to check queue in seconds (default: 60)
-- `AUDIO_STORAGE_PATH`: Where to store generated audio files
+- **`DATABASE_URL`** (required): PostgreSQL connection string
+  - Format: `postgresql://USER:PASSWORD@HOST:PORT/DATABASE?schema=SCHEMA`
+  - Must match the database configured in `docker-compose.yml`
+  - Example: `postgresql://lofield:password@localhost:5432/lofield_fm?schema=public`
+
+- **`SCHEDULER_BUFFER_MINUTES`** (optional): How far ahead to maintain the queue
+  - Default: `45` minutes
+  - Valid range: Any positive integer
+  - Higher values mean more content is generated in advance
+
+- **`SCHEDULER_CHECK_INTERVAL`** (optional): How often to check the queue (in seconds)
+  - Default: `60` seconds
+  - Valid range: Any positive integer (recommended: 30-120)
+  - Lower values check more frequently but use more resources
+
+- **`AUDIO_STORAGE_PATH`** (optional): Directory for generated audio files
+  - Default: `/tmp/lofield/audio`
+  - Must be a writable directory path
+  - Will be created automatically if it doesn't exist
+
+**Future AI Integration Variables** (not yet implemented):
+- `OPENAI_API_KEY`: For LLM-based content generation
+- `ELEVENLABS_API_KEY`: For text-to-speech
+- `STABILITY_AI_API_KEY`: For text-to-music generation
+
+See `.env.example` for a template with all available variables.
 
 ## Current Status
 

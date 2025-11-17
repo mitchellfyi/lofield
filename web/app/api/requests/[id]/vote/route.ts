@@ -8,6 +8,14 @@ export async function POST(
   try {
     const { id } = await params;
 
+    // Validate ID format (CUID format check)
+    if (!id || typeof id !== "string" || id.length < 20) {
+      return NextResponse.json(
+        { error: "Invalid request ID format" },
+        { status: 400 }
+      );
+    }
+
     // Check if request exists
     const existingRequest = await prisma.request.findUnique({
       where: { id },
@@ -34,6 +42,15 @@ export async function POST(
     });
   } catch (error) {
     console.error("Error upvoting request:", error);
+    
+    // Check for database connection errors
+    if (error instanceof Error && error.message.includes("connect")) {
+      return NextResponse.json(
+        { error: "Database connection failed" },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Failed to upvote request" },
       { status: 500 }

@@ -269,43 +269,69 @@ eventSource.addEventListener('now-playing', (e) => {
 ### Prerequisites
 
 - Node.js 20+
-- PostgreSQL database (or use Prisma's local dev database)
+- Docker and Docker Compose (recommended) OR PostgreSQL installed locally
 
-### Installation
+### Quick Start with Docker Compose
 
-1. **Install dependencies:**
+The easiest way to get started is using Docker Compose:
+
+1. **Start the database and streaming server:**
+   ```bash
+   docker-compose up -d
+   ```
+
+   This starts:
+   - PostgreSQL database on port 5432
+   - Icecast streaming server on port 8000
+
+2. **Install dependencies:**
    ```bash
    cd web
    npm install
    ```
 
-2. **Set up environment variables:**
+3. **Set up environment variables:**
    ```bash
    cp .env.example .env
-   # Edit .env with your database credentials
+   # Edit .env if needed (defaults work with Docker Compose)
    ```
 
-3. **Generate Prisma client:**
+4. **Generate Prisma client:**
    ```bash
    npx prisma generate
    ```
 
-4. **Run database migrations:**
+5. **Run database migrations:**
    ```bash
    npx prisma migrate dev --name init
    ```
 
-5. **Seed the database:**
+6. **Seed the database:**
    ```bash
    npx tsx prisma/seed/seed.ts
    ```
 
-6. **Start the development server:**
+7. **Start the development server:**
    ```bash
    npm run dev
    ```
 
 The API will be available at `http://localhost:3000/api/`
+
+### Alternative: Local PostgreSQL
+
+If you prefer not to use Docker:
+
+1. **Install PostgreSQL** on your system
+2. **Create a database:**
+   ```bash
+   createdb lofield_fm
+   ```
+3. **Update DATABASE_URL** in `.env`:
+   ```
+   DATABASE_URL="postgresql://yourusername:yourpassword@localhost:5432/lofield_fm"
+   ```
+4. **Follow steps 2-7 above**
 
 ### Database Management
 

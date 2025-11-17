@@ -1,0 +1,22 @@
+{
+  "name": "lofield-scheduler",
+  "version": "1.0.0",
+  "description": "Lofield FM Scheduler Service - manages content generation and broadcast queue",
+  "main": "index.ts",
+  "scripts": {
+    "start": "tsx index.ts",
+    "dev": "tsx watch index.ts"
+  },
+  "keywords": ["lofield", "scheduler", "radio", "ai"],
+  "author": "Lofield FM",
+  "license": "MIT",
+  "dependencies": {
+    "@prisma/client": "^6.19.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4",
+    "typescript": "^5"
+  }
+}

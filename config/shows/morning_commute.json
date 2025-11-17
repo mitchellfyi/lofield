@@ -1,0 +1,144 @@
+{
+  "id": "morning_commute",
+  "name": "Morning Commute",
+  "description": "For people starting their work day, whether that's a commute to an office or a commute from bed to desk. The show acknowledges that mornings are not everyone's favorite time without being aggressively cheerful about it.",
+  "schedule": {
+    "days": [
+      "mon",
+      "tue",
+      "wed",
+      "thu",
+      "fri",
+      "sat",
+      "sun"
+    ],
+    "start_time_utc": "06:00",
+    "end_time_utc": "09:00",
+    "duration_hours": 3
+  },
+  "ratios": {
+    "music_fraction": 0.65,
+    "talk_fraction": 0.35
+  },
+  "timing": {
+    "max_link_seconds": 30,
+    "min_gap_between_links_seconds": 200,
+    "typical_track_length_seconds": 210
+  },
+  "presenters": {
+    "primary_duo": [
+      "morgan",
+      "riley"
+    ],
+    "duo_probability": 0.85,
+    "solo_probability": 0.15,
+    "notes": "Mostly duo for conversation, occasional solo for focused segments"
+  },
+  "tone": {
+    "keywords": [
+      "resigned acceptance",
+      "light energy",
+      "not annoying",
+      "realistic",
+      "balanced"
+    ],
+    "energy_level": "moderate",
+    "mood": "Acknowledging that mornings happen, with light energy but no fake enthusiasm"
+  },
+  "topics": {
+    "primary_tags": [
+      "morning_routine",
+      "commute",
+      "work_start",
+      "inbox_anxiety",
+      "meeting_prep",
+      "coffee",
+      "first_call"
+    ],
+    "banned_tags": [
+      "overly_cheerful",
+      "seize_the_day",
+      "morning_motivation"
+    ],
+    "allow_listener_requests": true,
+    "typical_request_themes": [
+      "morning coffee vibes",
+      "commute soundtrack",
+      "inbox dread",
+      "meeting prep music"
+    ]
+  },
+  "commentary_style": {
+    "typical_intro_length_seconds": 25,
+    "longer_segment_frequency": "regular",
+    "longer_segment_length_seconds": 90,
+    "check_ins": [
+      "Morning's happening",
+      "For everyone pretending they've read their emails",
+      "The work day begins"
+    ],
+    "sample_lines": [
+      "It's 7:30. Time to pretend you've read all your emails.",
+      "Shout out to everyone whose first meeting is at 9am. You have an hour and a half to mentally prepare.",
+      "The 7:42 to London is delayed. Shocking exactly no one.",
+      "That was 'Morning Coffee' requested by Sarah. Sarah, we hope the caffeine is kicking in."
+    ]
+  },
+  "handover": {
+    "duration_seconds": 300,
+    "style": "Transition from early morning to work day proper, acknowledging the shift in energy",
+    "typical_themes": [
+      "The day has begun",
+      "Time to face the inbox",
+      "Morning commute done"
+    ]
+  },
+  "season_overrides": {
+    "winter": {
+      "tone_adjustment": "Reference darkness, cold commutes, reluctance to leave bed",
+      "additional_topics": [
+        "dark_mornings",
+        "cold_weather",
+        "winter_commute"
+      ]
+    },
+    "summer": {
+      "tone_adjustment": "Reference light mornings, nicer weather, easier to get up",
+      "additional_topics": [
+        "summer_mornings",
+        "light_commute"
+      ]
+    },
+    "autumn": {
+      "tone_adjustment": "Back-to-school energy in September even though listeners aren't in school",
+      "additional_topics": [
+        "back_to_school_energy",
+        "autumn_mornings"
+      ]
+    }
+  },
+  "holiday_overrides": {
+    "christmas_period": {
+      "dates": [
+        "2025-12-24",
+        "2025-12-25",
+        "2025-12-26"
+      ],
+      "tone_adjustment": "Acknowledge holiday time, people having time off, reduced traffic",
+      "notes": "Some people work through holidays"
+    },
+    "new_year": {
+      "dates": [
+        "2026-01-01"
+      ],
+      "tone_adjustment": "First work day of the year energy, back to normal",
+      "sample_line": "New year, same commute"
+    }
+  },
+  "ai_budget": {
+    "max_tokens_per_show": 10000,
+    "max_tts_seconds_per_show": 3779,
+    "max_music_minutes_per_show": 117,
+    "notes": "35% talk = 63 minutes = 3780 seconds of TTS maximum, 65% music = 117 minutes"
+  }
+}

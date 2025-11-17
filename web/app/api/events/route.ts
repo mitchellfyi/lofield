@@ -47,6 +47,20 @@ export async function GET(request: NextRequest) {
             };
 
             sendEvent(nowPlaying, "now-playing");
+          } else {
+            // Send consistent structure with null values when no segment is playing
+            const nowPlaying = {
+              segmentId: null,
+              type: null,
+              startTime: null,
+              endTime: null,
+              showName: null,
+              title: null,
+              artist: null,
+              requestText: null,
+            };
+            
+            sendEvent(nowPlaying, "now-playing");
           }
         } catch (error) {
           console.error("Error fetching now-playing in SSE:", error);

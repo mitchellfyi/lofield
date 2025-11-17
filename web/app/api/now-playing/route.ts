@@ -24,10 +24,18 @@ export async function GET() {
     });
 
     if (!currentSegment) {
-      return NextResponse.json(
-        { error: "No segment currently playing" },
-        { status: 404 },
-      );
+      // Return consistent structure with null values instead of 404
+      return NextResponse.json({
+        segmentId: null,
+        type: null,
+        startTime: null,
+        endTime: null,
+        showName: null,
+        title: null,
+        artist: null,
+        requestText: null,
+        requesterName: null,
+      });
     }
 
     // Build the response

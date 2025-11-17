@@ -5,7 +5,46 @@ import type { QueueItem } from "@/lib/types";
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const minutesAhead = parseInt(searchParams.get("minutes") || "60");
+    
+    // Parse and validate minutes parameter
+    const minutesParam = searchParams.get("minutes");
+    let minutesAhead = 60; // default
+    if (minutesParam) {
+      const parsedMinutes = parseInt(minutesParam, 10);
+      if (isNaN(parsedMinutes) || parsedMinutes < 1) {
+        return NextResponse.json(
+          { error: "Invalid minutes parameter: must be a positive number" },
+          { status: 400 }
+        );
+      }
+      if (parsedMinutes > 1440) { // max 24 hours
+        return NextResponse.json(
+          { error: "Invalid minutes parameter: maximum value is 1440 (24 hours)" },
+          { status: 400 }
+        );
+      }
+      minutesAhead = parsedMinutes;
+    }
+    
+    // Parse and validate limit parameter (optional)
+    const limitParam = searchParams.get("limit");
+    let limit: number | undefined;
+    if (limitParam) {
+      const parsedLimit = parseInt(limitParam, 10);
+      if (isNaN(parsedLimit) || parsedLimit < 1) {
+        return NextResponse.json(
+          { error: "Invalid limit parameter: must be a positive number" },
+          { status: 400 }
+        );
+      }
+      if (parsedLimit > 100) {
+        return NextResponse.json(
+          { error: "Invalid limit parameter: maximum value is 100" },
+          { status: 400 }
+        );
+      }
+      limit = parsedLimit;
+    }
     
     const now = new Date();
     const futureTime = new Date(now.getTime() + minutesAhead * 60000);
@@ -25,10 +64,17 @@ export async function GET(request: NextRequest) {
       orderBy: {
         startTime: "asc",
       },
+      ...(limit && { take: limit }),
     });
 
     // Transform to queue items
-    const queueItems: QueueItem[] = upcomingSegments.map((segment) => {
+    const queueItems: QueueItem[] = upcomingSegments.map((segment: {
+      id: string;
+      type: string;
+      startTime: Date;
+      endTime: Date;
+      track: { title: string } | null;
+    }) => {
       const duration = Math.floor(
         (segment.endTime.getTime() - segment.startTime.getTime()) / 1000,
       );

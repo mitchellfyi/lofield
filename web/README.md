@@ -39,11 +39,13 @@ npm start
 ### Code Quality
 
 **Linting:**
+
 ```bash
 npm run lint
 ```
 
 **Formatting:**
+
 ```bash
 npm run format
 ```

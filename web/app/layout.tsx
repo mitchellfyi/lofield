@@ -13,8 +13,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lofield FM – Background noise for people just trying to make it through the day",
-  description: "Your co-working companion. 24/7 AI-generated lofi music and chat from the fictional town of Lofield.",
+  title:
+    "Lofield FM – Background noise for people just trying to make it through the day",
+  description:
+    "Your co-working companion. 24/7 AI-generated lofi music and chat from the fictional town of Lofield.",
 };
 
 export default function RootLayout({
@@ -34,14 +36,17 @@ export default function RootLayout({
                 Lofield FM
               </h1>
               <p className="mt-1 text-sm text-muted-foreground sm:text-base">
-                Background noise for people just trying to make it through the day
+                Background noise for people just trying to make it through the
+                day
               </p>
             </div>
           </header>
           <main className="flex-1">{children}</main>
           <footer className="border-t bg-card px-4 py-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-7xl text-center text-sm text-muted-foreground">
-              <p>Now playing on a frequency that probably doesn&apos;t exist.</p>
+              <p>
+                Now playing on a frequency that probably doesn&apos;t exist.
+              </p>
             </div>
           </footer>
         </div>

@@ -21,7 +21,7 @@ describe("Script Generation Module", () => {
     it("should throw error when API key is missing", async () => {
       const request = {
         segmentType: "track_intro" as const,
-        showStyle: "deep_work" as const,
+        showStyle: "deep_work_calendar_blocks" as const,
         presenterIds: ["presenter_1", "presenter_2"],
         trackInfo: {
           title: "Chill Beats",
@@ -41,7 +41,7 @@ describe("Script Generation Module", () => {
     it("should accept track intro request", async () => {
       const request = {
         segmentType: "track_intro" as const,
-        showStyle: "morning_commute" as const,
+        showStyle: "mild_panic_mornings" as const,
         presenterIds: ["presenter_1", "presenter_2"],
         trackInfo: {
           title: "Morning Lofi",
@@ -59,7 +59,7 @@ describe("Script Generation Module", () => {
     it("should accept segment request with topic", async () => {
       const request = {
         segmentType: "segment" as const,
-        showStyle: "lunch_club" as const,
+        showStyle: "lunch_procrastination_club" as const,
         presenterIds: ["presenter_3", "presenter_4"],
         topic: "back-to-back video calls",
         durationSeconds: 90,
@@ -73,7 +73,7 @@ describe("Script Generation Module", () => {
     it("should accept handover request", async () => {
       const request = {
         segmentType: "handover" as const,
-        showStyle: "commute" as const,
+        showStyle: "commute_to_nowhere" as const,
         presenterIds: ["presenter_5", "presenter_6"],
         contextInfo: {
           currentTime: new Date(),
@@ -89,7 +89,7 @@ describe("Script Generation Module", () => {
     it("should accept ident request", async () => {
       const request = {
         segmentType: "ident" as const,
-        showStyle: "night_shift" as const,
+        showStyle: "insomniac_office" as const,
         presenterIds: ["presenter_7", "presenter_8"],
       };
 
@@ -103,7 +103,7 @@ describe("Script Generation Module", () => {
     it("should handle requests with full context", async () => {
       const request = {
         segmentType: "track_intro" as const,
-        showStyle: "deep_work" as const,
+        showStyle: "deep_work_calendar_blocks" as const,
         presenterIds: ["presenter_1", "presenter_2"],
         trackInfo: {
           title: "Focus Mode",
@@ -129,14 +129,14 @@ describe("Script Generation Module", () => {
 
   describe("Show Styles", () => {
     const showStyles = [
-      "morning_commute",
-      "deep_work",
-      "lunch_club",
-      "survival",
-      "commute",
-      "night_school",
-      "night_shift",
-      "insomniac",
+      "mild_panic_mornings",
+      "deep_work_allegedly",
+      "deep_work_calendar_blocks",
+      "lunch_procrastination_club",
+      "afternoon_survival_session",
+      "commute_to_nowhere",
+      "lofield_night_school",
+      "insomniac_office",
     ] as const;
 
     showStyles.forEach((style) => {
@@ -167,7 +167,7 @@ describe("Script Generation Module", () => {
       it(`should accept ${type} segment type`, async () => {
         const request = {
           segmentType: type,
-          showStyle: "deep_work" as const,
+          showStyle: "deep_work_calendar_blocks" as const,
           presenterIds: ["presenter_1", "presenter_2"],
         };
 
@@ -190,7 +190,7 @@ describe("Script Generation Module", () => {
     it("should track cache misses", async () => {
       const request = {
         segmentType: "track_intro" as const,
-        showStyle: "deep_work" as const,
+        showStyle: "deep_work_calendar_blocks" as const,
         presenterIds: ["presenter_1", "presenter_2"],
       };
 
@@ -214,7 +214,7 @@ describe("Script Generation Module", () => {
     it("should return error result on failure", async () => {
       const request = {
         segmentType: "track_intro" as const,
-        showStyle: "deep_work" as const,
+        showStyle: "deep_work_calendar_blocks" as const,
         presenterIds: ["presenter_1", "presenter_2"],
       };
 
@@ -231,7 +231,7 @@ describe("Script Generation Module", () => {
     it("should return properly structured result", async () => {
       const request = {
         segmentType: "segment" as const,
-        showStyle: "lunch_club" as const,
+        showStyle: "lunch_procrastination_club" as const,
         presenterIds: ["presenter_1", "presenter_2"],
       };
 

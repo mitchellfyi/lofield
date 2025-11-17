@@ -71,6 +71,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(requests);
   } catch (error) {
     console.error("Error fetching requests:", error);
+    
+    // Check for database connection errors
+    if (error instanceof Error && error.message.includes("connect")) {
+      return NextResponse.json(
+        { error: "Database connection failed" },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Failed to fetch requests" },
       { status: 500 }
@@ -80,7 +89,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateRequestData = await request.json();
+    let body: CreateRequestData;
+    
+    // Parse JSON body with error handling
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON in request body" },
+        { status: 400 }
+      );
+    }
 
     // Validate request
     if (!body.type || !body.text) {
@@ -90,9 +109,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (typeof body.text !== "string" || typeof body.type !== "string") {
+      return NextResponse.json(
+        { error: "Fields 'type' and 'text' must be strings" },
+        { status: 400 }
+      );
+    }
+
     if (body.text.length < 10) {
       return NextResponse.json(
         { error: "Text must be at least 10 characters" },
+        { status: 400 }
+      );
+    }
+
+    if (body.text.length > 500) {
+      return NextResponse.json(
+        { error: "Text must not exceed 500 characters" },
         { status: 400 }
       );
     }
@@ -105,32 +138,62 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 1: Moderate the request
-    const moderationResult = await moderateRequest(body.text);
-
-    if (moderationResult.verdict === "rejected") {
-      // Create request in database but mark as rejected
-      const rejectedRequest = await prisma.request.create({
-        data: {
-          type: body.type,
-          rawText: body.text,
-          votes: 0,
-          status: "rejected",
-          moderationStatus: "rejected",
-        },
-      });
-
+    let moderationResult;
+    try {
+      moderationResult = await moderateRequest(body.text);
+    } catch (moderationError) {
+      console.error("Moderation service error:", moderationError);
       return NextResponse.json(
-        {
-          error: "Request rejected by moderation",
-          reasons: moderationResult.reasons,
-          id: rejectedRequest.id,
-        },
-        { status: 403 }
+        { error: "Moderation service temporarily unavailable" },
+        { status: 503 }
       );
     }
 
+    if (moderationResult.verdict === "rejected") {
+      // Create request in database but mark as rejected
+      try {
+        const rejectedRequest = await prisma.request.create({
+          data: {
+            type: body.type,
+            rawText: body.text,
+            votes: 0,
+            status: "rejected",
+            moderationStatus: "rejected",
+          },
+        });
+
+        return NextResponse.json(
+          {
+            error: "Request rejected by moderation",
+            reasons: moderationResult.reasons,
+            id: rejectedRequest.id,
+          },
+          { status: 403 }
+        );
+      } catch (dbError) {
+        console.error("Database error while saving rejected request:", dbError);
+        // Still return moderation rejection even if we couldn't save it
+        return NextResponse.json(
+          {
+            error: "Request rejected by moderation",
+            reasons: moderationResult.reasons,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     // Step 2: Classify the request (if moderation passed or needs rewrite)
-    const classification = await classifyRequest(body.text, body.type);
+    let classification;
+    try {
+      classification = await classifyRequest(body.text, body.type);
+    } catch (classificationError) {
+      console.error("Classification service error:", classificationError);
+      return NextResponse.json(
+        { error: "Classification service temporarily unavailable" },
+        { status: 503 }
+      );
+    }
 
     // Store normalized metadata as JSON string
     const normalizedData = {
@@ -166,6 +229,15 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error creating request:", error);
+    
+    // Check for database connection errors
+    if (error instanceof Error && error.message.includes("connect")) {
+      return NextResponse.json(
+        { error: "Database connection failed" },
+        { status: 503 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Failed to create request" },
       { status: 500 }

@@ -109,14 +109,23 @@ The backend uses Next.js API Routes with Prisma and PostgreSQL. See [BACKEND.md]
 
 **Quick start**:
 ```bash
+# Set up secure credentials first (IMPORTANT!)
+# Copy the example files and set secure passwords
+cp .env.example .env
 cd web
+cp .env.example .env
 
+# Edit both .env files with secure credentials
+# For development, you can use simple passwords, but NEVER use defaults in production
+# Generate secure passwords with: openssl rand -base64 32
+
+# Start database services
+cd ..
+docker-compose up -d
+
+cd web
 # Install dependencies
 npm install
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your database credentials
 
 # Generate Prisma client
 npx prisma generate
@@ -130,6 +139,8 @@ npx tsx prisma/seed/seed.ts
 # Start development server (includes API)
 npm run dev
 ```
+
+**⚠️ Security Note**: Never commit `.env` files with real credentials. The `.env.example` files contain placeholder values that MUST be changed before use. Always use strong, unique passwords in production environments.
 
 **API Endpoints**:
 - `GET/POST /api/requests` - Submit and list requests

@@ -17,7 +17,41 @@ git clone https://github.com/mitchellfyi/lofield.git
 cd lofield
 ```
 
-### 2. Start the Database
+### 2. Configure Secure Credentials
+
+**IMPORTANT**: Set up secure credentials before starting services.
+
+```bash
+# Copy environment variable templates
+cp .env.example .env
+cd web
+cp .env.example .env
+cd ..
+```
+
+**Edit both `.env` files** and replace all `CHANGE_ME_*` placeholders with secure passwords:
+
+- **Root `.env`**: Contains credentials for Docker services (PostgreSQL, Icecast)
+- **`web/.env`**: Contains credentials for the Next.js application
+
+**For development**, you can use simple passwords like:
+```bash
+# In root .env
+POSTGRES_PASSWORD=dev_password_123
+ICECAST_SOURCE_PASSWORD=dev_source_123
+ICECAST_RELAY_PASSWORD=dev_relay_123
+ICECAST_ADMIN_PASSWORD=dev_admin_123
+```
+
+**For production**, generate strong passwords:
+```bash
+# Generate secure random passwords
+openssl rand -base64 32
+```
+
+⚠️ **Security Warning**: Never commit `.env` files or use default/example passwords in production!
+
+### 3. Start the Database
 
 Using Docker Compose (easiest):
 
@@ -29,7 +63,9 @@ This starts:
 - PostgreSQL on `localhost:5432`
 - Icecast streaming server on `localhost:8000`
 
-**Alternative:** If you have PostgreSQL installed locally, skip this step and update the `DATABASE_URL` in step 4.
+**Note**: Docker Compose will now require the `.env` file to be configured. If you see errors about missing environment variables, make sure you completed step 2.
+
+**Alternative:** If you have PostgreSQL installed locally, skip this step and update the `DATABASE_URL` in `web/.env` with your local database credentials.
 
 ### 3. Install Dependencies
 
@@ -40,11 +76,12 @@ npm install
 
 ### 4. Configure Environment
 
-```bash
-cp .env.example .env
-```
+The `.env` files were already created in step 2. Verify that:
+- Root `.env` has secure passwords for POSTGRES_PASSWORD and ICECAST_* variables
+- `web/.env` has a DATABASE_URL with the same POSTGRES_PASSWORD you set in root `.env`
+- `web/.env` has ICECAST_SOURCE_PASSWORD and ICECAST_ADMIN_PASSWORD matching root `.env`
 
-The default `.env.example` works with Docker Compose. If using local PostgreSQL, edit `.env` and update `DATABASE_URL`.
+If using local PostgreSQL instead of Docker, edit `web/.env` and update `DATABASE_URL` to point to your local instance.
 
 ### 5. Set Up Database
 
@@ -172,7 +209,7 @@ npx prisma generate
 
 - Read [BACKEND.md](../BACKEND.md) for comprehensive documentation
 - Explore the API endpoints in the browser at `http://localhost:3000`
-- Check out the Icecast admin UI at `http://localhost:8000/admin/` (password: `hackme`)
+- Check out the Icecast admin UI at `http://localhost:8000/admin/` (username: `admin`, password: the value you set for `ICECAST_ADMIN_PASSWORD` in your `.env` file)
 - Review the scheduler code in `services/scheduler/index.ts` to see where AI integration will happen
 
 ## Stopping Everything

@@ -51,4 +51,3 @@ export interface ArchiveSegment {
   type: string;
   streamUrl?: string;
 }
-

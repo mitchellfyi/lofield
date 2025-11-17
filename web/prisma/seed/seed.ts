@@ -15,7 +15,7 @@ async function main() {
   // Seed presenters
   console.log("Seeding presenters...");
   const presentersData = JSON.parse(fs.readFileSync(presentersPath, "utf-8"));
-  
+
   for (const presenter of presentersData.presenters) {
     await prisma.presenter.upsert({
       where: { id: presenter.id },
@@ -34,7 +34,9 @@ async function main() {
 
   // Seed shows
   console.log("Seeding shows...");
-  const showFiles = fs.readdirSync(showsDir).filter((file) => file.endsWith(".json"));
+  const showFiles = fs
+    .readdirSync(showsDir)
+    .filter((file) => file.endsWith(".json"));
 
   for (const showFile of showFiles) {
     const showPath = path.join(showsDir, showFile);

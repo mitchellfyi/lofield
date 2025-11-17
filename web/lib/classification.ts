@@ -171,14 +171,14 @@ Examples of Good Tone:
 /**
  * Classifies a user request as either a music prompt or talk topic,
  * extracting structured metadata using an LLM.
- * 
+ *
  * @param text - The user-submitted request text (already moderated)
  * @param userType - User-specified type hint ("music" or "talk")
  * @returns ClassificationResult with type, normalized text, and metadata
  */
 export async function classifyRequest(
   text: string,
-  userType: "music" | "talk",
+  userType: "music" | "talk"
 ): Promise<ClassificationResult> {
   const openai = getOpenAIClient();
   if (!openai) {
@@ -254,7 +254,7 @@ Classify this request and return JSON.`;
     // Filter tags to only include allowed ones
     if (result.metadata.tags) {
       result.metadata.tags = result.metadata.tags.filter((tag) =>
-        ALLOWED_TAGS.includes(tag),
+        ALLOWED_TAGS.includes(tag)
       );
     }
 
@@ -272,7 +272,7 @@ Classify this request and return JSON.`;
  */
 function fallbackClassification(
   text: string,
-  userType: "music" | "talk",
+  userType: "music" | "talk"
 ): ClassificationResult {
   const lowerText = text.toLowerCase();
 
@@ -304,9 +304,7 @@ function fallbackClassification(
     "experience",
   ];
 
-  const hasMusicKeywords = musicKeywords.some((kw) =>
-    lowerText.includes(kw),
-  );
+  const hasMusicKeywords = musicKeywords.some((kw) => lowerText.includes(kw));
   const hasTalkKeywords = talkKeywords.some((kw) => lowerText.includes(kw));
 
   let type: RequestType;

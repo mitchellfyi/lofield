@@ -12,6 +12,7 @@ export function AudioPlayer({ audioUrl, isLive = true }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -26,9 +27,11 @@ export function AudioPlayer({ audioUrl, isLive = true }: AudioPlayerProps) {
       const wasPlaying = isPlaying;
       audioRef.current.pause();
       audioRef.current.load();
+      setError(null); // Clear any previous errors
       if (wasPlaying) {
         audioRef.current.play().catch((err) => {
           console.error("Failed to play audio:", err);
+          setError("Failed to load audio stream. Please try again.");
           setIsPlaying(false);
         });
       }
@@ -44,10 +47,14 @@ export function AudioPlayer({ audioUrl, isLive = true }: AudioPlayerProps) {
       setIsPlaying(false);
     } else {
       try {
+        setError(null); // Clear any previous errors
         await audioRef.current.play();
         setIsPlaying(true);
       } catch (err) {
         console.error("Failed to play audio:", err);
+        setError(
+          "Failed to play audio. Please check your connection and try again."
+        );
         setIsPlaying(false);
       }
     }
@@ -74,9 +81,23 @@ export function AudioPlayer({ audioUrl, isLive = true }: AudioPlayerProps) {
         onPause={() => setIsPlaying(false)}
         onError={(e) => {
           console.error("Audio error:", e);
+          setError(
+            "Audio playback error occurred. Please try refreshing the page."
+          );
           setIsPlaying(false);
         }}
       />
+
+      {/* Error Message */}
+      {error && (
+        <div
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200"
+          role="alert"
+        >
+          <p className="font-medium">Playback Error</p>
+          <p>{error}</p>
+        </div>
+      )}
 
       <div className="flex items-center gap-4">
         {/* Play/Pause Button */}
@@ -124,7 +145,10 @@ export function AudioPlayer({ audioUrl, isLive = true }: AudioPlayerProps) {
             value={isMuted ? 0 : volume}
             onChange={handleVolumeChange}
             className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-muted accent-primary"
-            aria-label="Volume"
+            aria-label={`Volume: ${Math.round((isMuted ? 0 : volume) * 100)}%`}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round((isMuted ? 0 : volume) * 100)}
           />
         </div>
       </div>

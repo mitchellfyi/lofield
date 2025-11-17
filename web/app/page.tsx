@@ -7,8 +7,11 @@ import { RequestForm } from "@/components/requests/RequestForm";
 import { RequestFeed } from "@/components/requests/RequestFeed";
 
 // Get stream URLs from environment variables with fallbacks
-const STREAM_URL = process.env.NEXT_PUBLIC_STREAM_URL || "https://stream.lofield.fm/live.mp3";
-const ARCHIVE_BASE_URL = process.env.NEXT_PUBLIC_ARCHIVE_BASE_URL || "https://stream.lofield.fm/archive";
+const STREAM_URL =
+  process.env.NEXT_PUBLIC_STREAM_URL || "https://stream.lofield.fm/live.mp3";
+const ARCHIVE_BASE_URL =
+  process.env.NEXT_PUBLIC_ARCHIVE_BASE_URL ||
+  "https://stream.lofield.fm/archive";
 
 export default function Home() {
   const [audioUrl, setAudioUrl] = useState(STREAM_URL);
@@ -23,9 +26,7 @@ export default function Home() {
     } else {
       // Time-shifted URL (this would be provided by the API in a real implementation)
       const timestamp = Date.now() - minutesBack * 60 * 1000;
-      setAudioUrl(
-        `${ARCHIVE_BASE_URL}/${timestamp}.mp3`,
-      );
+      setAudioUrl(`${ARCHIVE_BASE_URL}/${timestamp}.mp3`);
       setIsLive(false);
     }
   };

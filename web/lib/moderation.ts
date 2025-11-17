@@ -1,8 +1,18 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI | null {
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openaiClient;
+}
 
 export type ModerationVerdict = "allowed" | "rejected" | "needs_rewrite";
 
@@ -90,7 +100,8 @@ export async function moderateRequest(
     }
 
     // Use OpenAI Moderation API
-    if (!process.env.OPENAI_API_KEY) {
+    const openai = getOpenAIClient();
+    if (!openai) {
       console.warn("OPENAI_API_KEY not set, skipping OpenAI moderation");
       // Fall through to banned topic check
     } else {

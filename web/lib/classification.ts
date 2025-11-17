@@ -1,8 +1,18 @@
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+let openaiClient: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI | null {
+  if (!process.env.OPENAI_API_KEY) {
+    return null;
+  }
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openaiClient;
+}
 
 export type RequestType = "music_prompt" | "talk_topic";
 
@@ -170,7 +180,8 @@ export async function classifyRequest(
   text: string,
   userType: "music" | "talk",
 ): Promise<ClassificationResult> {
-  if (!process.env.OPENAI_API_KEY) {
+  const openai = getOpenAIClient();
+  if (!openai) {
     // Fallback: use simple heuristics without LLM
     return fallbackClassification(text, userType);
   }

@@ -5,12 +5,53 @@ import type { CreateRequestData } from "@/lib/types";
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const status = searchParams.get("status");
-    const limit = parseInt(searchParams.get("limit") || "50");
-    const offset = parseInt(searchParams.get("offset") || "0");
+    const statusParam = searchParams.get("status");
+    
+    // Validate status parameter
+    const validStatuses = ["pending", "approved", "rejected", "used"];
+    if (statusParam && !validStatuses.includes(statusParam)) {
+      return NextResponse.json(
+        { error: `Invalid status parameter: must be one of ${validStatuses.join(", ")}` },
+        { status: 400 }
+      );
+    }
+    
+    // Parse and validate limit parameter
+    const limitParam = searchParams.get("limit");
+    let limit = 20; // default
+    if (limitParam) {
+      const parsedLimit = parseInt(limitParam, 10);
+      if (isNaN(parsedLimit) || parsedLimit < 1) {
+        return NextResponse.json(
+          { error: "Invalid limit parameter: must be a positive number" },
+          { status: 400 }
+        );
+      }
+      if (parsedLimit > 100) {
+        return NextResponse.json(
+          { error: "Invalid limit parameter: maximum value is 100" },
+          { status: 400 }
+        );
+      }
+      limit = parsedLimit;
+    }
+    
+    // Parse and validate offset parameter
+    const offsetParam = searchParams.get("offset");
+    let offset = 0; // default
+    if (offsetParam) {
+      const parsedOffset = parseInt(offsetParam, 10);
+      if (isNaN(parsedOffset) || parsedOffset < 0) {
+        return NextResponse.json(
+          { error: "Invalid offset parameter: must be a non-negative number" },
+          { status: 400 }
+        );
+      }
+      offset = parsedOffset;
+    }
 
     // Build query filters
-    const where = status ? { status } : {};
+    const where = statusParam ? { status: statusParam } : {};
 
     // Fetch requests from database
     const requests = await prisma.request.findMany({

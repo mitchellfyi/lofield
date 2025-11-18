@@ -471,11 +471,77 @@ See `.env.example` for all available environment variables.
 **Required:**
 - `DATABASE_URL`: PostgreSQL connection string
 
-**Optional:**
+**API Security (Optional but Recommended):**
+- `RATE_LIMIT_WINDOW_MS`: Time window for rate limiting in milliseconds (default: 60000 = 1 minute)
+- `RATE_LIMIT_MAX`: Maximum requests per window (default: 5)
+  - **Development**: Set higher (e.g., 100) for easier testing
+  - **Production**: Set based on expected traffic (e.g., 10-20 for typical usage)
+- `ALLOWED_ORIGINS`: Comma-separated list of allowed CORS origins (default: `http://localhost:3000`)
+  - **Development**: Include `http://localhost:3000`
+  - **Production**: Include your production domain(s) (e.g., `https://lofield.fm,https://www.lofield.fm`)
+  - **Preview Deployments**: Include Vercel preview URLs if using Vercel (e.g., `https://lofield-preview.vercel.app`)
+
+**Other Optional Variables:**
 - `AUDIO_STORAGE_PATH`: Where to store generated audio files (default: `/tmp/lofield/audio`)
 - `SCHEDULER_BUFFER_MINUTES`: Content buffer size (default: 45)
 - `ICECAST_*`: Streaming server configuration
 - `*_API_KEY`: API keys for AI services (for future use)
+
+### Rate Limiting Configuration Guide
+
+The rate limiting system helps protect your API from abuse. Here's how to configure it for different environments:
+
+**Development:**
+```bash
+RATE_LIMIT_WINDOW_MS=60000  # 1 minute
+RATE_LIMIT_MAX=100          # 100 requests per minute (lenient for testing)
+```
+
+**Staging/Preview:**
+```bash
+RATE_LIMIT_WINDOW_MS=60000  # 1 minute
+RATE_LIMIT_MAX=20           # 20 requests per minute
+```
+
+**Production:**
+```bash
+RATE_LIMIT_WINDOW_MS=60000  # 1 minute
+RATE_LIMIT_MAX=5            # 5 requests per minute (strict for production)
+```
+
+**High-Traffic Production:**
+```bash
+RATE_LIMIT_WINDOW_MS=300000 # 5 minutes
+RATE_LIMIT_MAX=25           # 25 requests per 5 minutes (allows bursts)
+```
+
+The rate limiter tracks requests per IP address per endpoint. For example, a user can make 5 POST requests to `/api/requests` and 5 POST requests to `/api/requests/{id}/vote` within the same window.
+
+### CORS Configuration Guide
+
+The CORS system restricts which origins can access your API. Here's how to configure it:
+
+**Development:**
+```bash
+ALLOWED_ORIGINS=http://localhost:3000
+```
+
+**Production (Single Domain):**
+```bash
+ALLOWED_ORIGINS=https://lofield.fm
+```
+
+**Production (Multiple Domains):**
+```bash
+ALLOWED_ORIGINS=https://lofield.fm,https://www.lofield.fm
+```
+
+**Production with Preview Deployments:**
+```bash
+ALLOWED_ORIGINS=https://lofield.fm,https://www.lofield.fm,https://lofield-preview.vercel.app
+```
+
+**Note**: Never use `*` (wildcard) in production as it allows any origin to access your API.
 
 ## Testing the API
 
@@ -548,12 +614,25 @@ Deploy Icecast on:
 
 ## Security Considerations
 
-1. **Rate Limiting**: Implement rate limiting on POST endpoints to prevent spam
-2. **Authentication**: Add user authentication for request submissions
+1. **Rate Limiting**: All POST endpoints that accept user input are protected with rate limiting to prevent abuse
+   - Default: 5 requests per minute per IP address
+   - Configurable via `RATE_LIMIT_WINDOW_MS` and `RATE_LIMIT_MAX` environment variables
+   - Returns `429 Too Many Requests` with a `Retry-After` header when limit is exceeded
+   - Rate limit information is included in response headers:
+     - `X-RateLimit-Limit`: Maximum requests allowed in the window
+     - `X-RateLimit-Remaining`: Number of requests remaining in the current window
+     - `X-RateLimit-Reset`: ISO 8601 timestamp when the rate limit resets
+
+2. **CORS (Cross-Origin Resource Sharing)**: API routes are protected with CORS policies
+   - Only trusted origins can make cross-origin requests
+   - Configurable via `ALLOWED_ORIGINS` environment variable (comma-separated list)
+   - Defaults to `http://localhost:3000` for local development
+   - Production example: `https://lofield.fm,https://www.lofield.fm,https://lofield-preview.vercel.app`
+   - Properly handles preflight `OPTIONS` requests
+
 3. **Input Validation**: All user inputs are validated and sanitized
 4. **SQL Injection**: Prisma provides protection against SQL injection
-5. **CORS**: Configure CORS policies for production
-6. **Environment Variables**: Never commit `.env` files; use secrets management
+5. **Environment Variables**: Never commit `.env` files; use secrets management
 
 ## Future Enhancements
 

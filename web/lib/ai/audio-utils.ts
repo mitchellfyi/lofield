@@ -5,8 +5,8 @@
  * Uses ffprobe to extract accurate metadata from audio files.
  */
 
-import ffmpeg from "fluent-ffmpeg";
-import ffprobeStatic from "ffprobe-static";
+import * as ffmpeg from "fluent-ffmpeg";
+import * as ffprobeStatic from "ffprobe-static";
 
 // Configure fluent-ffmpeg to use the static ffprobe binary
 ffmpeg.setFfprobePath(ffprobeStatic.path);
@@ -62,7 +62,9 @@ export async function getAudioMetadata(
       // Extract and return metadata
       const result: AudioMetadata = {
         duration: format.duration || 0,
-        bitRate: format.bit_rate ? parseInt(format.bit_rate, 10) : undefined,
+        bitRate: format.bit_rate
+          ? parseInt(String(format.bit_rate), 10)
+          : undefined,
         sampleRate: audioStream.sample_rate
           ? parseInt(String(audioStream.sample_rate), 10)
           : undefined,

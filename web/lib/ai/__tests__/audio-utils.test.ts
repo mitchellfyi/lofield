@@ -10,21 +10,15 @@ const mockFfprobe = jest.fn();
 const mockSetFfprobePath = jest.fn();
 
 jest.mock("fluent-ffmpeg", () => {
-  const actualFfmpeg = jest.requireActual("fluent-ffmpeg");
   return {
-    ...actualFfmpeg,
     __esModule: true,
-    default: Object.assign(
-      jest.fn().mockImplementation(() => ({})),
-      {
-        ffprobe: mockFfprobe,
-        setFfprobePath: mockSetFfprobePath,
-      }
-    ),
+    setFfprobePath: mockSetFfprobePath,
+    ffprobe: mockFfprobe,
   };
 });
 
 jest.mock("ffprobe-static", () => ({
+  __esModule: true,
   path: "/mock/path/to/ffprobe",
 }));
 

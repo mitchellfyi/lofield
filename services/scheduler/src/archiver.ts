@@ -5,9 +5,11 @@
  * an index for time-shifted listening and show episode assembly.
  */
 
-import * as fs from "fs";
+import * as fs from "fs/promises";
+import * as fsSync from "fs";
 import * as path from "path";
 import { PrismaClient } from "@prisma/client";
+import logger from "./logger";
 import type { ArchiveIndex, QueuedSegment } from "./types";
 
 // Allow prisma to be undefined for testing
@@ -17,7 +19,7 @@ try {
   prisma = new PrismaClient();
 } catch (error) {
   // Prisma not initialized (e.g., in test environment without database)
-  console.warn("Prisma client not initialized - database operations will fail");
+  logger.warn("Prisma client not initialized - database operations will fail");
 }
 
 // In-memory index (in production, this would be persisted to database or file)
@@ -26,7 +28,7 @@ const archiveIndex: ArchiveIndex[] = [];
 /**
  * Get the archive file path for a given hour
  */
-function getArchiveFilePath(date: Date, archivePath: string): string {
+async function getArchiveFilePath(date: Date, archivePath: string): Promise<string> {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   const day = String(date.getUTCDate()).padStart(2, "0");
@@ -36,8 +38,10 @@ function getArchiveFilePath(date: Date, archivePath: string): string {
   const dirPath = path.join(archivePath, year.toString(), month);
 
   // Ensure directory exists
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
+  try {
+    await fs.access(dirPath);
+  } catch {
+    await fs.mkdir(dirPath, { recursive: true });
   }
 
   return path.join(dirPath, filename);
@@ -51,27 +55,31 @@ export async function recordSegmentToArchive(
   archivePath: string
 ): Promise<void> {
   try {
-    const archiveFile = getArchiveFilePath(segment.startTime, archivePath);
+    const archiveFile = await getArchiveFilePath(segment.startTime, archivePath);
 
     // Read the segment audio file
-    if (!fs.existsSync(segment.filePath)) {
-      console.warn(
+    try {
+      await fs.access(segment.filePath);
+    } catch {
+      logger.warn(
         `Segment file not found: ${segment.filePath}, skipping archive`
       );
       return;
     }
 
-    const segmentData = fs.readFileSync(segment.filePath);
+    const segmentData = await fs.readFile(segment.filePath);
 
     // Get current archive file size to calculate offset
     let offset = 0;
-    if (fs.existsSync(archiveFile)) {
-      const stats = fs.statSync(archiveFile);
+    try {
+      const stats = await fs.stat(archiveFile);
       offset = stats.size;
+    } catch {
+      // File doesn't exist yet, offset is 0
     }
 
     // Append segment to archive file
-    fs.appendFileSync(archiveFile, segmentData);
+    await fs.appendFile(archiveFile, segmentData);
 
     // Calculate duration in seconds
     const duration =
@@ -91,11 +99,11 @@ export async function recordSegmentToArchive(
 
     archiveIndex.push(indexEntry);
 
-    console.log(
+    logger.debug(
       `Archived segment ${segment.id} to ${archiveFile} at offset ${offset}`
     );
   } catch (error) {
-    console.error(`Error archiving segment ${segment.id}:`, error);
+    logger.error({ err: error, segmentId: segment.id }, `Error archiving segment ${segment.id}`);
     throw error;
   }
 }
@@ -125,7 +133,7 @@ export async function assembleShowEpisode(
   }
 
   try {
-    console.log(`Assembling episode for show ${showId} on ${date.toISOString()}`);
+    logger.info(`Assembling episode for show ${showId} on ${date.toISOString()}`);
 
     // Get show from database
     const show = await prisma.show.findUnique({
@@ -159,29 +167,58 @@ export async function assembleShowEpisode(
 
     // Ensure output directory exists
     const dir = path.dirname(outputFile);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    try {
+      await fs.access(dir);
+    } catch {
+      await fs.mkdir(dir, { recursive: true });
     }
 
-    // Assemble episode by concatenating segment data
-    const writeStream = fs.createWriteStream(outputFile);
+    // Assemble episode by streaming segment data
+    const { createWriteStream, createReadStream } = await import("fs");
+    const writeStream = createWriteStream(outputFile);
 
     for (const segment of segments) {
-      const archiveData = fs.readFileSync(segment.filePath);
-      // Extract segment data from offset
-      const segmentData = archiveData.slice(
-        segment.offset,
-        segment.offset + Math.ceil(segment.duration * 1000) // Rough estimate
-      );
-      writeStream.write(segmentData);
+      // Use streaming to read only the segment portion we need
+      const archiveFile = await fs.open(segment.filePath, "r");
+      
+      try {
+        // Calculate estimated segment size in bytes
+        // MP3 bitrate is typically ~128kbps = 16KB/s
+        const estimatedBytes = Math.ceil(segment.duration * 16 * 1024);
+        
+        // Create a buffer for the segment
+        const buffer = Buffer.allocUnsafe(estimatedBytes);
+        const { bytesRead } = await archiveFile.read(
+          buffer,
+          0,
+          estimatedBytes,
+          segment.offset
+        );
+        
+        // Write the actual bytes read to the output stream
+        await new Promise<void>((resolve, reject) => {
+          writeStream.write(buffer.slice(0, bytesRead), (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+      } finally {
+        await archiveFile.close();
+      }
     }
 
-    writeStream.end();
+    // Close the write stream
+    await new Promise<void>((resolve, reject) => {
+      writeStream.end((err?: Error) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
 
-    console.log(`Episode assembled: ${outputFile}`);
+    logger.info(`Episode assembled: ${outputFile}`);
     return outputFile;
   } catch (error) {
-    console.error(`Error assembling episode for show ${showId}:`, error);
+    logger.error({ err: error, showId }, `Error assembling episode for show ${showId}`);
     throw error;
   }
 }
@@ -223,7 +260,7 @@ export async function cleanupOldArchives(
     deletedCount++;
   });
 
-  console.log(
+  logger.info(
     `Cleaned up ${deletedCount} archive entries older than ${retentionDays} days`
   );
 

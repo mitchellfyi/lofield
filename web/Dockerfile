@@ -1,13 +1,14 @@
 # Multi-stage Dockerfile for Lofield FM Web Service (Next.js 16)
 # Build optimized production image with non-root user
+# Note: Build context should be repository root
 
 # Stage 1: Dependencies
 FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* ./
+# Copy package files from web directory
+COPY web/package.json web/package-lock.json* ./
 RUN npm ci
 
 # Stage 2: Builder
@@ -16,7 +17,15 @@ WORKDIR /app
 
 # Copy dependencies from deps stage
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+
+# Copy web source
+COPY web ./
+
+# Copy config directory (needed for build-time static generation)
+COPY config ../config
+
+# Set dummy DATABASE_URL for Prisma Client generation (not used at build time)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
 
 # Generate Prisma Client
 RUN npx prisma generate
@@ -43,6 +52,9 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Copy config directory for runtime access
+COPY --from=builder /config ../config
 
 # Set ownership
 RUN chown -R nextjs:nodejs /app

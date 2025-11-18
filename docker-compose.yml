@@ -46,8 +46,8 @@ services:
   # Web Application (Next.js 16)
   web:
     build:
-      context: ./web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: web/Dockerfile
     container_name: lofield_web
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-lofield}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lofield_fm}?schema=public

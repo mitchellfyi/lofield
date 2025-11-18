@@ -30,6 +30,9 @@ COPY services/playout ./
 # Copy Prisma schema from web directory
 COPY web/prisma ./prisma
 
+# Set dummy DATABASE_URL for Prisma Client generation (not used at build time)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
+
 # Generate Prisma Client
 RUN npx prisma generate
 

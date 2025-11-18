@@ -7,14 +7,16 @@ version: '3.8'
 services:
   web:
     build:
-      context: ./web
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: web/Dockerfile.dev
       target: development
     volumes:
       # Mount source code for hot reload
       - ./web:/app
       - /app/node_modules
       - /app/.next
+      # Mount config directory for runtime access
+      - ./config:/config:ro
     environment:
       NODE_ENV: development
     command: npm run dev
@@ -25,6 +27,8 @@ services:
       - ./services/scheduler:/app
       - /app/node_modules
       - ./web/prisma:/app/prisma:ro
+      # Mount config directory for runtime access
+      - ./config:/config:ro
     environment:
       NODE_ENV: development
     command: npm run dev

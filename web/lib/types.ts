@@ -81,6 +81,12 @@ export interface ShowTone {
   mood: string;
 }
 
+export interface ShowTiming {
+  max_link_seconds: number;
+  min_gap_between_links_seconds: number;
+  typical_track_length_seconds: number;
+}
+
 export interface ShowTopics {
   primary_tags: string[];
   banned_tags?: string[];
@@ -94,6 +100,7 @@ export interface Show {
   description: string;
   schedule: ShowSchedule;
   ratios: ShowRatios;
+  timing?: ShowTiming;
   presenters: {
     primary_duo: string[];
     duo_probability: number;

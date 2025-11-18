@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Show, Presenter } from "@/lib/types";
-import { formatUTCTimeToLocal } from "@/lib/time-utils";
+import { formatUTCTimeToLocal, formatDuration } from "@/lib/time-utils";
 
 interface ShowDetailContentProps {
   show: Show;
@@ -87,6 +87,16 @@ export function ShowDetailContent({ show, presenters }: ShowDetailContentProps) 
                 </span>
               </div>
             </div>
+            {show.timing?.typical_track_length_seconds && (
+              <div>
+                <div className="text-sm font-medium text-muted-foreground">
+                  Typical Track Length
+                </div>
+                <div className="mt-1 text-lg">
+                  {formatDuration(show.timing.typical_track_length_seconds)}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

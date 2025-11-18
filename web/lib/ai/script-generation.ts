@@ -64,9 +64,10 @@ export async function generateScript(
     showStyle: request.showStyle,
     topic: request.topic,
     trackInfo: request.trackInfo,
-    // Include only non-transient context: season and weather
+    // Include only non-transient context: season, weather, and holiday tags
     season: request.contextInfo?.season,
     weather: request.contextInfo?.weather,
+    holidayTags: request.contextInfo?.holidayTags,
     presenterIds: request.presenterIds,
     durationSeconds: request.durationSeconds,
   };
@@ -267,6 +268,10 @@ function buildUserPrompt(request: ScriptGenerationRequest): string {
     }
     if (request.contextInfo.weather) {
       prompt += `\n- Weather: ${request.contextInfo.weather}`;
+    }
+    if (request.contextInfo.holidayTags && request.contextInfo.holidayTags.length > 0) {
+      prompt += `\n- Holidays/Events: ${request.contextInfo.holidayTags.join(", ")}`;
+      prompt += `\n  (Reference these in a low-key, understated way if appropriate)`;
     }
   }
 

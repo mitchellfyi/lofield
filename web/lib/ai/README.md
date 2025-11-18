@@ -539,12 +539,61 @@ Potential improvements:
 - [ ] Quality scoring and automatic regeneration
 - [ ] A/B testing different prompts
 
+## Seasonal and Holiday Integration
+
+The AI modules support seasonal and holiday context to generate content that's relevant to the time of year. See the [Seasonal and Holiday Logic documentation](../../../docs/seasonal-holiday-logic.md) for complete details.
+
+### Quick Example
+
+```typescript
+import { enhanceMusicRequestWithSeason, enhanceScriptRequestWithSeason } from "@/lib/seasonal";
+import { generateMusic, generateScript } from "@/lib/ai";
+
+// Music generation with seasonal bias
+const musicRequest = {
+  prompt: "chill lofi beats for studying",
+  duration: 180,
+};
+const enhancedMusic = enhanceMusicRequestWithSeason(musicRequest);
+const music = await generateMusic(enhancedMusic);
+// In winter: adds "cosy winter atmosphere" to the prompt
+// In summer: adds "bright and breezy" to the prompt
+
+// Script generation with season and holiday context
+const scriptRequest = {
+  segmentType: "track_intro",
+  showStyle: "mild_panic_mornings",
+  presenterIds: ["morgan", "riley"],
+  trackInfo: { title: "Morning Vibes" },
+};
+const enhancedScript = enhanceScriptRequestWithSeason(scriptRequest);
+const script = await generateScript(enhancedScript);
+// Adds contextInfo.season: "winter"
+// Adds contextInfo.holidayTags: ["christmas_day"] on Dec 25
+```
+
+### Features
+
+- **Season Detection**: Automatically detects current season (winter/spring/summer/autumn)
+- **Holiday Detection**: Reads holidays from `config/tags.json`
+- **Seasonal Mood Biases**: Each season has specific mood descriptors for music
+- **Show Overrides**: Shows can define season-specific tone adjustments
+- **Hemisphere Support**: Configurable for Northern or Southern hemisphere
+
+See `docs/seasonal-holiday-logic.md` for:
+- Complete API reference
+- Usage examples
+- Adding new holidays
+- Customizing seasonal moods
+- Integration guidelines
+
 ## Support
 
 For issues or questions:
 - Check the main [README](../../../README.md)
 - Review [architecture documentation](../../../docs/architecture.md)
 - Check [TESTING.md](../../../TESTING.md) for test guidelines
+- Check [seasonal-holiday-logic.md](../../../docs/seasonal-holiday-logic.md) for seasonal features
 - Open an issue on GitHub
 
 ---

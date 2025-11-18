@@ -15,6 +15,7 @@ export interface MusicGenerationRequest {
   bpm?: number; // Target BPM (optional)
   mood?: string[]; // Mood descriptors
   tags?: string[]; // Metadata tags
+  seasonalBias?: string; // Seasonal mood bias for context-aware generation
 }
 
 export interface MusicGenerationResult {
@@ -72,6 +73,7 @@ export interface ScriptGenerationRequest {
     nextTrack?: string;
     season?: string;
     weather?: string;
+    holidayTags?: string[]; // Holiday tags for the current date
   };
   presenterIds: string[]; // Duo presenter IDs
   durationSeconds?: number; // Target duration

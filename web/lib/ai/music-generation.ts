@@ -231,6 +231,11 @@ function enhancePromptForLofi(
     enhanced = `${enhanced}, ${request.bpm} BPM`;
   }
 
+  // Add seasonal bias if present in request
+  if (request.seasonalBias) {
+    enhanced = `${enhanced}, ${request.seasonalBias}`;
+  }
+
   // Add lofi production characteristics
   enhanced = `${enhanced}, soft vinyl crackle, warm analog sound, gentle lo-fi texture`;
 

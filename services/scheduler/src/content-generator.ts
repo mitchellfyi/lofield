@@ -5,7 +5,8 @@
  * to create audio segments for the broadcast queue.
  */
 
-import * as fs from "fs";
+import * as fs from "fs/promises";
+import * as fsSync from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
 import type { Show, ShowConfig, Request } from "./types";
@@ -78,25 +79,30 @@ export async function generateMusicTrack(
     //   mood: moodKeywords,
     // });
 
+    // Use show-specific track length or default to 3 minutes
+    const trackDuration = showConfig.timing.typical_track_length_seconds || 180;
+
     // For stub: create a placeholder file path
     const filename = `track_${crypto.randomBytes(8).toString("hex")}.mp3`;
     const filePath = path.join(audioStoragePath, "music", filename);
 
     // Ensure directory exists
     const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    try {
+      await fs.access(dir);
+    } catch {
+      await fs.mkdir(dir, { recursive: true });
     }
 
     // Create a stub file (in production, this would be the actual audio)
-    fs.writeFileSync(filePath, Buffer.from("stub_audio_data"));
+    await fs.writeFile(filePath, Buffer.from("stub_audio_data"));
 
     return {
       success: true,
       filePath,
       metadata: {
         title: request.rawText.substring(0, 50),
-        duration: 180, // 3 minutes
+        duration: trackDuration,
       },
     };
   } catch (error) {
@@ -190,11 +196,13 @@ export async function generateCommentary(
       const filePath = path.join(audioStoragePath, "commentary", filename);
       
       const dir = path.dirname(filePath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+      try {
+        await fs.access(dir);
+      } catch {
+        await fs.mkdir(dir, { recursive: true });
       }
       
-      fs.writeFileSync(filePath, Buffer.from("stub_tts_audio_data"));
+      await fs.writeFile(filePath, Buffer.from("stub_tts_audio_data"));
       audioFiles.push(filePath);
     }
 
@@ -298,11 +306,13 @@ export async function generateHandoverSegment(
       const filePath = path.join(audioStoragePath, "handovers", filename);
       
       const dir = path.dirname(filePath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+      try {
+        await fs.access(dir);
+      } catch {
+        await fs.mkdir(dir, { recursive: true });
       }
       
-      fs.writeFileSync(filePath, Buffer.from("stub_handover_audio_data"));
+      await fs.writeFile(filePath, Buffer.from("stub_handover_audio_data"));
       audioFiles.push(filePath);
     }
 
@@ -313,11 +323,13 @@ export async function generateHandoverSegment(
     const filePath = path.join(audioStoragePath, "handovers", filename);
     
     const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    try {
+      await fs.access(dir);
+    } catch {
+      await fs.mkdir(dir, { recursive: true });
     }
     
-    fs.writeFileSync(filePath, Buffer.from("stub_handover_audio_data"));
+    await fs.writeFile(filePath, Buffer.from("stub_handover_audio_data"));
 
     return {
       success: true,
@@ -402,12 +414,14 @@ export async function generateIdent(
 
     // Ensure directory exists
     const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    try {
+      await fs.access(dir);
+    } catch {
+      await fs.mkdir(dir, { recursive: true });
     }
 
     // Create a stub file
-    fs.writeFileSync(filePath, Buffer.from("stub_ident_audio_data"));
+    await fs.writeFile(filePath, Buffer.from("stub_ident_audio_data"));
 
     return {
       success: true,
@@ -439,12 +453,14 @@ export async function generateFallbackContent(
 
   // Ensure directory exists
   const dir = path.dirname(filePath);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  try {
+    await fs.access(dir);
+  } catch {
+    await fs.mkdir(dir, { recursive: true });
   }
 
   // Create a stub file
-  fs.writeFileSync(filePath, Buffer.from("stub_fallback_audio_data"));
+  await fs.writeFile(filePath, Buffer.from("stub_fallback_audio_data"));
 
   return {
     filePath,

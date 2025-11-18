@@ -233,120 +233,141 @@ export class SchedulerService {
       const musicRatio = config.ratios.music_fraction;
       const talkRatio = config.ratios.talk_fraction;
 
+      // Calculate time budgets based on show ratios
+      const musicMinutesNeeded = minutesNeeded * musicRatio;
+      const talkMinutesNeeded = minutesNeeded * talkRatio;
+
+      console.log(
+        `Generating content with ${(musicRatio * 100).toFixed(0)}% music (${musicMinutesNeeded.toFixed(1)} min) / ${(talkRatio * 100).toFixed(0)}% talk (${talkMinutesNeeded.toFixed(1)} min)`
+      );
+
       // Get top requests
       const requests = await getTopRequests(10);
       console.log(`Found ${requests.length} requests to process`);
 
-      let generatedMinutes = 0;
+      let musicMinutesGenerated = 0;
+      let talkMinutesGenerated = 0;
       let nextSlot = await getNextAvailableSlot();
 
       // Generate content mix based on ratios
       for (const request of requests) {
-        if (generatedMinutes >= minutesNeeded) {
+        // Stop if we've generated enough total content
+        const totalGenerated = musicMinutesGenerated + talkMinutesGenerated;
+        if (totalGenerated >= minutesNeeded) {
           break;
         }
 
         try {
-          // Generate music track
-          const musicResult = await generateMusicTrack(
-            request,
-            show,
-            this.config.audioStoragePath
-          );
-
-          if (!musicResult.success || !musicResult.filePath) {
-            console.error("Music generation failed, using fallback");
-            const fallback = await generateFallbackContent(
-              "music",
+          // Generate music track if we still need music
+          if (musicMinutesGenerated < musicMinutesNeeded) {
+            const musicResult = await generateMusicTrack(
+              request,
+              show,
               this.config.audioStoragePath
             );
-            musicResult.filePath = fallback.filePath;
-            musicResult.metadata = {
-              title: "Fallback Track",
-              duration: fallback.duration,
-            };
-          }
 
-          // Create track record
-          const trackId = await createTrack({
-            requestId: request.id,
-            filePath: musicResult.filePath!,
-            title: musicResult.metadata?.title || request.rawText,
-            artist: "Lofield FM",
-            lengthSeconds: musicResult.metadata?.duration || 180,
-          });
+            if (!musicResult.success || !musicResult.filePath) {
+              console.error("Music generation failed, using fallback");
+              const fallback = await generateFallbackContent(
+                "music",
+                this.config.audioStoragePath
+              );
+              musicResult.filePath = fallback.filePath;
+              musicResult.metadata = {
+                title: "Fallback Track",
+                duration: fallback.duration,
+              };
+            }
 
-          // Generate commentary
-          const commentaryResult = await generateCommentary(
-            request,
-            show,
-            musicResult.metadata?.title || request.rawText,
-            this.config.audioStoragePath
-          );
+            const musicDuration = musicResult.metadata?.duration || 180;
 
-          if (!commentaryResult.success || !commentaryResult.filePath) {
-            console.warn("Commentary generation failed, skipping");
-          }
+            // Create track record
+            const trackId = await createTrack({
+              requestId: request.id,
+              filePath: musicResult.filePath!,
+              title: musicResult.metadata?.title || request.rawText,
+              artist: "Lofield FM",
+              lengthSeconds: musicDuration,
+            });
 
-          // Schedule commentary segment (if successful)
-          if (commentaryResult.success && commentaryResult.filePath) {
-            const commentaryEnd = new Date(
-              nextSlot.getTime() + (commentaryResult.metadata?.duration || 30) * 1000
+            // Generate commentary if we still need talk
+            let commentaryResult: Awaited<ReturnType<typeof generateCommentary>> | null = null;
+            if (talkMinutesGenerated < talkMinutesNeeded) {
+              commentaryResult = await generateCommentary(
+                request,
+                show,
+                musicResult.metadata?.title || request.rawText,
+                this.config.audioStoragePath
+              );
+
+              if (!commentaryResult.success || !commentaryResult.filePath) {
+                console.warn("Commentary generation failed, skipping");
+                commentaryResult = null;
+              }
+            }
+
+            // Schedule commentary segment first (if we have it)
+            if (commentaryResult && commentaryResult.filePath) {
+              const commentaryDuration = commentaryResult.metadata?.duration || 30;
+              const commentaryEnd = new Date(
+                nextSlot.getTime() + commentaryDuration * 1000
+              );
+
+              await createSegment({
+                showId: show.id,
+                type: "talk",
+                filePath: commentaryResult.filePath,
+                startTime: nextSlot,
+                endTime: commentaryEnd,
+                requestId: request.id,
+              });
+
+              talkMinutesGenerated += commentaryDuration / 60;
+              nextSlot = commentaryEnd;
+            }
+
+            // Schedule music segment
+            const musicEnd = new Date(
+              nextSlot.getTime() + musicDuration * 1000
             );
 
             await createSegment({
               showId: show.id,
-              type: "talk",
-              filePath: commentaryResult.filePath,
+              type: "music",
+              filePath: musicResult.filePath!,
               startTime: nextSlot,
-              endTime: commentaryEnd,
+              endTime: musicEnd,
               requestId: request.id,
+              trackId: trackId,
             });
 
-            generatedMinutes += (commentaryResult.metadata?.duration || 30) / 60;
-            nextSlot = commentaryEnd;
+            musicMinutesGenerated += musicDuration / 60;
+            nextSlot = musicEnd;
+
+            // Mark request as used
+            await markRequestAsUsed(request.id);
+
+            // Publish request played notification
+            publishRequestPlayed(request.id, musicResult.metadata?.title || "Track");
+
+            console.log(
+              `Generated content for "${request.rawText}" - Music: ${musicMinutesGenerated.toFixed(1)}/${musicMinutesNeeded.toFixed(1)} min, Talk: ${talkMinutesGenerated.toFixed(1)}/${talkMinutesNeeded.toFixed(1)} min`
+            );
           }
-
-          // Schedule music segment
-          const musicEnd = new Date(
-            nextSlot.getTime() + (musicResult.metadata?.duration || 180) * 1000
-          );
-
-          await createSegment({
-            showId: show.id,
-            type: "music",
-            filePath: musicResult.filePath!,
-            startTime: nextSlot,
-            endTime: musicEnd,
-            requestId: request.id,
-            trackId: trackId,
-          });
-
-          generatedMinutes += (musicResult.metadata?.duration || 180) / 60;
-          nextSlot = musicEnd;
-
-          // Mark request as used
-          await markRequestAsUsed(request.id);
-
-          // Publish request played notification
-          publishRequestPlayed(request.id, musicResult.metadata?.title || "Track");
-
-          console.log(
-            `Generated content for request "${request.rawText}" (${generatedMinutes.toFixed(1)}/${minutesNeeded.toFixed(1)} min)`
-          );
         } catch (error) {
           console.error(`Error processing request ${request.id}:`, error);
           continue;
         }
       }
 
-      // Generate filler idents if we still need more content
-      while (generatedMinutes < minutesNeeded) {
+      // Fill remaining talk time with idents if needed
+      while (talkMinutesGenerated < talkMinutesNeeded) {
         const identResult = await generateIdent(show, this.config.audioStoragePath);
 
         if (identResult.success && identResult.filePath) {
+          const identDuration = identResult.metadata?.duration || 10;
           const identEnd = new Date(
-            nextSlot.getTime() + (identResult.metadata?.duration || 10) * 1000
+            nextSlot.getTime() + identDuration * 1000
           );
 
           await createSegment({
@@ -357,15 +378,16 @@ export class SchedulerService {
             endTime: identEnd,
           });
 
-          generatedMinutes += (identResult.metadata?.duration || 10) / 60;
+          talkMinutesGenerated += identDuration / 60;
           nextSlot = identEnd;
         } else {
           break; // Can't generate more, exit
         }
       }
 
+      const totalGenerated = musicMinutesGenerated + talkMinutesGenerated;
       console.log(
-        `Content generation complete: ${generatedMinutes.toFixed(1)} minutes generated`
+        `Content generation complete: ${totalGenerated.toFixed(1)} minutes (Music: ${musicMinutesGenerated.toFixed(1)} min, Talk: ${talkMinutesGenerated.toFixed(1)} min)`
       );
     } catch (error) {
       console.error("Error in generateContent:", error);

@@ -14,13 +14,37 @@ The scheduler is organized into modular components:
    - Manages show transitions and handover segments
    - Provides seasonal context for content generation
 
-2. **Queue Manager** (`src/queue-manager.ts`)
+2. **Show Manager** (`src/show-manager.ts`) ⭐ NEW
+   - Loads show configurations from `config/shows/*.json`
+   - Validates show requirements (ratios, duration, presenters)
+   - Applies seasonal and holiday overrides
+   - Supports configuration hot-reload
+
+3. **Presenter Manager** (`src/presenter-manager.ts`) ⭐ NEW
+   - Loads presenter configurations and voice mappings
+   - Implements duo vs solo selection logic
+   - Splits scripts between presenters for duo segments
+   - Manages anchor/sidekick roles
+
+4. **Topic Selector** (`src/topic-selector.ts`) ⭐ NEW
+   - Selects topics from show tags + seasonal context
+   - Provides mood keywords for music generation
+   - Determines segment duration (normal vs extended)
+   - Tracks topic diversity to avoid repetition
+
+5. **Queue Builder** (`src/queue-builder.ts`) ⭐ NEW
+   - Calculates queue statistics (duration, ratios, counts)
+   - Validates queue meets talk/music requirements
+   - Determines next segment type to maintain ratios
+   - Enforces minimum gap between talk segments
+
+6. **Queue Manager** (`src/queue-manager.ts`)
    - Maintains queue of upcoming segments with metadata
    - Monitors queue depth (targets 10-15 minutes minimum buffer)
    - Triggers content generation when buffer runs low
    - Tracks segment start times, file paths, show IDs, and request IDs
 
-3. **Content Generator** (`src/content-generator.ts`)
+7. **Content Generator** (`src/content-generator.ts`)
    - Integrates AI modules for music, scripts, and TTS
    - Generates music tracks from requests
    - Creates presenter commentary segments
@@ -28,34 +52,59 @@ The scheduler is organized into modular components:
    - Generates station idents
    - Provides fallback content on AI failure
 
-4. **Archiver** (`src/archiver.ts`)
+8. **Archiver** (`src/archiver.ts`)
    - Records segments into hour-long archive files
    - Maintains index with file offsets for time-shifted listening
    - Enables jump-to-time functionality
    - Assembles on-demand episodes per show
 
-5. **Broadcaster** (`src/broadcaster.ts`)
+9. **Broadcaster** (`src/broadcaster.ts`)
    - Publishes "now playing" metadata via EventEmitter
    - Streams upcoming segments information
    - Broadcasts request identifiers for voting
    - Supports WebSocket/SSE integration
 
-6. **Main Scheduler** (`src/scheduler.ts`)
-   - Orchestrates all components
-   - Runs scheduling loop with configurable interval
-   - Handles errors and recovery
-   - Ensures continuous streaming
+10. **Main Scheduler** (`src/scheduler.ts`)
+    - Orchestrates all components
+    - Runs scheduling loop with configurable interval
+    - Handles errors and recovery
+    - Ensures continuous streaming
 
-## Responsibilities
+## Documentation
+
+- **[Show and Presenter Management Guide](SHOW_PRESENTER_MANAGEMENT.md)** - Comprehensive guide to the new show and presenter management system with examples and best practices
 
 ## Features
 
-### Show Scheduling
+### Show Scheduling & Management
 - **Automated show selection**: Determines active show based on UTC time and day of week
 - **3-hour blocks**: Eight shows rotate daily (00:00-03:00, 03:00-06:00, etc.)
 - **Seasonal awareness**: Adjusts content based on season (winter, spring, summer, autumn)
 - **Holiday detection**: Recognizes major holidays (Christmas, New Year, Halloween, etc.)
 - **Handover segments**: Generates 5-minute transitions between shows featuring both presenter duos
+- **Configuration validation**: Ensures all shows meet ratio requirements (music ≤60%, talk ≥40%)
+- **Hot-reload**: Update show and presenter configs without service restart
+
+### Presenter Management
+- **Voice mapping**: Maps 16 presenters to distinct TTS voices
+- **Duo dynamics**: Probabilistic duo vs solo presentation based on show config
+- **Script splitting**: Automatically distributes dialogue between anchor and sidekick
+- **Role-based assignment**: Respects anchor/sidekick roles in duo interactions
+- **4-presenter handovers**: Coordinates both outgoing and incoming presenter duos
+
+### Topic & Mood Selection
+- **Context-aware topics**: Combines show tags with seasonal and holiday context
+- **Diversity tracking**: Avoids topic repetition with weighted selection
+- **Mood keywords**: Provides appropriate keywords for music generation
+- **Dynamic duration**: Varies segment length based on show configuration
+- **Banned tag filtering**: Excludes inappropriate topics per show
+
+### Talk/Music Ratio Enforcement
+- **Real-time validation**: Calculates queue statistics continuously
+- **Automatic balancing**: Suggests next segment type to maintain ratios
+- **Segment planning**: Calculates exact needs to fill target duration
+- **Gap enforcement**: Respects minimum time between talk segments
+- **Tolerance handling**: Allows 5% deviation for natural flow
 
 ### Queue Management
 - **Dynamic buffer**: Maintains configurable buffer of upcoming content (default: 45 minutes)

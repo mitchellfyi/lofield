@@ -11,6 +11,7 @@ import * as crypto from "crypto";
 import { getAIConfig } from "./config";
 import { createCache } from "./cache";
 import { withRetry, isRetryableError } from "./retry";
+import { getAudioDuration } from "./audio-utils";
 import type {
   MusicGenerationRequest,
   MusicGenerationResult,
@@ -158,10 +159,23 @@ async function generateMusicWithElevenLabs(
     const extension = getExtensionFromContentType(contentType);
     const filePath = await saveAudioFile(buffer, request, extension);
 
+    // Use ffprobe to get the actual duration of the generated file
+    let actualDuration = Math.round(durationMs / 1000);
+    try {
+      actualDuration = await getAudioDuration(filePath);
+      console.log(
+        `Detected actual duration: ${actualDuration}s (requested: ${Math.round(durationMs / 1000)}s)`
+      );
+    } catch (error) {
+      console.warn(
+        `Failed to probe audio duration, using requested duration: ${(error as Error).message}`
+      );
+    }
+
     const metadata: MusicMetadata = {
       title: generateTitle(request),
       artist: "Lofield FM",
-      duration: Math.round(durationMs / 1000),
+      duration: actualDuration,
       bpm: request.bpm,
       mood: request.mood,
       tags: request.tags,

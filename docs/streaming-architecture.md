@@ -82,6 +82,26 @@ This document outlines the streaming and playback engine architecture for Lofiel
 
 ## Playout Pipeline
 
+### Music Duration Detection
+
+**Accurate Duration Measurement:**
+The music generation module uses `ffprobe` to detect the actual duration of generated audio files. AI models may produce audio that is slightly longer or shorter than requested, which can cause timing drift in the schedule.
+
+**Implementation:**
+1. After generating a music track via the AI provider (e.g., ElevenLabs), the file is saved to disk
+2. `ffprobe` inspects the audio file to extract precise metadata including duration, sample rate, and codec information
+3. The actual duration (in seconds) is stored in the track's metadata, replacing the requested duration
+4. The scheduler and playout service use this accurate duration for scheduling and playback
+
+**Fallback Behavior:**
+If `ffprobe` fails to read the audio file (e.g., corrupted file, unsupported format), the system falls back to using the requested duration with a warning logged. This ensures the service continues operating even if duration detection fails.
+
+**Benefits:**
+- Prevents timing drift in the 24-hour schedule
+- Ensures seamless transitions between segments
+- Provides accurate metadata for time-shift and archive features
+- Enables better quality control by detecting malformed audio files early
+
 ### FFmpeg Processing Chain
 
 The playout service uses FFmpeg to process audio segments:

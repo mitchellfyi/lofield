@@ -515,7 +515,8 @@ export async function generateIdent(
  */
 export async function generateFallbackContent(
   type: "music" | "talk",
-  audioStoragePath: string
+  audioStoragePath: string,
+  duration?: number
 ): Promise<{ filePath: string; duration: number }> {
   logger.info(`  [FALLBACK] Generating fallback ${type} content`);
 
@@ -533,8 +534,11 @@ export async function generateFallbackContent(
   // Create a stub file
   await fs.writeFile(filePath, Buffer.from("stub_fallback_audio_data"));
 
+  // Use provided duration or defaults
+  const actualDuration = duration ?? (type === "music" ? 180 : 30);
+
   return {
     filePath,
-    duration: type === "music" ? 180 : 30,
+    duration: actualDuration,
   };
 }

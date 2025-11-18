@@ -6,7 +6,6 @@
  */
 
 import * as fs from "fs/promises";
-import * as fsSync from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
 import logger from "./logger";
@@ -22,8 +21,34 @@ import {
 } from "./topic-selector";
 import { getSeasonalContextWithOverrides } from "./show-scheduler";
 
-// Placeholder for AI module integration
-// In a real implementation, these would import from the web/lib/ai modules
+/**
+ * Mix/concatenate multiple audio files into a single file
+ * In production, this would use actual audio processing libraries
+ */
+async function mixAudioFiles(
+  audioFiles: string[],
+  outputPath: string
+): Promise<void> {
+  // In a real implementation, this would:
+  // 1. Load all audio files
+  // 2. Concatenate them sequentially
+  // 3. Save to outputPath
+  // For stub: combine file contents as placeholder
+  
+  const combinedContent = Buffer.concat(
+    await Promise.all(
+      audioFiles.map(async (file) => {
+        try {
+          return await fs.readFile(file);
+        } catch {
+          return Buffer.from("stub_audio_data");
+        }
+      })
+    )
+  );
+  
+  await fs.writeFile(outputPath, combinedContent);
+}
 
 interface MusicGenerationResult {
   success: boolean;
@@ -62,7 +87,7 @@ export async function generateMusicTrack(
   audioStoragePath: string
 ): Promise<MusicGenerationResult> {
   try {
-    const showConfig = getShowConfig(show.id);
+    const showConfig = await getShowConfig(show.id);
     if (!showConfig) {
       throw new Error(`Show config not found for ${show.id}`);
     }
@@ -126,7 +151,7 @@ export async function generateCommentary(
   segmentType: "track_intro" | "segment" = "track_intro"
 ): Promise<TTSResult> {
   try {
-    const showConfig = getShowConfig(show.id);
+    const showConfig = await getShowConfig(show.id);
     if (!showConfig) {
       throw new Error(`Show config not found for ${show.id}`);
     }
@@ -134,7 +159,8 @@ export async function generateCommentary(
     const seasonalContext = getSeasonalContextWithOverrides(showConfig);
     const { presenters, isDuo } = selectPresenters(
       showConfig.presenters.primary_duo,
-      showConfig.presenters.duo_probability
+      showConfig.presenters.duo_probability,
+      show.id // Pass showId for usage tracking
     );
 
     // Determine segment duration
@@ -172,7 +198,7 @@ export async function generateCommentary(
     // Step 2: If duo, split script between presenters
     let audioSegments: { presenterId: string; text: string }[];
     if (isDuo) {
-      audioSegments = splitScriptForDuo(script, presenters);
+      audioSegments = await splitScriptForDuo(script, presenters);
     } else {
       audioSegments = [{ presenterId: presenters[0], text: script }];
     }
@@ -180,7 +206,7 @@ export async function generateCommentary(
     // Step 3: Generate TTS for each segment
     const audioFiles: string[] = [];
     for (const segment of audioSegments) {
-      const voiceId = getPresenterVoiceId(segment.presenterId);
+      const voiceId = await getPresenterVoiceId(segment.presenterId);
       if (!voiceId) {
         logger.warn(`  [WARN] Voice ID not found for presenter ${segment.presenterId}`);
         continue;
@@ -207,10 +233,22 @@ export async function generateCommentary(
       audioFiles.push(filePath);
     }
 
-    // Step 4: If duo, mix the audio files
-    // In reality, we would mix/sequence the audio files here
-    // For now, we just use the first one
-    const finalFilePath = audioFiles[0] || path.join(audioStoragePath, "commentary", `fallback_${crypto.randomBytes(8).toString("hex")}.mp3`);
+    // Step 4: Mix audio files if duo (concatenate sequentially)
+    let finalFilePath: string;
+    if (audioFiles.length > 1) {
+      // Mix all audio files into a single file
+      const mixedFilename = `commentary_mixed_${crypto.randomBytes(8).toString("hex")}.mp3`;
+      finalFilePath = path.join(audioStoragePath, "commentary", mixedFilename);
+      await mixAudioFiles(audioFiles, finalFilePath);
+      
+      logger.debug(`  [AI] Mixed ${audioFiles.length} audio segments into ${mixedFilename}`);
+    } else {
+      finalFilePath = audioFiles[0] || path.join(
+        audioStoragePath, 
+        "commentary", 
+        `fallback_${crypto.randomBytes(8).toString("hex")}.mp3`
+      );
+    }
 
     return {
       success: true,
@@ -237,8 +275,8 @@ export async function generateHandoverSegment(
   audioStoragePath: string
 ): Promise<TTSResult> {
   try {
-    const currentConfig = getShowConfig(currentShow.id);
-    const nextConfig = getShowConfig(nextShow.id);
+    const currentConfig = await getShowConfig(currentShow.id);
+    const nextConfig = await getShowConfig(nextShow.id);
     
     if (!currentConfig || !nextConfig) {
       throw new Error("Show config not found for handover generation");
@@ -262,7 +300,8 @@ export async function generateHandoverSegment(
     // Build handover themes
     const handoverThemes = currentConfig.handover?.typical_themes || [];
 
-    // Step 1: Generate handover script with all presenters
+    // Step 1: Generate witty handover script with Lofield voice
+    // In production, this would call the LLM with proper context
     // const scriptResult = await generateScript({
     //   segmentType: "handover",
     //   showContext: {
@@ -278,8 +317,14 @@ export async function generateHandoverSegment(
     //   isDuo: true, // Handovers are always multi-presenter
     // });
 
-    // Stub script with all four presenters
-    const script = `And that's it for ${currentShow.name}. Coming up next is ${nextShow.name}. Stay tuned.`;
+    // Generate a Lofield-style witty handover script (stub)
+    const script = generateLofieldHandoverScript(
+      currentShow.name,
+      nextShow.name,
+      currentConfig,
+      nextConfig,
+      handoverThemes
+    );
 
     logger.debug(`  [AI] Generated handover script`);
 
@@ -290,7 +335,7 @@ export async function generateHandoverSegment(
     // Step 3: Generate TTS for each presenter segment
     const audioFiles: string[] = [];
     for (const segment of scriptSegments) {
-      const voiceId = getPresenterVoiceId(segment.presenterId);
+      const voiceId = await getPresenterVoiceId(segment.presenterId);
       if (!voiceId) {
         logger.warn(`  [WARN] Voice ID not found for presenter ${segment.presenterId}`);
         continue;
@@ -318,19 +363,13 @@ export async function generateHandoverSegment(
     }
 
     // Step 4: Mix/sequence all audio segments
-    // In reality, we would create a mixed audio file with all presenters
-    // For now, create a combined placeholder
-    const filename = `handover_${crypto.randomBytes(8).toString("hex")}.mp3`;
-    const filePath = path.join(audioStoragePath, "handovers", filename);
+    const mixedFilename = `handover_${crypto.randomBytes(8).toString("hex")}.mp3`;
+    const filePath = path.join(audioStoragePath, "handovers", mixedFilename);
     
-    const dir = path.dirname(filePath);
-    try {
-      await fs.access(dir);
-    } catch {
-      await fs.mkdir(dir, { recursive: true });
-    }
+    // Mix all presenter audio files
+    await mixAudioFiles(audioFiles, filePath);
     
-    await fs.writeFile(filePath, Buffer.from("stub_handover_audio_data"));
+    logger.debug(`  [AI] Mixed ${audioFiles.length} handover segments into ${mixedFilename}`);
 
     return {
       success: true,
@@ -346,6 +385,36 @@ export async function generateHandoverSegment(
       error: (error as Error).message,
     };
   }
+}
+
+/**
+ * Generate a witty Lofield-style handover script
+ */
+function generateLofieldHandoverScript(
+  currentShowName: string,
+  nextShowName: string,
+  currentConfig: ShowConfig,
+  nextConfig: ShowConfig,
+  themes: string[]
+): string {
+  // Generate dry, understated handover in Lofield style
+  // This is a stub - in production, LLM would generate this
+  
+  const lines = [
+    `And that's it for ${currentShowName}.`,
+    `Hope you made it through.`,
+    `Coming up next: ${nextShowName}.`,
+    `Same frequency, different energy level.`,
+    `We'll be here, you'll be there, time will continue to pass.`,
+  ];
+  
+  // Add theme-specific line if available
+  if (themes.length > 0) {
+    const theme = themes[Math.floor(Math.random() * themes.length)];
+    lines.push(`${theme}.`);
+  }
+  
+  return lines.join(" ");
 }
 
 /**
@@ -385,7 +454,7 @@ export async function generateIdent(
   audioStoragePath: string
 ): Promise<TTSResult> {
   try {
-    const showConfig = getShowConfig(show.id);
+    const showConfig = await getShowConfig(show.id);
     if (!showConfig) {
       throw new Error(`Show config not found for ${show.id}`);
     }
@@ -394,14 +463,15 @@ export async function generateIdent(
 
     const { presenters } = selectPresenters(
       showConfig.presenters.primary_duo,
-      0.5 // 50% chance of duo for idents
+      0.5, // 50% chance of duo for idents
+      show.id
     );
 
     // Stub ident script
     const script = "You're listening to Lofield FM. Background noise for people just trying to make it through the day.";
 
     // Generate TTS for the ident
-    const voiceId = getPresenterVoiceId(presenters[0]);
+    const voiceId = await getPresenterVoiceId(presenters[0]);
     
     // const ttsResult = await generateTTS({
     //   text: script,

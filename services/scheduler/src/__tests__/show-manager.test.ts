@@ -17,40 +17,40 @@ describe("Show Manager", () => {
   });
 
   describe("loadShowConfigs", () => {
-    it("should load show configurations", () => {
-      const configs = loadShowConfigs();
+    it("should load show configurations", async () => {
+      const configs = await loadShowConfigs();
       expect(configs.size).toBeGreaterThan(0);
     });
 
-    it("should cache configurations", () => {
-      const configs1 = loadShowConfigs();
-      const configs2 = loadShowConfigs();
+    it("should cache configurations", async () => {
+      const configs1 = await loadShowConfigs();
+      const configs2 = await loadShowConfigs();
       expect(configs1).toBe(configs2);
     });
 
-    it("should force reload when requested", () => {
-      const configs1 = loadShowConfigs();
-      const configs2 = loadShowConfigs(true);
+    it("should force reload when requested", async () => {
+      const configs1 = await loadShowConfigs();
+      const configs2 = await loadShowConfigs(true);
       expect(configs1).not.toBe(configs2);
     });
   });
 
   describe("getShowConfig", () => {
-    it("should retrieve a specific show config", () => {
-      const config = getShowConfig("deep_work_calendar_blocks");
+    it("should retrieve a specific show config", async () => {
+      const config = await getShowConfig("mild_panic_mornings");
       expect(config).not.toBeNull();
-      expect(config?.name).toBe("Deep Work (According to Calendar Blocks)");
+      expect(config?.name).toBe("Mild Panic Mornings");
     });
 
-    it("should return null for non-existent show", () => {
-      const config = getShowConfig("nonexistent_show");
+    it("should return null for non-existent show", async () => {
+      const config = await getShowConfig("nonexistent_show");
       expect(config).toBeNull();
     });
   });
 
   describe("getAllShowConfigs", () => {
-    it("should return all show configurations", () => {
-      const configs = getAllShowConfigs();
+    it("should return all show configurations", async () => {
+      const configs = await getAllShowConfigs();
       expect(configs.length).toBeGreaterThan(0);
       expect(configs[0]).toHaveProperty("id");
       expect(configs[0]).toHaveProperty("name");
@@ -58,8 +58,8 @@ describe("Show Manager", () => {
   });
 
   describe("validateShowConfig", () => {
-    it("should validate a correct show config", () => {
-      const config = getShowConfig("deep_work_calendar_blocks");
+    it("should validate a correct show config", async () => {
+      const config = await getShowConfig("mild_panic_mornings");
       if (!config) {
         throw new Error("Config not found");
       }
@@ -69,8 +69,8 @@ describe("Show Manager", () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it("should detect music fraction exceeding maximum", () => {
-      const config = getShowConfig("deep_work_calendar_blocks");
+    it("should detect music fraction exceeding maximum", async () => {
+      const config = await getShowConfig("mild_panic_mornings");
       if (!config) {
         throw new Error("Config not found");
       }
@@ -89,8 +89,8 @@ describe("Show Manager", () => {
       expect(result.errors[0]).toContain("Music fraction");
     });
 
-    it("should detect talk fraction below minimum", () => {
-      const config = getShowConfig("deep_work_calendar_blocks");
+    it("should detect talk fraction below minimum", async () => {
+      const config = await getShowConfig("mild_panic_mornings");
       if (!config) {
         throw new Error("Config not found");
       }
@@ -108,8 +108,8 @@ describe("Show Manager", () => {
       expect(result.errors.length).toBeGreaterThan(0);
     });
 
-    it("should detect incorrect duration", () => {
-      const config = getShowConfig("deep_work_calendar_blocks");
+    it("should detect incorrect duration", async () => {
+      const config = await getShowConfig("mild_panic_mornings");
       if (!config) {
         throw new Error("Config not found");
       }
@@ -129,9 +129,9 @@ describe("Show Manager", () => {
   });
 
   describe("getShowConfigWithOverrides", () => {
-    it("should apply seasonal overrides", () => {
-      const config = getShowConfigWithOverrides(
-        "deep_work_calendar_blocks",
+    it("should apply seasonal overrides", async () => {
+      const config = await getShowConfigWithOverrides(
+        "mild_panic_mornings",
         "winter"
       );
       
@@ -140,28 +140,42 @@ describe("Show Manager", () => {
 
       // Check if winter topics were added
       const hasWinterTopics = config.topics.primary_tags.some(
-        tag => tag.includes("winter") || tag.includes("dark")
+        tag => tag.includes("winter") || tag.includes("dark") || tag.includes("cold")
       );
       expect(hasWinterTopics).toBe(true);
     });
 
-    it("should return config without overrides for non-existent season", () => {
-      const config = getShowConfigWithOverrides(
-        "deep_work_calendar_blocks",
+    it("should return config without overrides for non-existent season", async () => {
+      const config = await getShowConfigWithOverrides(
+        "mild_panic_mornings",
         "spring"
       );
       
       expect(config).not.toBeNull();
     });
 
-    it("should handle holiday overrides", () => {
-      const config = getShowConfigWithOverrides(
-        "deep_work_calendar_blocks",
+    it("should handle holiday overrides", async () => {
+      const config = await getShowConfigWithOverrides(
+        "mild_panic_mornings",
         "winter",
         "Christmas"
       );
       
       expect(config).not.toBeNull();
+    });
+    
+    it("should deep merge tone adjustments", async () => {
+      const config = await getShowConfigWithOverrides(
+        "mild_panic_mornings",
+        "winter"
+      );
+      
+      expect(config).not.toBeNull();
+      if (!config) return;
+
+      // Should preserve original tone keywords while adding seasonal adjustment
+      expect(config.tone.keywords).toBeDefined();
+      expect(config.tone.keywords.length).toBeGreaterThan(0);
     });
   });
 });

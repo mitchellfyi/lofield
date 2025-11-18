@@ -132,109 +132,109 @@ describe("Queue Builder", () => {
   });
 
   describe("validateQueueRatios", () => {
-    it("should validate correct ratios", () => {
+    it("should validate correct ratios", async () => {
       const segments = [
         createMockSegment("music", 360), // 6 minutes (60%)
         createMockSegment("talk", 240),  // 4 minutes (40%)
       ];
 
-      const result = validateQueueRatios(segments, mockShow);
+      const result = await validateQueueRatios(segments, mockShow);
       expect(result.valid).toBe(true);
     });
 
-    it("should detect excessive music", () => {
+    it("should detect excessive music", async () => {
       const segments = [
         createMockSegment("music", 420), // 7 minutes (70%)
         createMockSegment("talk", 180),  // 3 minutes (30%)
       ];
 
-      const result = validateQueueRatios(segments, mockShow);
+      const result = await validateQueueRatios(segments, mockShow);
       expect(result.valid).toBe(false);
       expect(result.message).toContain("Music fraction");
     });
 
-    it("should detect insufficient talk", () => {
+    it("should detect insufficient talk", async () => {
       const segments = [
         createMockSegment("music", 540), // 9 minutes (90%)
         createMockSegment("talk", 60),   // 1 minute (10%)
       ];
 
-      const result = validateQueueRatios(segments, mockShow);
+      const result = await validateQueueRatios(segments, mockShow);
       expect(result.valid).toBe(false);
       // Could fail on either music or talk check
       expect(result.message).toBeDefined();
     });
 
-    it("should allow small deviation from target", () => {
+    it("should allow small deviation from target", async () => {
       const segments = [
         createMockSegment("music", 380), // 6.33 minutes (63.3%)
         createMockSegment("talk", 220),  // 3.67 minutes (36.7%)
       ];
 
       // Should pass because deviation is within tolerance (0.05)
-      const result = validateQueueRatios(segments, mockShow);
+      const result = await validateQueueRatios(segments, mockShow);
       expect(result.valid).toBe(true);
     });
   });
 
   describe("determineNextSegmentType", () => {
-    it("should suggest music when music is low", () => {
+    it("should suggest music when music is low", async () => {
       const segments = [
         createMockSegment("talk", 300), // All talk, no music
       ];
 
-      const nextType = determineNextSegmentType(segments, mockShow);
+      const nextType = await determineNextSegmentType(segments, mockShow);
       expect(nextType).toBe("music");
     });
 
-    it("should suggest talk when talk is low", () => {
+    it("should suggest talk when talk is low", async () => {
       const segments = [
         createMockSegment("music", 600), // All music, no talk
       ];
 
-      const nextType = determineNextSegmentType(segments, mockShow);
+      const nextType = await determineNextSegmentType(segments, mockShow);
       expect(nextType).toBe("talk");
     });
 
-    it("should suggest balanced when ratios are good", () => {
+    it("should suggest balanced when ratios are good", async () => {
       const segments = [
         createMockSegment("music", 360), // 60%
         createMockSegment("talk", 240),  // 40%
       ];
 
-      const nextType = determineNextSegmentType(segments, mockShow);
+      const nextType = await determineNextSegmentType(segments, mockShow);
       expect(["music", "talk", "balanced"]).toContain(nextType);
     });
   });
 
   describe("calculateSegmentNeeds", () => {
-    it("should calculate needs for empty queue", () => {
-      const needs = calculateSegmentNeeds([], mockShow, 60); // 60 minutes target
+    it("should calculate needs for empty queue", async () => {
+      const needs = await calculateSegmentNeeds([], mockShow, 60); // 60 minutes target
 
       expect(needs.totalDurationNeeded).toBe(60 * 60); // 3600 seconds
       expect(needs.musicSegmentsNeeded).toBeGreaterThan(0);
       expect(needs.talkSegmentsNeeded).toBeGreaterThan(0);
     });
 
-    it("should calculate remaining needs", () => {
+    it("should calculate remaining needs", async () => {
       const segments = [
         createMockSegment("music", 180), // 3 minutes
         createMockSegment("talk", 60),   // 1 minute
       ];
 
-      const needs = calculateSegmentNeeds(segments, mockShow, 10); // 10 minutes target
+      const needs = await calculateSegmentNeeds(segments, mockShow, 10); // 10 minutes target
 
       expect(needs.totalDurationNeeded).toBeCloseTo(6 * 60, 0); // ~6 minutes remaining
       expect(needs.musicSegmentsNeeded).toBeGreaterThan(0);
       expect(needs.talkSegmentsNeeded).toBeGreaterThan(0);
     });
 
-    it("should return zero needs when queue is full", () => {
+    it("should return zero needs when queue is full", async () => {
       const segments = [
         createMockSegment("music", 600), // 10 minutes
       ];
 
-      const needs = calculateSegmentNeeds(segments, mockShow, 10); // 10 minutes target
+      const needs = await calculateSegmentNeeds(segments, mockShow, 10); // 10 minutes target
 
       expect(needs.totalDurationNeeded).toBeLessThanOrEqual(0);
       expect(needs.musicSegmentsNeeded).toBe(0);
@@ -243,33 +243,33 @@ describe("Queue Builder", () => {
   });
 
   describe("getMinGapBetweenLinks", () => {
-    it("should get min gap from show config", () => {
-      const minGap = getMinGapBetweenLinks(mockShow);
+    it("should get min gap from show config", async () => {
+      const minGap = await getMinGapBetweenLinks(mockShow);
       expect(minGap).toBe(300);
     });
   });
 
   describe("canAddTalkSegment", () => {
-    it("should allow talk when no previous talk", () => {
+    it("should allow talk when no previous talk", async () => {
       const segments = [
         createMockSegment("music", 180),
       ];
 
-      const canAdd = canAddTalkSegment(segments, mockShow);
+      const canAdd = await canAddTalkSegment(segments, mockShow);
       expect(canAdd).toBe(true);
     });
 
-    it("should allow talk when enough time has passed", () => {
+    it("should allow talk when enough time has passed", async () => {
       const segments = [
         createMockSegment("talk", 30, -10), // 10 minutes ago
         createMockSegment("music", 180, -7), // 7 minutes ago
       ];
 
-      const canAdd = canAddTalkSegment(segments, mockShow);
+      const canAdd = await canAddTalkSegment(segments, mockShow);
       expect(canAdd).toBe(true);
     });
 
-    it("should prevent talk when too soon after previous", () => {
+    it("should prevent talk when too soon after previous", async () => {
       // Create a recent talk segment
       const recentTalk = createMockSegment("talk", 30);
       // Manually set the end time to be very recent (1 minute ago)
@@ -277,7 +277,7 @@ describe("Queue Builder", () => {
 
       const segments = [recentTalk];
 
-      const canAdd = canAddTalkSegment(segments, mockShow);
+      const canAdd = await canAddTalkSegment(segments, mockShow);
       expect(canAdd).toBe(false);
     });
   });

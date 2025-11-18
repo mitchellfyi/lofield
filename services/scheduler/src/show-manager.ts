@@ -5,7 +5,7 @@
  * and provides utilities for accessing show-specific settings.
  */
 
-import * as fs from "fs";
+import * as fs from "fs/promises";
 import * as path from "path";
 import type { ShowConfig } from "./types";
 
@@ -16,7 +16,7 @@ let configLoadTime: number = 0;
 /**
  * Get the path to the config directory
  */
-function getConfigBasePath(): string {
+async function getConfigBasePath(): Promise<string> {
   // Try multiple possible paths (from scheduler service, from root, etc.)
   const possiblePaths = [
     path.join(process.cwd(), "..", "..", "config"),
@@ -26,8 +26,11 @@ function getConfigBasePath(): string {
 
   for (const configPath of possiblePaths) {
     const showsPath = path.join(configPath, "shows");
-    if (fs.existsSync(showsPath)) {
+    try {
+      await fs.access(showsPath);
       return configPath;
+    } catch {
+      // Path doesn't exist, continue
     }
   }
 
@@ -38,7 +41,7 @@ function getConfigBasePath(): string {
 /**
  * Load all show configurations from config/shows/*.json
  */
-export function loadShowConfigs(forceReload: boolean = false): Map<string, ShowConfig> {
+export async function loadShowConfigs(forceReload: boolean = false): Promise<Map<string, ShowConfig>> {
   const now = Date.now();
   
   // Return cached configs if recent (unless force reload)
@@ -46,16 +49,18 @@ export function loadShowConfigs(forceReload: boolean = false): Map<string, ShowC
     return showConfigCache;
   }
 
-  const configBasePath = getConfigBasePath();
+  const configBasePath = await getConfigBasePath();
   const showsPath = path.join(configBasePath, "shows");
 
-  if (!fs.existsSync(showsPath)) {
+  try {
+    await fs.access(showsPath);
+  } catch {
     console.warn(`Shows config directory not found: ${showsPath}`);
     return new Map();
   }
 
   const newCache = new Map<string, ShowConfig>();
-  const files = fs.readdirSync(showsPath);
+  const files = await fs.readdir(showsPath);
 
   for (const file of files) {
     if (!file.endsWith(".json")) {
@@ -64,7 +69,7 @@ export function loadShowConfigs(forceReload: boolean = false): Map<string, ShowC
 
     try {
       const filePath = path.join(showsPath, file);
-      const content = fs.readFileSync(filePath, "utf-8");
+      const content = await fs.readFile(filePath, "utf-8");
       const config: ShowConfig = JSON.parse(content);
       
       // Validate required fields
@@ -89,16 +94,16 @@ export function loadShowConfigs(forceReload: boolean = false): Map<string, ShowC
 /**
  * Get a specific show configuration by ID
  */
-export function getShowConfig(showId: string): ShowConfig | null {
-  const configs = loadShowConfigs();
+export async function getShowConfig(showId: string): Promise<ShowConfig | null> {
+  const configs = await loadShowConfigs();
   return configs.get(showId) || null;
 }
 
 /**
  * Get all loaded show configurations
  */
-export function getAllShowConfigs(): ShowConfig[] {
-  const configs = loadShowConfigs();
+export async function getAllShowConfigs(): Promise<ShowConfig[]> {
+  const configs = await loadShowConfigs();
   return Array.from(configs.values());
 }
 
@@ -106,9 +111,9 @@ export function getAllShowConfigs(): ShowConfig[] {
  * Reload configurations from disk
  * Useful for hot-reloading without service restart
  */
-export function reloadShowConfigs(): void {
+export async function reloadShowConfigs(): Promise<void> {
   console.log("Reloading show configurations...");
-  loadShowConfigs(true);
+  await loadShowConfigs(true);
 }
 
 /**
@@ -159,22 +164,58 @@ export function validateShowConfig(config: ShowConfig): { valid: boolean; errors
 }
 
 /**
+ * Deep merge utility to merge nested objects
+ */
+function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
+  const result = { ...target };
+  
+  for (const key in source) {
+    const sourceValue = source[key];
+    const targetValue = target[key];
+    
+    if (sourceValue === undefined) {
+      continue;
+    }
+    
+    if (Array.isArray(sourceValue) && Array.isArray(targetValue)) {
+      // For arrays, concatenate and deduplicate
+      result[key] = [...new Set([...targetValue, ...sourceValue])] as any;
+    } else if (
+      typeof sourceValue === 'object' && 
+      sourceValue !== null && 
+      !Array.isArray(sourceValue) &&
+      typeof targetValue === 'object' && 
+      targetValue !== null && 
+      !Array.isArray(targetValue)
+    ) {
+      // For objects, recursively merge
+      result[key] = deepMerge(targetValue, sourceValue) as any;
+    } else {
+      // For primitive values, override
+      result[key] = sourceValue as any;
+    }
+  }
+  
+  return result;
+}
+
+/**
  * Get show configuration merged with seasonal/holiday overrides
  */
-export function getShowConfigWithOverrides(
+export async function getShowConfigWithOverrides(
   showId: string,
   season: string,
   holidayName?: string
-): ShowConfig | null {
-  const baseConfig = getShowConfig(showId);
+): Promise<ShowConfig | null> {
+  const baseConfig = await getShowConfig(showId);
   if (!baseConfig) {
     return null;
   }
 
   // Clone the config to avoid mutating the cache
-  const config = JSON.parse(JSON.stringify(baseConfig)) as ShowConfig;
+  let config = JSON.parse(JSON.stringify(baseConfig)) as ShowConfig;
 
-  // Apply seasonal overrides
+  // Apply seasonal overrides with deep merge
   if (config.season_overrides && config.season_overrides[season]) {
     const override = config.season_overrides[season];
     
@@ -185,14 +226,32 @@ export function getShowConfigWithOverrides(
         ...override.additional_topics,
       ];
     }
+    
+    // Deep merge other properties (like tone adjustments)
+    if (override.tone_adjustment) {
+      // Store tone_adjustment for prompt generation without overwriting existing tone
+      config = deepMerge(config, {
+        tone: {
+          ...config.tone,
+          seasonal_adjustment: override.tone_adjustment,
+        } as any,
+      });
+    }
   }
 
-  // Apply holiday overrides
+  // Apply holiday overrides with deep merge
   if (holidayName && config.holiday_overrides) {
     for (const [key, override] of Object.entries(config.holiday_overrides)) {
       if (key.toLowerCase().includes(holidayName.toLowerCase())) {
-        // Holiday overrides could add more topics in the future
-        // For now, we just note they're available for prompt generation
+        // Deep merge holiday adjustments
+        if (override.tone_adjustment) {
+          config = deepMerge(config, {
+            tone: {
+              ...config.tone,
+              holiday_adjustment: override.tone_adjustment,
+            } as any,
+          });
+        }
         break;
       }
     }

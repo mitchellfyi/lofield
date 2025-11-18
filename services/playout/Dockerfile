@@ -1,5 +1,6 @@
 # Dockerfile for Lofield FM Playout Service
 # Node.js service with ffmpeg for audio streaming and playout
+# Note: Build context should be repository root
 
 FROM node:20-alpine AS base
 WORKDIR /app
@@ -10,8 +11,8 @@ FROM base AS deps
 # Install ffmpeg and audio processing tools
 RUN apk add --no-cache ffmpeg
 
-# Copy package files
-COPY package.json package-lock.json* ./
+# Copy package files from playout directory
+COPY services/playout/package.json services/playout/package-lock.json* ./
 RUN npm ci
 
 # Stage 2: Builder
@@ -22,11 +23,15 @@ RUN apk add --no-cache ffmpeg
 
 # Copy dependencies
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
 
-# Note: Prisma schema is expected to be in ../web/prisma relative to build context
-# docker-compose should set build context to repo root with dockerfile path specified
-RUN npx prisma generate --schema=../web/prisma/schema.prisma
+# Copy playout source
+COPY services/playout ./
+
+# Copy Prisma schema from web directory
+COPY web/prisma ./prisma
+
+# Generate Prisma Client
+RUN npx prisma generate
 
 # Stage 3: Runner
 FROM base AS runner
@@ -49,6 +54,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/index.ts ./
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/*.json ./
+COPY --from=builder /app/prisma ./prisma
 
 # Set ownership
 RUN chown -R playout:nodejs /app

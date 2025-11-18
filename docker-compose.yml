@@ -118,7 +118,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: sh -c "npx prisma migrate deploy --schema=../web/prisma/schema.prisma && npm start"
+    command: sh -c "npx prisma migrate deploy && npm start"
     restart: unless-stopped
     networks:
       - lofield
@@ -147,7 +147,7 @@ services:
         condition: service_healthy
       icecast:
         condition: service_healthy
-    command: sh -c "npx prisma migrate deploy --schema=../web/prisma/schema.prisma && npm start"
+    command: sh -c "npx prisma migrate deploy && npm start"
     restart: unless-stopped
     networks:
       - lofield

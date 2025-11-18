@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import { prisma } from "@/lib/db";
@@ -8,7 +8,7 @@ import { prisma } from "@/lib/db";
  * 
  * Returns health status of the streaming infrastructure
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const streamPath =
       process.env.STREAM_OUTPUT_PATH || "/var/lofield/stream";
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Check archive storage
-    let archiveStorage = {
+    const archiveStorage = {
       available: "unknown",
       used: "unknown",
     };

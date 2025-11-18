@@ -89,7 +89,7 @@ export async function GET(
     );
 
     // Generate HLS playlist
-    const playlist = generateHLSPlaylist(segments, showId, dateParam);
+    const playlist = generateHLSPlaylist(segments);
 
     return new NextResponse(playlist, {
       status: 200,
@@ -121,9 +121,7 @@ function generateHLSPlaylist(
     showId: string;
     segmentType: string;
     segmentId: string;
-  }>,
-  showId: string,
-  date: string
+  }>
 ): string {
   const lines = [
     "#EXTM3U",

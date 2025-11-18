@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 
@@ -7,7 +7,7 @@ import path from "path";
  * 
  * Serves the live HLS manifest for continuous streaming
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const streamPath =
       process.env.STREAM_OUTPUT_PATH || "/var/lofield/stream";

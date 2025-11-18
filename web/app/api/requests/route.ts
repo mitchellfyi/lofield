@@ -3,11 +3,14 @@ import { prisma } from "@/lib/db";
 import type { CreateRequestData } from "@/lib/types";
 import { moderateRequest } from "@/lib/moderation";
 import { classifyRequest } from "@/lib/classification";
+import { requestEventEmitter } from "@/lib/request-events";
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const statusParam = searchParams.get("status");
+    const typeParam = searchParams.get("type");
+    const sortParam = searchParams.get("sort");
 
     // Validate status parameter
     const validStatuses = ["pending", "approved", "rejected", "used"];
@@ -18,6 +21,42 @@ export async function GET(request: NextRequest) {
         },
         { status: 400 }
       );
+    }
+
+    // Validate type parameter
+    const validTypes = ["music", "talk"];
+    if (typeParam && !validTypes.includes(typeParam)) {
+      return NextResponse.json(
+        {
+          error: `Invalid type parameter: must be one of ${validTypes.join(", ")}`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate sort parameter
+    const validSorts = ["created_at", "votes"];
+    if (sortParam && !validSorts.includes(sortParam)) {
+      return NextResponse.json(
+        {
+          error: `Invalid sort parameter: must be one of ${validSorts.join(", ")}`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // Parse and validate page parameter (1-based)
+    const pageParam = searchParams.get("page");
+    let page = 1; // default
+    if (pageParam) {
+      const parsedPage = parseInt(pageParam, 10);
+      if (isNaN(parsedPage) || parsedPage < 1) {
+        return NextResponse.json(
+          { error: "Invalid page parameter: must be a positive number" },
+          { status: 400 }
+        );
+      }
+      page = parsedPage;
     }
 
     // Parse and validate limit parameter
@@ -40,35 +79,55 @@ export async function GET(request: NextRequest) {
       limit = parsedLimit;
     }
 
-    // Parse and validate offset parameter
-    const offsetParam = searchParams.get("offset");
-    let offset = 0; // default
-    if (offsetParam) {
-      const parsedOffset = parseInt(offsetParam, 10);
-      if (isNaN(parsedOffset) || parsedOffset < 0) {
-        return NextResponse.json(
-          { error: "Invalid offset parameter: must be a non-negative number" },
-          { status: 400 }
-        );
-      }
-      offset = parsedOffset;
-    }
+    // Calculate offset from page and limit
+    const offset = (page - 1) * limit;
 
     // Build query filters
-    const where = statusParam ? { status: statusParam } : {};
+    const where: {
+      status?: string;
+      type?: string;
+    } = {};
+    if (statusParam) {
+      where.status = statusParam;
+    }
+    if (typeParam) {
+      where.type = typeParam;
+    }
+
+    // Determine sort order
+    const orderBy =
+      sortParam === "created_at"
+        ? [{ createdAt: "desc" as const }]
+        : [
+            { votes: "desc" as const }, // Sort by votes (highest first)
+            { createdAt: "desc" as const }, // Then by creation date (newest first)
+          ];
+
+    // Get total count for pagination metadata
+    const total = await prisma.request.count({ where });
 
     // Fetch requests from database
     const requests = await prisma.request.findMany({
       where,
-      orderBy: [
-        { votes: "desc" }, // Sort by votes (highest first)
-        { createdAt: "desc" }, // Then by creation date (newest first)
-      ],
+      orderBy,
       take: limit,
       skip: offset,
     });
 
-    return NextResponse.json(requests);
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(total / limit);
+
+    return NextResponse.json({
+      data: requests,
+      pagination: {
+        total,
+        totalPages,
+        currentPage: page,
+        pageSize: limit,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
   } catch (error) {
     console.error("Error fetching requests:", error);
 
@@ -215,6 +274,18 @@ export async function POST(request: NextRequest) {
           moderationResult.verdict === "needs_rewrite" ? "flagged" : "approved",
       },
     });
+
+    // Emit event for real-time updates (only for non-rejected requests)
+    if (newRequest.status === "pending") {
+      requestEventEmitter.emitRequestCreated({
+        id: newRequest.id,
+        type: newRequest.type,
+        text: newRequest.rawText,
+        upvotes: newRequest.votes,
+        status: newRequest.status,
+        createdAt: newRequest.createdAt.toISOString(),
+      });
+    }
 
     return NextResponse.json(
       {

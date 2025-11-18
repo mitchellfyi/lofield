@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { requestEventEmitter } from "@/lib/request-events";
 
 export async function POST(
   request: NextRequest,
@@ -33,6 +34,12 @@ export async function POST(
           increment: 1,
         },
       },
+    });
+
+    // Emit event for real-time updates
+    requestEventEmitter.emitRequestVoted({
+      id: updatedRequest.id,
+      votes: updatedRequest.votes,
     });
 
     return NextResponse.json({

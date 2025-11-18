@@ -151,8 +151,10 @@ describe("Seasonal Integration Helpers", () => {
   });
 
   describe("getShowSeasonOverrides", () => {
-    it("should return season overrides when present", () => {
+    it("should merge season overrides with base config", () => {
       const showConfig = {
+        primary_tags: ["remote_work", "focus"],
+        tone: "dry and understated",
         season_overrides: {
           winter: {
             tone_adjustment: "Reference darkness, cold commutes",
@@ -162,20 +164,25 @@ describe("Seasonal Integration Helpers", () => {
       };
 
       const date = new Date("2025-01-15");
-      const overrides = getShowSeasonOverrides(showConfig, {
+      const merged = getShowSeasonOverrides(showConfig, {
         date,
         hemisphere: "northern",
       });
 
-      expect(overrides.additionalTopics).toContain("dark_mornings");
-      expect(overrides.additionalTopics).toContain("cold_weather");
-      expect(overrides.toneAdjustment).toBe(
-        "Reference darkness, cold commutes"
-      );
+      // Should merge arrays (concatenate and deduplicate)
+      expect(merged.primary_tags).toContain("remote_work");
+      expect(merged.primary_tags).toContain("focus");
+      expect(merged.primary_tags).toContain("dark_mornings");
+      expect(merged.primary_tags).toContain("cold_weather");
+      
+      // Tone should be from override (replaces scalar values)
+      expect(merged.tone).toBe("Reference darkness, cold commutes");
     });
 
-    it("should return empty array when no overrides for season", () => {
+    it("should return original config when no overrides for season", () => {
       const showConfig = {
+        primary_tags: ["remote_work"],
+        tone: "dry",
         season_overrides: {
           winter: {
             additional_topics: ["winter_topic"],
@@ -184,47 +191,112 @@ describe("Seasonal Integration Helpers", () => {
       };
 
       const date = new Date("2025-07-15"); // Summer
-      const overrides = getShowSeasonOverrides(showConfig, {
+      const merged = getShowSeasonOverrides(showConfig, {
         date,
         hemisphere: "northern",
       });
 
-      expect(overrides.additionalTopics).toEqual([]);
-      expect(overrides.toneAdjustment).toBeUndefined();
+      expect(merged.primary_tags).toEqual(["remote_work"]);
+      expect(merged.tone).toBe("dry");
     });
 
-    it("should return empty array when no season_overrides in config", () => {
-      const showConfig = {};
+    it("should return original config when no season_overrides in config", () => {
+      const showConfig = {
+        primary_tags: ["work"],
+      };
 
-      const overrides = getShowSeasonOverrides(showConfig);
+      const merged = getShowSeasonOverrides(showConfig);
 
-      expect(overrides.additionalTopics).toEqual([]);
-      expect(overrides.toneAdjustment).toBeUndefined();
+      expect(merged.primary_tags).toEqual(["work"]);
+    });
+
+    it("should deduplicate merged arrays", () => {
+      const showConfig = {
+        primary_tags: ["remote_work", "focus"],
+        season_overrides: {
+          winter: {
+            additional_topics: ["remote_work", "cold_weather"], // "remote_work" is duplicate
+          },
+        },
+      };
+
+      const date = new Date("2025-01-15");
+      const merged = getShowSeasonOverrides(showConfig, { date });
+
+      // Should have deduplicated "remote_work"
+      const remoteWorkCount = merged.primary_tags.filter(
+        tag => tag === "remote_work"
+      ).length;
+      expect(remoteWorkCount).toBe(1);
+      expect(merged.primary_tags).toContain("focus");
+      expect(merged.primary_tags).toContain("cold_weather");
+    });
+
+    it("should deeply merge nested objects", () => {
+      const showConfig = {
+        commentary_style: {
+          pacing: "conversational",
+          references: ["Lofield"],
+        },
+        season_overrides: {
+          winter: {
+            additional_topics: ["winter_weather"],
+            commentary_style: {
+              seasonal_note: "Mention dark mornings",
+            },
+          },
+        },
+      };
+
+      const date = new Date("2025-01-15");
+      const merged = getShowSeasonOverrides(showConfig, { date });
+
+      // Should preserve original commentary_style properties
+      expect(merged.commentary_style.pacing).toBe("conversational");
+      expect(merged.commentary_style.references).toEqual(["Lofield"]);
+      // Should add new properties from override
+      expect((merged.commentary_style as Record<string, unknown>).seasonal_note).toBe("Mention dark mornings");
     });
   });
 
   describe("getShowHolidayOverrides", () => {
-    it("should return holiday overrides when date matches", () => {
+    it("should merge holiday overrides when date matches", () => {
       const showConfig = {
+        tone: "dry",
+        commentary_style: {
+          pacing: "conversational",
+        },
         holiday_overrides: {
           christmas_period: {
             dates: ["2025-12-24", "2025-12-25", "2025-12-26"],
             tone_adjustment: "Acknowledge holiday time",
+            sample_line: "Christmas. Some of us are still online.",
             notes: "Some people work through holidays",
           },
         },
       };
 
       const date = new Date("2025-12-25");
-      const overrides = getShowHolidayOverrides(showConfig, { date });
+      const merged = getShowHolidayOverrides(showConfig, { date });
 
-      expect(overrides).not.toBeNull();
-      expect(overrides?.toneAdjustment).toBe("Acknowledge holiday time");
-      expect(overrides?.notes).toBe("Some people work through holidays");
+      // Tone should be from override
+      expect(merged.tone).toBe("Acknowledge holiday time");
+      
+      // Sample line should be added to commentary_style
+      expect((merged.commentary_style as Record<string, unknown>).sample_holiday_line).toBe(
+        "Christmas. Some of us are still online."
+      );
+      
+      // Original commentary_style properties should be preserved
+      expect(merged.commentary_style.pacing).toBe("conversational");
+      
+      // Notes should be added
+      expect((merged as Record<string, unknown>).notes).toBe("Some people work through holidays");
     });
 
-    it("should return null when date does not match", () => {
+    it("should return original config when date does not match", () => {
       const showConfig = {
+        tone: "dry",
         holiday_overrides: {
           christmas_period: {
             dates: ["2025-12-24", "2025-12-25"],
@@ -234,21 +306,25 @@ describe("Seasonal Integration Helpers", () => {
       };
 
       const date = new Date("2025-01-15");
-      const overrides = getShowHolidayOverrides(showConfig, { date });
+      const merged = getShowHolidayOverrides(showConfig, { date });
 
-      expect(overrides).toBeNull();
+      expect(merged.tone).toBe("dry");
     });
 
-    it("should return null when no holiday_overrides in config", () => {
-      const showConfig = {};
+    it("should return original config when no holiday_overrides in config", () => {
+      const showConfig = {
+        tone: "dry",
+      };
 
-      const overrides = getShowHolidayOverrides(showConfig);
+      const merged = getShowHolidayOverrides(showConfig);
 
-      expect(overrides).toBeNull();
+      expect(merged.tone).toBe("dry");
     });
 
     it("should handle multiple holiday periods", () => {
       const showConfig = {
+        tone: "dry",
+        commentary_style: {} as Record<string, unknown>,
         holiday_overrides: {
           new_year: {
             dates: ["2025-01-01"],
@@ -263,18 +339,46 @@ describe("Seasonal Integration Helpers", () => {
       };
 
       const newYearDate = new Date("2025-01-01");
-      const newYearOverrides = getShowHolidayOverrides(showConfig, {
+      const newYearMerged = getShowHolidayOverrides(showConfig, {
         date: newYearDate,
       });
 
-      expect(newYearOverrides?.sampleLine).toBe("New year, same commute");
+      expect((newYearMerged.commentary_style as Record<string, unknown>).sample_holiday_line).toBe(
+        "New year, same commute"
+      );
 
       const christmasDate = new Date("2025-12-25");
-      const christmasOverrides = getShowHolidayOverrides(showConfig, {
+      const christmasMerged = getShowHolidayOverrides(showConfig, {
         date: christmasDate,
       });
 
-      expect(christmasOverrides?.toneAdjustment).toBe("Christmas vibes");
+      expect(christmasMerged.tone).toBe("Christmas vibes");
+    });
+
+    it("should deeply merge commentary_style", () => {
+      const showConfig = {
+        commentary_style: {
+          pacing: "conversational",
+          references: ["Lofield Town Hall"],
+        },
+        holiday_overrides: {
+          halloween: {
+            dates: ["2025-10-31"],
+            sample_line: "Halloween. The scariest thing is your inbox.",
+          },
+        },
+      };
+
+      const date = new Date("2025-10-31");
+      const merged = getShowHolidayOverrides(showConfig, { date });
+
+      // Original properties should be preserved
+      expect(merged.commentary_style.pacing).toBe("conversational");
+      expect(merged.commentary_style.references).toEqual(["Lofield Town Hall"]);
+      // New property should be added
+      expect((merged.commentary_style as Record<string, unknown>).sample_holiday_line).toBe(
+        "Halloween. The scariest thing is your inbox."
+      );
     });
   });
 });

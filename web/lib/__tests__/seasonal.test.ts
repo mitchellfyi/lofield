@@ -12,6 +12,7 @@ import {
   getContextTags,
   getSeasonalMusicMood,
   applySeasonalBiasToMusicPrompt,
+  getHolidayScriptGuidance,
 } from "../seasonal";
 
 describe("Seasonal Logic", () => {
@@ -309,6 +310,28 @@ describe("Seasonal Logic", () => {
       expect(typeof mood).toBe("string");
       expect(mood.length).toBeGreaterThan(0);
     });
+
+    it("should return consistent mood for the same date", () => {
+      const date = new Date("2025-01-15");
+      const mood1 = getSeasonalMusicMood(date, "northern");
+      const mood2 = getSeasonalMusicMood(date, "northern");
+      const mood3 = getSeasonalMusicMood(date, "northern");
+
+      expect(mood1).toBe(mood2);
+      expect(mood2).toBe(mood3);
+    });
+
+    it("should be deterministic based on day of year", () => {
+      // Same day in different years should map to same index in mood array
+      const date2025 = new Date("2025-03-15");
+      const date2026 = new Date("2026-03-15");
+      
+      const mood2025 = getSeasonalMusicMood(date2025, "northern");
+      const mood2026 = getSeasonalMusicMood(date2026, "northern");
+      
+      // Should be the same since it's the same day of year
+      expect(mood2025).toBe(mood2026);
+    });
   });
 
   describe("applySeasonalBiasToMusicPrompt", () => {
@@ -323,7 +346,7 @@ describe("Seasonal Logic", () => {
 
       expect(enhanced).toContain(basePrompt);
       expect(enhanced.length).toBeGreaterThan(basePrompt.length);
-      expect(enhanced).toMatch(/.*,\s+.+/); // Should have comma and additional text
+      expect(enhanced).toMatch(/.*,\s+with a .+/); // Should have ", with a" phrase
     });
 
     it("should add different seasonal biases for different seasons", () => {
@@ -345,6 +368,83 @@ describe("Seasonal Logic", () => {
       expect(winterPrompt).not.toBe(summerPrompt);
       expect(winterPrompt).toContain(basePrompt);
       expect(summerPrompt).toContain(basePrompt);
+    });
+
+    it("should produce grammatically correct prompts", () => {
+      const date = new Date("2025-01-15");
+      const basePrompt = "chill lofi beats";
+      const enhanced = applySeasonalBiasToMusicPrompt(
+        basePrompt,
+        date,
+        "northern"
+      );
+
+      // Should match pattern: "base prompt, with a seasonal mood"
+      expect(enhanced).toMatch(/^.+, with a .+$/);
+      // Should not have awkward concatenation
+      expect(enhanced).not.toMatch(/cosy winter atmosphere$/); // Old format
+      expect(enhanced).toMatch(/with a cosy winter atmosphere$|with a warm and comforting$|with a soft ambient textures$|with a muted and reflective$|with a gentle winter ambience$/); // New format with "with a"
+    });
+  });
+
+  describe("getHolidayScriptGuidance", () => {
+    it("should return guidance for holidays", () => {
+      const date = new Date("2025-12-25");
+      const guidance = getHolidayScriptGuidance(date);
+
+      expect(guidance).not.toBeNull();
+      expect(guidance?.holidayTags).toContain("christmas_day");
+      expect(guidance?.guidance).toBeDefined();
+      expect(guidance?.exampleLines).toBeDefined();
+      expect(guidance?.exampleLines.length).toBeGreaterThan(0);
+    });
+
+    it("should return null for non-holiday dates", () => {
+      const date = new Date("2025-03-15");
+      const guidance = getHolidayScriptGuidance(date);
+
+      expect(guidance).toBeNull();
+    });
+
+    it("should provide understated example lines for Christmas", () => {
+      const date = new Date("2025-12-25");
+      const guidance = getHolidayScriptGuidance(date);
+
+      expect(guidance?.exampleLines.length).toBeGreaterThan(0);
+      // Check for dry, understated tone (should NOT be overly cheerful)
+      const hasUnderstatedTone = guidance?.exampleLines.some(
+        line => line.toLowerCase().includes("still") || 
+                line.toLowerCase().includes("same") ||
+                line.toLowerCase().includes("some of us")
+      );
+      expect(hasUnderstatedTone).toBe(true);
+    });
+
+    it("should provide guidance for Halloween", () => {
+      const date = new Date("2025-10-31");
+      const guidance = getHolidayScriptGuidance(date);
+
+      expect(guidance).not.toBeNull();
+      expect(guidance?.holidayTags).toContain("halloween");
+      expect(guidance?.exampleLines.length).toBeGreaterThan(0);
+    });
+
+    it("should provide guidance for New Year", () => {
+      const date = new Date("2025-01-01");
+      const guidance = getHolidayScriptGuidance(date);
+
+      expect(guidance).not.toBeNull();
+      expect(guidance?.holidayTags).toContain("new_year");
+      expect(guidance?.exampleLines.length).toBeGreaterThan(0);
+    });
+
+    it("should include restraint and dry wit in guidance", () => {
+      const date = new Date("2025-12-25");
+      const guidance = getHolidayScriptGuidance(date);
+
+      expect(guidance?.guidance).toContain("restraint");
+      expect(guidance?.guidance).toContain("dry");
+      expect(guidance?.guidance).toContain("matter-of-factly");
     });
   });
 });

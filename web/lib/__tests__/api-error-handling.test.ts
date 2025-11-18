@@ -47,6 +47,22 @@ jest.mock("@/lib/request-events", () => ({
   },
 }));
 
+// Mock rate limiting - disable it for these tests
+jest.mock("@/lib/rate-limit", () => ({
+  rateLimit: jest.fn(() => null), // Always allow requests
+  getRateLimitHeaders: jest.fn(() => ({
+    "X-RateLimit-Limit": "5",
+    "X-RateLimit-Remaining": "5",
+  })),
+}));
+
+// Mock CORS - allow all origins for these tests
+jest.mock("@/lib/cors", () => ({
+  handleCorsPreflightRequest: jest.fn(() => null),
+  addCorsHeaders: jest.fn((response) => response),
+  getCorsHeaders: jest.fn(() => ({})),
+}));
+
 import { prisma } from "@/lib/db";
 import { moderateRequest } from "@/lib/moderation";
 import { classifyRequest } from "@/lib/classification";

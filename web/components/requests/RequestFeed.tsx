@@ -4,6 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { ArrowUp, Music, MessageSquare } from "lucide-react";
 import type { Request } from "@/lib/types";
+import { formatDateTimeToLocal } from "@/lib/time-utils";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
@@ -154,7 +155,7 @@ export function RequestFeed({ refreshKey = 0 }: RequestFeedProps) {
                 {request.text}
               </p>
               <p className="text-xs text-muted-foreground">
-                Submitted {new Date(request.createdAt).toLocaleString()}
+                Submitted {formatDateTimeToLocal(request.createdAt)}
               </p>
             </div>
           </div>

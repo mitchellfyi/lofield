@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ScheduleSlot } from "@/lib/types";
+import { formatUTCTimeToLocal } from "@/lib/time-utils";
 
 interface ShowCardProps {
   slot: ScheduleSlot;
@@ -12,12 +13,15 @@ export function ShowCard({ slot }: ShowCardProps) {
   const musicPercentage = Math.round(show.ratios.music_fraction * 100);
   const talkPercentage = Math.round(show.ratios.talk_fraction * 100);
 
+  const localStartTime = formatUTCTimeToLocal(startTime);
+  const localEndTime = formatUTCTimeToLocal(endTime);
+
   return (
-    <Link href={`/shows/${show.id}`}>
+    <Link href={`/shows/${show.id}`} aria-label={`View details for ${show.name}`}>
       <div className="rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
         <div className="space-y-2">
           <div className="text-sm text-muted-foreground">
-            {startTime} - {endTime}
+            {localStartTime} - {localEndTime}
           </div>
           <h3 className="font-semibold leading-tight">{show.name}</h3>
           <div className="flex gap-2 text-xs">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Show, Presenter } from "@/lib/types";
+import { formatUTCTimeToLocal } from "@/lib/time-utils";
 
 interface ShowDetailContentProps {
   show: Show;
@@ -24,6 +25,9 @@ export function ShowDetailContent({ show, presenters }: ShowDetailContentProps) 
   const daysDisplay = show.schedule.days
     .map((d) => dayNames[d] || d)
     .join(", ");
+  
+  const localStartTime = formatUTCTimeToLocal(show.schedule.start_time_utc, true);
+  const localEndTime = formatUTCTimeToLocal(show.schedule.end_time_utc, true);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -50,10 +54,10 @@ export function ShowDetailContent({ show, presenters }: ShowDetailContentProps) 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <div className="text-sm font-medium text-muted-foreground">
-                Air Time (UTC)
+                Air Time
               </div>
               <div className="mt-1 text-lg">
-                {show.schedule.start_time_utc} - {show.schedule.end_time_utc}
+                {localStartTime} - {localEndTime}
               </div>
             </div>
             <div>

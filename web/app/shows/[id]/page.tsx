@@ -4,11 +4,11 @@ import { ShowDetailContent } from "@/components/shows/ShowDetailContent";
 import type { Metadata } from "next";
 
 type Props = {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { id } = await params;
+  const { id } = params;
   const show = getShowById(id);
 
   if (!show) {
@@ -30,8 +30,8 @@ export async function generateStaticParams() {
   }));
 }
 
-export default async function ShowDetailPage({ params }: Props) {
-  const { id } = await params;
+export default function ShowDetailPage({ params }: Props) {
+  const { id } = params;
   const show = getShowById(id);
 
   if (!show) {

@@ -115,7 +115,7 @@ export class PlayoutService {
       logger.info('Processing segments', { count: segments.length });
 
       // Convert to SegmentInfo format
-      const segmentInfos: SegmentInfo[] = segments.map((seg) => ({
+      const segmentInfos: SegmentInfo[] = segments.map((seg: any) => ({
         id: seg.id,
         filePath: seg.filePath!,
         type: seg.type as 'music' | 'talk' | 'ident' | 'handover',
@@ -134,19 +134,27 @@ export class PlayoutService {
       // Archive segments that are currently playing
       for (const segment of segmentInfos) {
         if (segment.startTime <= now && segment.endTime >= now) {
-          // This segment is currently playing, archive it
-          const duration =
-            (segment.endTime.getTime() - segment.startTime.getTime()) / 1000;
+          try {
+            // This segment is currently playing, archive it
+            const duration =
+              (segment.endTime.getTime() - segment.startTime.getTime()) / 1000;
 
-          await this.archiveManager.archiveSegment(
-            segment.filePath,
-            segment.startTime,
-            duration,
-            segment.showId,
-            segment.type,
-            segment.id,
-            segment.trackId
-          );
+            await this.archiveManager.archiveSegment(
+              segment.filePath,
+              segment.startTime,
+              duration,
+              segment.showId,
+              segment.type,
+              segment.id,
+              segment.trackId
+            );
+          } catch (error) {
+            logger.error('Failed to archive segment, continuing with next', { 
+              error: error instanceof Error ? error.message : String(error),
+              segmentId: segment.id 
+            });
+            // Continue with next segment - archiving failure shouldn't stop playback
+          }
         }
       }
 
@@ -155,7 +163,10 @@ export class PlayoutService {
         this.lastProcessedTime = segments[segments.length - 1].endTime;
       }
     } catch (error) {
-      logger.error('Failed to process pending segments', { error });
+      logger.error('Failed to process pending segments', { 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+      // Don't re-throw - let the main loop continue
     }
   }
 

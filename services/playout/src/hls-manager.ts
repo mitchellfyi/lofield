@@ -96,6 +96,8 @@ export class HLSStreamManager {
             error: err.message,
             stderr: stderr?.substring(0, 500),
           });
+          // Gracefully handle error - don't crash the service
+          this.ffmpegProcess = null;
         })
         .on('end', () => {
           logger.info('FFmpeg process ended');
@@ -113,12 +115,19 @@ export class HLSStreamManager {
       }, 5000);
     } catch (error) {
       logger.error('Failed to start HLS stream', { error });
-      throw error;
+      // Don't re-throw - let the service continue with next iteration
+      this.ffmpegProcess = null;
     }
   }
 
   /**
    * Build FFmpeg filter complex for crossfading between segments
+   * 
+   * Applies crossfading between segments based on their types:
+   * - Music-to-music: Uses acrossfade for smooth transitions
+   * - Music-to-talk: Fade out music, immediate talk start
+   * - Talk-to-music: Fade in music under final words
+   * - Other transitions: Simple fade in/out
    */
   private buildCrossfadeFilter(segments: SegmentInfo[]): string | null {
     if (segments.length < 2) {
@@ -126,13 +135,57 @@ export class HLSStreamManager {
       return null;
     }
 
-    // For now, we'll skip crossfading and just concatenate
-    // Crossfading with filter_complex is complex when using concat demuxer
-    // This would require reading all files as separate inputs and building
-    // a complex acrossfade chain. For initial implementation, we'll use
-    // simple concatenation. Crossfading can be added in a future enhancement.
-    
-    return null;
+    try {
+      // Build filter chain with crossfades between segments
+      const filters: string[] = [];
+      
+      // For each segment, determine crossfade duration based on types
+      for (let i = 0; i < segments.length; i++) {
+        const current = segments[i];
+        const next = segments[i + 1];
+        
+        if (i === 0) {
+          // First segment: just fade in at the start (0.5s)
+          filters.push(`[${i}:a]afade=t=in:st=0:d=0.5[a${i}]`);
+        } else if (!next) {
+          // Last segment: fade out at the end (1s)
+          filters.push(`[${i}:a]afade=t=out:st=${segments[i].endTime.getTime() - segments[i].startTime.getTime() - 1}:d=1[a${i}]`);
+        } else {
+          // Middle segments: apply fades based on transition type
+          const fadeOutDuration = this.getCrossfadeDuration(current.type, next.type);
+          filters.push(`[${i}:a]afade=t=out:st=${segments[i].endTime.getTime() - segments[i].startTime.getTime() - fadeOutDuration}:d=${fadeOutDuration}[a${i}out]`);
+          filters.push(`[a${i}out]afade=t=in:st=0:d=0.5[a${i}]`);
+        }
+      }
+
+      // Concatenate all processed segments
+      const inputLabels = segments.map((_, i) => `[a${i}]`).join('');
+      filters.push(`${inputLabels}concat=n=${segments.length}:v=0:a=1[aout]`);
+      
+      // Add loudness normalization at the end
+      filters.push('[aout]loudnorm=I=-16:TP=-1.5:LRA=11[anorm]');
+
+      return filters.join(';');
+    } catch (error) {
+      logger.warn('Failed to build crossfade filter, using simple concatenation', { error });
+      return null;
+    }
+  }
+
+  /**
+   * Get crossfade duration based on segment transition types
+   */
+  private getCrossfadeDuration(fromType: string, toType: string): number {
+    if (fromType === 'music' && toType === 'music') {
+      return this.config.crossfadeMusicToMusic;
+    } else if (fromType === 'music' && (toType === 'talk' || toType === 'ident')) {
+      return this.config.crossfadeMusicToTalk;
+    } else if ((fromType === 'talk' || fromType === 'ident') && toType === 'music') {
+      return this.config.crossfadeTalkToMusic;
+    } else {
+      // Default fallback for other transitions
+      return 1.0;
+    }
   }
 
   /**

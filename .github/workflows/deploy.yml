@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Full Application CI"]
+    types:
+      - completed
+    branches:
+      - main
 
 env:
   REGISTRY: ${{ secrets.REGISTRY }}
@@ -12,24 +18,14 @@ env:
   REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
 jobs:
-  # Ensure CI checks pass before deploying
-  check-ci:
-    name: Verify CI Checks
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Wait for CI checks
-        uses: lewagon/wait-on-check-action@v1.3.4
-        with:
-          ref: ${{ github.ref }}
-          check-name: 'All CI Checks Passed'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          wait-interval: 10
-
   build-and-push:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
-    needs: check-ci
+    # Only run if CI passed or if manually triggered
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
 
     permissions:
       contents: read

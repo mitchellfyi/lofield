@@ -1,6 +1,6 @@
 /**
  * AI Modules Index
- * 
+ *
  * Central export point for all AI modules.
  */
 
@@ -53,8 +53,4 @@ export {
 } from "./script-generation";
 
 // TTS
-export {
-  generateTTS,
-  getTTSCacheStats,
-  clearTTSCache,
-} from "./tts";
+export { generateTTS, getTTSCacheStats, clearTTSCache } from "./tts";

@@ -1,6 +1,6 @@
 /**
  * Tests for API error handling
- * 
+ *
  * These tests verify that API routes properly handle edge cases and errors:
  * - Invalid input validation
  * - JSON parsing errors

@@ -11,6 +11,7 @@ The AI modules consist of three main components:
 3. **Text-to-Speech (TTS)**: Converts scripts to audio
 
 Each module includes:
+
 - Caching to prevent duplicate generation
 - Retry logic with exponential backoff
 - Error handling and fallback behavior
@@ -278,8 +279,8 @@ const result = await generateTTS({
   voiceId: "voice_1",
   presenterName: "Presenter One",
   speed: 1.0,
-  stability: 0.5,              // ElevenLabs only
-  similarityBoost: 0.75,       // ElevenLabs only
+  stability: 0.5, // ElevenLabs only
+  similarityBoost: 0.75, // ElevenLabs only
 });
 
 if (result.success) {
@@ -291,6 +292,7 @@ if (result.success) {
 #### Voice IDs
 
 For OpenAI TTS, use these generic voice IDs (mapped internally):
+
 - `voice_1` → "alloy"
 - `voice_2` → "echo"
 - `voice_3` → "fable"
@@ -365,6 +367,7 @@ All modules implement robust error handling:
 ### Retryable Errors
 
 The following errors trigger automatic retry:
+
 - Network timeouts
 - Rate limiting (429)
 - Server errors (500, 502, 503, 504)
@@ -373,6 +376,7 @@ The following errors trigger automatic retry:
 ### Non-Retryable Errors
 
 These errors fail immediately:
+
 - Invalid API keys
 - Validation errors
 - Client errors (400, 401, 403, 404)
@@ -481,24 +485,29 @@ npm test -- --coverage lib/ai/__tests__
 ### Common Issues
 
 **"REPLICATE_API_TOKEN not set"**
+
 - Ensure `REPLICATE_API_TOKEN` is set in your environment
 - Get token from https://replicate.com/account
 
 **"OPENAI_API_KEY not set"**
+
 - Ensure `OPENAI_API_KEY` is set in your environment
 - Get token from https://platform.openai.com/api-keys
 
 **"Failed to download audio"**
+
 - Check network connectivity
 - Verify `AUDIO_STORAGE_PATH` is writable
 - Check disk space
 
 **"Rate limit exceeded"**
+
 - Wait before retrying
 - Increase `RETRY_BASE_DELAY` and `RETRY_MAX_DELAY`
 - Consider upgrading API plan
 
 **Cache not persisting**
+
 - Verify `CACHE_DIR` is writable
 - Check disk space
 - Ensure process has file system permissions
@@ -515,6 +524,7 @@ npm test -- --coverage lib/ai/__tests__
 ### Input Validation
 
 All modules validate inputs before making API calls to prevent:
+
 - Prompt injection
 - Excessive resource usage
 - Invalid parameters
@@ -522,6 +532,7 @@ All modules validate inputs before making API calls to prevent:
 ### Content Safety
 
 Script generation includes content policy guidelines:
+
 - No health or medical advice
 - No political content
 - No cruel or mean-spirited humor
@@ -546,7 +557,10 @@ The AI modules support seasonal and holiday context to generate content that's r
 ### Quick Example
 
 ```typescript
-import { enhanceMusicRequestWithSeason, enhanceScriptRequestWithSeason } from "@/lib/seasonal";
+import {
+  enhanceMusicRequestWithSeason,
+  enhanceScriptRequestWithSeason,
+} from "@/lib/seasonal";
 import { generateMusic, generateScript } from "@/lib/ai";
 
 // Music generation with seasonal bias
@@ -581,6 +595,7 @@ const script = await generateScript(enhancedScript);
 - **Hemisphere Support**: Configurable for Northern or Southern hemisphere
 
 See `docs/seasonal-holiday-logic.md` for:
+
 - Complete API reference
 - Usage examples
 - Adding new holidays
@@ -590,6 +605,7 @@ See `docs/seasonal-holiday-logic.md` for:
 ## Support
 
 For issues or questions:
+
 - Check the main [README](../../../README.md)
 - Review [architecture documentation](../../../docs/architecture.md)
 - Check [TESTING.md](../../../TESTING.md) for test guidelines
@@ -598,4 +614,4 @@ For issues or questions:
 
 ---
 
-*Lofield FM AI Modules: Making radio that's artificial and honest about it.*
+_Lofield FM AI Modules: Making radio that's artificial and honest about it._

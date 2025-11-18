@@ -2,13 +2,17 @@
  * Tests for music generation module
  */
 
-import { generateMusic, getMusicCacheStats, clearMusicCache } from "../music-generation";
+import {
+  generateMusic,
+  getMusicCacheStats,
+  clearMusicCache,
+} from "../music-generation";
 
 describe("Music Generation Module", () => {
   beforeEach(() => {
     // Clear cache before each test
     clearMusicCache();
-    
+
     // Remove API key to test error handling
     delete process.env.REPLICATE_API_TOKEN;
   });
@@ -25,7 +29,7 @@ describe("Music Generation Module", () => {
       };
 
       const result = await generateMusic(request);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain("REPLICATE_API_TOKEN");
     });
@@ -42,7 +46,7 @@ describe("Music Generation Module", () => {
 
       // Will fail due to missing API key, but validates structure
       const result = await generateMusic(request);
-      
+
       expect(result.success).toBe(false);
       // Structure is valid, just missing credentials
     });
@@ -53,7 +57,7 @@ describe("Music Generation Module", () => {
       };
 
       const result = await generateMusic(request);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
     });
@@ -65,7 +69,7 @@ describe("Music Generation Module", () => {
       };
 
       const result = await generateMusic(request);
-      
+
       expect(result.success).toBe(false);
     });
   });
@@ -73,7 +77,7 @@ describe("Music Generation Module", () => {
   describe("Cache Behavior", () => {
     it("should initialize cache correctly", () => {
       const stats = getMusicCacheStats();
-      
+
       expect(stats).toBeDefined();
       expect(stats.hits).toBe(0);
       expect(stats.misses).toBe(0);
@@ -85,7 +89,7 @@ describe("Music Generation Module", () => {
       };
 
       await generateMusic(request);
-      
+
       const stats = getMusicCacheStats();
       expect(stats.misses).toBeGreaterThan(0);
     });
@@ -93,7 +97,7 @@ describe("Music Generation Module", () => {
     it("should clear cache", () => {
       clearMusicCache();
       const stats = getMusicCacheStats();
-      
+
       expect(stats.size).toBe(0);
       expect(stats.hits).toBe(0);
       expect(stats.misses).toBe(0);
@@ -107,7 +111,7 @@ describe("Music Generation Module", () => {
       };
 
       const result = await generateMusic(request);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
       expect(result.filePath).toBeUndefined();
@@ -120,7 +124,7 @@ describe("Music Generation Module", () => {
       };
 
       const result = await generateMusic(request);
-      
+
       expect(result.error).toBeTruthy();
       expect(typeof result.error).toBe("string");
     });
@@ -134,7 +138,7 @@ describe("Music Generation Module", () => {
       };
 
       const result = await generateMusic(request);
-      
+
       expect(result).toHaveProperty("success");
       expect(result).toHaveProperty("cached");
       expect(typeof result.success).toBe("boolean");

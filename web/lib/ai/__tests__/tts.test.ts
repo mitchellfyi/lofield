@@ -8,7 +8,7 @@ describe("TTS Module", () => {
   beforeEach(() => {
     // Clear cache before each test
     clearTTSCache();
-    
+
     // Remove API key to test error handling
     delete process.env.OPENAI_API_KEY;
     delete process.env.ELEVENLABS_API_KEY;
@@ -22,7 +22,7 @@ describe("TTS Module", () => {
   describe("API Configuration", () => {
     it("should throw error when OpenAI API key is missing", async () => {
       process.env.TTS_PROVIDER = "openai";
-      
+
       const request = {
         text: "This is a test script for presenter one.",
         voiceId: "voice_1",
@@ -30,14 +30,14 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain("OPENAI_API_KEY");
     });
 
     it("should throw error when ElevenLabs API key is missing", async () => {
       process.env.TTS_PROVIDER = "elevenlabs";
-      
+
       const request = {
         text: "This is a test script.",
         voiceId: "voice_elevenlabs_1",
@@ -45,7 +45,7 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toContain("ELEVENLABS_API_KEY");
     });
@@ -60,7 +60,7 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result.success).toBe(false);
       // Structure is valid, just missing API key
     });
@@ -73,7 +73,7 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result.success).toBe(false);
     });
 
@@ -86,14 +86,21 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result.success).toBe(false);
     });
   });
 
   describe("Voice Configuration", () => {
     it("should accept different voice IDs", async () => {
-      const voiceIds = ["voice_1", "voice_2", "voice_3", "voice_4", "voice_5", "voice_6"];
+      const voiceIds = [
+        "voice_1",
+        "voice_2",
+        "voice_3",
+        "voice_4",
+        "voice_5",
+        "voice_6",
+      ];
 
       for (const voiceId of voiceIds) {
         const request = {
@@ -102,7 +109,7 @@ describe("TTS Module", () => {
         };
 
         const result = await generateTTS(request);
-        
+
         expect(result.success).toBe(false);
         // All voice IDs should be accepted structurally
       }
@@ -117,7 +124,7 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result.success).toBe(false);
     });
 
@@ -138,7 +145,7 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result.success).toBe(false);
     });
 
@@ -149,7 +156,7 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result.success).toBe(false);
     });
   });
@@ -157,7 +164,7 @@ describe("TTS Module", () => {
   describe("Cache Behavior", () => {
     it("should initialize cache correctly", () => {
       const stats = getTTSCacheStats();
-      
+
       expect(stats).toBeDefined();
       expect(stats.hits).toBe(0);
       expect(stats.misses).toBe(0);
@@ -170,7 +177,7 @@ describe("TTS Module", () => {
       };
 
       await generateTTS(request);
-      
+
       const stats = getTTSCacheStats();
       expect(stats.misses).toBeGreaterThan(0);
     });
@@ -178,7 +185,7 @@ describe("TTS Module", () => {
     it("should clear cache", () => {
       clearTTSCache();
       const stats = getTTSCacheStats();
-      
+
       expect(stats.size).toBe(0);
       expect(stats.hits).toBe(0);
       expect(stats.misses).toBe(0);
@@ -193,7 +200,7 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
       expect(result.filePath).toBeUndefined();
@@ -207,7 +214,7 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result.error).toBeTruthy();
       expect(typeof result.error).toBe("string");
     });
@@ -221,7 +228,7 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result).toHaveProperty("success");
       expect(result).toHaveProperty("cached");
       expect(typeof result.success).toBe("boolean");
@@ -237,7 +244,7 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result.success).toBe(false);
       // Should not fail validation
     });
@@ -249,7 +256,7 @@ describe("TTS Module", () => {
       };
 
       const result = await generateTTS(request);
-      
+
       expect(result.success).toBe(false);
     });
   });

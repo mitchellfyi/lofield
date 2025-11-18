@@ -9,7 +9,10 @@ import {
   getShowSeasonOverrides,
   getShowHolidayOverrides,
 } from "../seasonal-integration";
-import type { MusicGenerationRequest, ScriptGenerationRequest } from "../ai/types";
+import type {
+  MusicGenerationRequest,
+  ScriptGenerationRequest,
+} from "../ai/types";
 
 describe("Seasonal Integration Helpers", () => {
   describe("enhanceMusicRequestWithSeason", () => {
@@ -174,7 +177,7 @@ describe("Seasonal Integration Helpers", () => {
       expect(merged.primary_tags).toContain("focus");
       expect(merged.primary_tags).toContain("dark_mornings");
       expect(merged.primary_tags).toContain("cold_weather");
-      
+
       // Tone should be from override (replaces scalar values)
       expect(merged.tone).toBe("Reference darkness, cold commutes");
     });
@@ -225,7 +228,7 @@ describe("Seasonal Integration Helpers", () => {
 
       // Should have deduplicated "remote_work"
       const remoteWorkCount = merged.primary_tags.filter(
-        tag => tag === "remote_work"
+        (tag) => tag === "remote_work"
       ).length;
       expect(remoteWorkCount).toBe(1);
       expect(merged.primary_tags).toContain("focus");
@@ -255,7 +258,9 @@ describe("Seasonal Integration Helpers", () => {
       expect(merged.commentary_style.pacing).toBe("conversational");
       expect(merged.commentary_style.references).toEqual(["Lofield"]);
       // Should add new properties from override
-      expect((merged.commentary_style as Record<string, unknown>).seasonal_note).toBe("Mention dark mornings");
+      expect(
+        (merged.commentary_style as Record<string, unknown>).seasonal_note
+      ).toBe("Mention dark mornings");
     });
   });
 
@@ -281,17 +286,19 @@ describe("Seasonal Integration Helpers", () => {
 
       // Tone should be from override
       expect(merged.tone).toBe("Acknowledge holiday time");
-      
+
       // Sample line should be added to commentary_style
-      expect((merged.commentary_style as Record<string, unknown>).sample_holiday_line).toBe(
-        "Christmas. Some of us are still online."
-      );
-      
+      expect(
+        (merged.commentary_style as Record<string, unknown>).sample_holiday_line
+      ).toBe("Christmas. Some of us are still online.");
+
       // Original commentary_style properties should be preserved
       expect(merged.commentary_style.pacing).toBe("conversational");
-      
+
       // Notes should be added
-      expect((merged as Record<string, unknown>).notes).toBe("Some people work through holidays");
+      expect((merged as Record<string, unknown>).notes).toBe(
+        "Some people work through holidays"
+      );
     });
 
     it("should return original config when date does not match", () => {
@@ -343,9 +350,10 @@ describe("Seasonal Integration Helpers", () => {
         date: newYearDate,
       });
 
-      expect((newYearMerged.commentary_style as Record<string, unknown>).sample_holiday_line).toBe(
-        "New year, same commute"
-      );
+      expect(
+        (newYearMerged.commentary_style as Record<string, unknown>)
+          .sample_holiday_line
+      ).toBe("New year, same commute");
 
       const christmasDate = new Date("2025-12-25");
       const christmasMerged = getShowHolidayOverrides(showConfig, {
@@ -376,9 +384,9 @@ describe("Seasonal Integration Helpers", () => {
       expect(merged.commentary_style.pacing).toBe("conversational");
       expect(merged.commentary_style.references).toEqual(["Lofield Town Hall"]);
       // New property should be added
-      expect((merged.commentary_style as Record<string, unknown>).sample_holiday_line).toBe(
-        "Halloween. The scariest thing is your inbox."
-      );
+      expect(
+        (merged.commentary_style as Record<string, unknown>).sample_holiday_line
+      ).toBe("Halloween. The scariest thing is your inbox.");
     });
   });
 });

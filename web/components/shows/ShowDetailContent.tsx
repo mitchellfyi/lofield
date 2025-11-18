@@ -19,14 +19,20 @@ const dayNames: Record<string, string> = {
   sun: "Sunday",
 };
 
-export function ShowDetailContent({ show, presenters }: ShowDetailContentProps) {
+export function ShowDetailContent({
+  show,
+  presenters,
+}: ShowDetailContentProps) {
   const musicPercentage = Math.round(show.ratios.music_fraction * 100);
   const talkPercentage = Math.round(show.ratios.talk_fraction * 100);
   const daysDisplay = show.schedule.days
     .map((d) => dayNames[d] || d)
     .join(", ");
-  
-  const localStartTime = formatUTCTimeToLocal(show.schedule.start_time_utc, true);
+
+  const localStartTime = formatUTCTimeToLocal(
+    show.schedule.start_time_utc,
+    true
+  );
   const localEndTime = formatUTCTimeToLocal(show.schedule.end_time_utc, true);
 
   return (
@@ -105,7 +111,10 @@ export function ShowDetailContent({ show, presenters }: ShowDetailContentProps) 
           <h2 className="mb-4 text-xl font-semibold">Presenters</h2>
           <div className="space-y-4">
             {presenters.map((presenter) => (
-              <div key={presenter.id} className="border-b pb-4 last:border-b-0 last:pb-0">
+              <div
+                key={presenter.id}
+                className="border-b pb-4 last:border-b-0 last:pb-0"
+              >
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="font-semibold">{presenter.name}</h3>

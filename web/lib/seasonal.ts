@@ -1,6 +1,6 @@
 /**
  * Seasonal and Holiday Logic
- * 
+ *
  * Provides functions for detecting the current season and relevant holidays,
  * enabling context-aware content generation for Lofield FM.
  */
@@ -114,7 +114,7 @@ const SEASONAL_MOOD_PROFILES: Record<Season, SeasonalMoodProfile> = {
 
 /**
  * Determine the season based on month and hemisphere
- * 
+ *
  * @param date - The date to check (defaults to current date)
  * @param hemisphere - Northern or Southern hemisphere (defaults to Northern for Lofield)
  * @returns The current season
@@ -157,7 +157,7 @@ export function getSeason(
 
 /**
  * Get seasonal mood profile for the current season
- * 
+ *
  * @param date - The date to check (defaults to current date)
  * @param hemisphere - Northern or Southern hemisphere (defaults to Northern)
  * @returns Seasonal mood profile with descriptors and biases
@@ -172,7 +172,7 @@ export function getSeasonalMoodProfile(
 
 /**
  * Get holidays for a specific date from configuration
- * 
+ *
  * @param date - The date to check (defaults to current date)
  * @returns Array of holiday tags for the given date
  */
@@ -185,7 +185,7 @@ export function getHolidaysForDate(date: Date = new Date()): string[] {
 
 /**
  * Get all holidays within a date range
- * 
+ *
  * @param startDate - Start of the date range
  * @param endDate - End of the date range
  * @returns Array of holiday information objects
@@ -209,7 +209,7 @@ export function getHolidaysInRange(
 
 /**
  * Check if a given date is a holiday
- * 
+ *
  * @param date - The date to check
  * @returns True if the date has associated holiday tags
  */
@@ -220,7 +220,7 @@ export function isHoliday(date: Date = new Date()): boolean {
 
 /**
  * Get seasonal tags from configuration
- * 
+ *
  * @param season - The season to get tags for
  * @returns Array of seasonal topic tags
  */
@@ -232,7 +232,7 @@ export function getSeasonalTags(season: Season): string[] {
 /**
  * Get all relevant context tags for a given date
  * Combines seasonal tags and holiday tags
- * 
+ *
  * @param date - The date to get context for (defaults to current date)
  * @param hemisphere - Northern or Southern hemisphere (defaults to Northern)
  * @returns Combined array of seasonal and holiday tags
@@ -251,7 +251,7 @@ export function getContextTags(
 
 /**
  * Format a date as ISO date string (YYYY-MM-DD)
- * 
+ *
  * @param date - The date to format
  * @returns ISO date string
  */
@@ -266,7 +266,7 @@ function formatDateISO(date: Date): string {
  * Get a seasonal music mood descriptor
  * Returns a deterministic descriptor based on the day of year
  * This ensures consistency across multiple calls for the same date
- * 
+ *
  * @param date - The date to check (defaults to current date)
  * @param hemisphere - Northern or Southern hemisphere (defaults to Northern)
  * @returns A mood descriptor string suitable for music generation
@@ -276,13 +276,13 @@ export function getSeasonalMusicMood(
   hemisphere: Hemisphere = "northern"
 ): string {
   const profile = getSeasonalMoodProfile(date, hemisphere);
-  
+
   // Calculate day of year for deterministic selection
   const startOfYear = new Date(date.getFullYear(), 0, 0);
   const diff = date.getTime() - startOfYear.getTime();
   const oneDay = 1000 * 60 * 60 * 24;
   const dayOfYear = Math.floor(diff / oneDay);
-  
+
   // Use day of year to select a consistent mood descriptor
   const index = dayOfYear % profile.musicMood.length;
   return profile.musicMood[index];
@@ -291,7 +291,7 @@ export function getSeasonalMusicMood(
 /**
  * Apply seasonal bias to a music prompt
  * Enhances the prompt with seasonal mood descriptors using natural phrasing
- * 
+ *
  * @param basePrompt - The original music prompt
  * @param date - The date to check (defaults to current date)
  * @param hemisphere - Northern or Southern hemisphere (defaults to Northern)
@@ -309,29 +309,28 @@ export function applySeasonalBiasToMusicPrompt(
 /**
  * Generate understated holiday script guidance for presenters
  * Provides example lines that align with Lofield FM's dry, self-aware tone
- * 
+ *
  * @param date - The date to check for holidays (defaults to current date)
  * @returns Holiday script guidance with examples, or null if no holiday
  */
-export function getHolidayScriptGuidance(
-  date: Date = new Date()
-): {
+export function getHolidayScriptGuidance(date: Date = new Date()): {
   holidayTags: string[];
   guidance: string;
   exampleLines: string[];
 } | null {
   const holidayTags = getHolidaysForDate(date);
-  
+
   if (holidayTags.length === 0) {
     return null;
   }
 
   // Generate understated, dry guidance based on the holiday
-  const guidance = "Reference the holiday with restraint and dry wit. Acknowledge it matter-of-factly without forced cheerfulness. Focus on relatable remote work experiences during holidays.";
-  
+  const guidance =
+    "Reference the holiday with restraint and dry wit. Acknowledge it matter-of-factly without forced cheerfulness. Focus on relatable remote work experiences during holidays.";
+
   // Example lines for common holidays (dry, understated, Lofield FM style)
   const exampleLines: string[] = [];
-  
+
   for (const tag of holidayTags) {
     switch (tag) {
       case "new_year":
@@ -341,24 +340,40 @@ export function getHolidayScriptGuidance(
       case "christmas_day":
       case "christmas_eve":
         exampleLines.push("Christmas. Some of us are still online.");
-        exampleLines.push("Festive period. Your Slack status says 'away,' but we know better.");
+        exampleLines.push(
+          "Festive period. Your Slack status says 'away,' but we know better."
+        );
         break;
       case "halloween":
         exampleLines.push("Halloween. The scariest thing today is your inbox.");
-        exampleLines.push("October 31st. Nothing quite as terrifying as a surprise meeting invite.");
+        exampleLines.push(
+          "October 31st. Nothing quite as terrifying as a surprise meeting invite."
+        );
         break;
       case "bonfire_night":
-        exampleLines.push("Bonfire Night. Remember, remember... that deadline in November.");
-        exampleLines.push("Guy Fawkes Night. Fireworks outside, deadlines inside.");
+        exampleLines.push(
+          "Bonfire Night. Remember, remember... that deadline in November."
+        );
+        exampleLines.push(
+          "Guy Fawkes Night. Fireworks outside, deadlines inside."
+        );
         break;
       case "valentines_day":
-        exampleLines.push("Valentine's Day. You, your laptop, and a questionable Wi-Fi connection.");
-        exampleLines.push("February 14th. Love is in the air. Deadline pressure is in the calendar.");
+        exampleLines.push(
+          "Valentine's Day. You, your laptop, and a questionable Wi-Fi connection."
+        );
+        exampleLines.push(
+          "February 14th. Love is in the air. Deadline pressure is in the calendar."
+        );
         break;
       case "easter":
       case "easter_monday":
-        exampleLines.push("Easter Monday. Bank holiday for some, another Monday for others.");
-        exampleLines.push("Easter. The only thing rising is your unread count.");
+        exampleLines.push(
+          "Easter Monday. Bank holiday for some, another Monday for others."
+        );
+        exampleLines.push(
+          "Easter. The only thing rising is your unread count."
+        );
         break;
       default:
         // Generic understated holiday reference

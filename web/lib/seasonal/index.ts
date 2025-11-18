@@ -1,9 +1,9 @@
 /**
  * Seasonal and Holiday Logic Module
- * 
+ *
  * This module provides comprehensive seasonal and holiday detection
  * for context-aware content generation in Lofield FM.
- * 
+ *
  * @module seasonal
  */
 

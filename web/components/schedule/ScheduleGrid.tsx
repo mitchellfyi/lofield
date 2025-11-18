@@ -19,7 +19,11 @@ const dayNames = [
 
 export function ScheduleGrid({ schedule }: ScheduleGridProps) {
   return (
-    <div className="grid gap-6 lg:grid-cols-7 md:grid-cols-3 sm:grid-cols-2" role="region" aria-label="Weekly show schedule">
+    <div
+      className="grid gap-6 lg:grid-cols-7 md:grid-cols-3 sm:grid-cols-2"
+      role="region"
+      aria-label="Weekly show schedule"
+    >
       {schedule.map((daySlots, dayIndex) => (
         <div key={dayIndex} className="space-y-3">
           <h2 className="text-lg font-semibold border-b pb-2">

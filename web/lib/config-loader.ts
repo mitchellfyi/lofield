@@ -180,11 +180,11 @@ export function loadPresentersConfig(): PresentersConfig {
 export function getPresenterVoiceMap(): Record<string, string> {
   const config = loadPresentersConfig();
   const voiceMap: Record<string, string> = {};
-  
+
   for (const presenter of config.presenters) {
     voiceMap[presenter.id] = presenter.voice_id;
   }
-  
+
   return voiceMap;
 }
 

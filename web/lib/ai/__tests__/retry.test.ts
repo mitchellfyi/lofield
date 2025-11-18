@@ -8,7 +8,7 @@ describe("Retry Utility", () => {
   describe("withRetry", () => {
     it("should succeed on first attempt", async () => {
       const fn = jest.fn().mockResolvedValue("success");
-      
+
       const result = await withRetry(fn, {
         maxAttempts: 3,
         baseDelay: 100,
@@ -20,11 +20,12 @@ describe("Retry Utility", () => {
     });
 
     it("should retry on failure and eventually succeed", async () => {
-      const fn = jest.fn()
+      const fn = jest
+        .fn()
         .mockRejectedValueOnce(new Error("fail 1"))
         .mockRejectedValueOnce(new Error("fail 2"))
         .mockResolvedValue("success");
-      
+
       const result = await withRetry(fn, {
         maxAttempts: 3,
         baseDelay: 10,
@@ -37,7 +38,7 @@ describe("Retry Utility", () => {
 
     it("should throw error after max attempts", async () => {
       const fn = jest.fn().mockRejectedValue(new Error("persistent failure"));
-      
+
       await expect(
         withRetry(fn, {
           maxAttempts: 3,
@@ -50,7 +51,8 @@ describe("Retry Utility", () => {
     });
 
     it("should use exponential backoff", async () => {
-      const fn = jest.fn()
+      const fn = jest
+        .fn()
         .mockRejectedValueOnce(new Error("fail 1"))
         .mockRejectedValueOnce(new Error("fail 2"))
         .mockResolvedValue("success");
@@ -70,7 +72,8 @@ describe("Retry Utility", () => {
     });
 
     it("should respect max delay", async () => {
-      const fn = jest.fn()
+      const fn = jest
+        .fn()
         .mockRejectedValueOnce(new Error("fail 1"))
         .mockRejectedValueOnce(new Error("fail 2"))
         .mockResolvedValue("success");
@@ -85,7 +88,8 @@ describe("Retry Utility", () => {
     });
 
     it("should call onRetry callback", async () => {
-      const fn = jest.fn()
+      const fn = jest
+        .fn()
         .mockRejectedValueOnce(new Error("fail 1"))
         .mockResolvedValue("success");
 
@@ -129,7 +133,7 @@ describe("Retry Utility", () => {
     it("should identify rate limit errors", () => {
       const error1 = new Error("Rate limit exceeded");
       const error2 = new Error("Error 429");
-      
+
       expect(isRetryableError(error1)).toBe(true);
       expect(isRetryableError(error2)).toBe(true);
     });
@@ -150,7 +154,7 @@ describe("Retry Utility", () => {
     it("should identify unavailability errors", () => {
       const error1 = new Error("Service unavailable");
       const error2 = new Error("Server overload");
-      
+
       expect(isRetryableError(error1)).toBe(true);
       expect(isRetryableError(error2)).toBe(true);
     });

@@ -1,6 +1,6 @@
 /**
  * Caching layer for AI module results
- * 
+ *
  * Prevents duplicate generation for the same prompts/inputs.
  * Uses in-memory cache with optional file-based persistence.
  */
@@ -69,7 +69,11 @@ export class AICache<T> {
   /**
    * Set a value in cache
    */
-  set(input: string | object, value: T, metadata?: Record<string, unknown>): void {
+  set(
+    input: string | object,
+    value: T,
+    metadata?: Record<string, unknown>
+  ): void {
     if (!this.enabled) {
       return;
     }
@@ -207,7 +211,9 @@ export class AICache<T> {
           const entry: CacheEntry<T> = {
             ...parsed,
             createdAt: new Date(parsed.createdAt),
-            expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : undefined,
+            expiresAt: parsed.expiresAt
+              ? new Date(parsed.expiresAt)
+              : undefined,
           };
 
           // Skip expired entries
@@ -224,7 +230,9 @@ export class AICache<T> {
       }
 
       if (loaded > 0) {
-        console.log(`Loaded ${loaded} cache entries for ${this.name} from disk`);
+        console.log(
+          `Loaded ${loaded} cache entries for ${this.name} from disk`
+        );
       }
     } catch (error) {
       console.error(`Failed to load cache from disk:`, error);

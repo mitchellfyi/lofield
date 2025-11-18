@@ -54,13 +54,13 @@ describe("AICache", () => {
     it("should expire entries after TTL", async () => {
       const shortCache = new AICache<string>("test", 1, true); // 1 second TTL
       shortCache.set("key1", "value1");
-      
+
       // Should exist immediately
       expect(shortCache.get("key1")).toBe("value1");
-      
+
       // Wait for expiration
       await new Promise((resolve) => setTimeout(resolve, 1100));
-      
+
       // Should be expired
       expect(shortCache.get("key1")).toBeNull();
     });
@@ -69,9 +69,9 @@ describe("AICache", () => {
       const shortCache = new AICache<string>("test", 1, true);
       shortCache.set("key1", "value1");
       shortCache.set("key2", "value2");
-      
+
       await new Promise((resolve) => setTimeout(resolve, 1100));
-      
+
       const removed = shortCache.cleanup();
       expect(removed).toBe(2);
       expect(shortCache.getStats().size).toBe(0);
@@ -81,12 +81,12 @@ describe("AICache", () => {
   describe("Statistics", () => {
     it("should track hits and misses", () => {
       cache.set("key1", "value1");
-      
+
       cache.get("key1"); // hit
       cache.get("key1"); // hit
       cache.get("key2"); // miss
       cache.get("key3"); // miss
-      
+
       const stats = cache.getStats();
       expect(stats.hits).toBe(2);
       expect(stats.misses).toBe(2);
@@ -97,7 +97,7 @@ describe("AICache", () => {
       cache.set("key1", "value1");
       cache.set("key2", "value2");
       cache.set("key3", "value3");
-      
+
       const stats = cache.getStats();
       expect(stats.size).toBe(3);
     });
@@ -107,7 +107,7 @@ describe("AICache", () => {
       cache.get("key1");
       cache.get("key1");
       cache.get("key1");
-      
+
       const stats = cache.getStats();
       expect(stats.hitRate).toBe(1.0);
     });
@@ -118,9 +118,9 @@ describe("AICache", () => {
       cache.set("key1", "value1");
       cache.set("key2", "value2");
       cache.set("key3", "value3");
-      
+
       cache.clear();
-      
+
       expect(cache.getStats().size).toBe(0);
       expect(cache.get("key1")).toBeNull();
     });
@@ -129,9 +129,9 @@ describe("AICache", () => {
       cache.set("key1", "value1");
       cache.get("key1");
       cache.get("key2");
-      
+
       cache.clear();
-      
+
       const stats = cache.getStats();
       expect(stats.hits).toBe(0);
       expect(stats.misses).toBe(0);
@@ -150,7 +150,7 @@ describe("AICache", () => {
       const disabledCache = new AICache<string>("test", 60, false);
       disabledCache.get("key1");
       disabledCache.get("key2");
-      
+
       const stats = disabledCache.getStats();
       expect(stats.misses).toBe(2);
       expect(stats.hits).toBe(0);
@@ -159,9 +159,14 @@ describe("AICache", () => {
 
   describe("Persistence", () => {
     it("should persist to disk when configured", () => {
-      const persistCache = new AICache<string>("persist-test", 60, true, testCacheDir);
+      const persistCache = new AICache<string>(
+        "persist-test",
+        60,
+        true,
+        testCacheDir
+      );
       persistCache.set("key1", "value1");
-      
+
       // Check that file was created
       const files = fs.readdirSync(testCacheDir);
       const cacheFiles = files.filter((f) => f.startsWith("persist-test_"));
@@ -170,13 +175,23 @@ describe("AICache", () => {
 
     it("should load from disk on initialization", () => {
       // Create and populate cache
-      const cache1 = new AICache<string>("persist-test", 60, true, testCacheDir);
+      const cache1 = new AICache<string>(
+        "persist-test",
+        60,
+        true,
+        testCacheDir
+      );
       cache1.set("key1", "value1");
       cache1.set("key2", "value2");
-      
+
       // Create new cache instance (should load from disk)
-      const cache2 = new AICache<string>("persist-test", 60, true, testCacheDir);
-      
+      const cache2 = new AICache<string>(
+        "persist-test",
+        60,
+        true,
+        testCacheDir
+      );
+
       expect(cache2.get("key1")).toBe("value1");
       expect(cache2.get("key2")).toBe("value2");
     });
@@ -184,13 +199,13 @@ describe("AICache", () => {
     it("should skip expired entries when loading from disk", async () => {
       const cache1 = new AICache<string>("persist-test", 1, true, testCacheDir);
       cache1.set("key1", "value1");
-      
+
       // Wait for expiration
       await new Promise((resolve) => setTimeout(resolve, 1100));
-      
+
       // Create new cache instance
       const cache2 = new AICache<string>("persist-test", 1, true, testCacheDir);
-      
+
       expect(cache2.get("key1")).toBeNull();
     });
   });
@@ -199,7 +214,7 @@ describe("AICache", () => {
     it("should create cache with correct configuration", () => {
       const factoryCache = createCache<string>("factory-test", 120, true);
       factoryCache.set("key1", "value1");
-      
+
       expect(factoryCache.get("key1")).toBe("value1");
     });
   });

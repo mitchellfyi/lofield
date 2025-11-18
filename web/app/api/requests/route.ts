@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(requests);
   } catch (error) {
     console.error("Error fetching requests:", error);
-    
+
     // Check for database connection errors
     if (error instanceof Error && error.message.includes("connect")) {
       return NextResponse.json(
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
         { status: 503 }
       );
     }
-    
+
     return NextResponse.json(
       { error: "Failed to fetch requests" },
       { status: 500 }
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     let body: CreateRequestData;
-    
+
     // Parse JSON body with error handling
     try {
       body = await request.json();
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Error creating request:", error);
-    
+
     // Check for database connection errors
     if (error instanceof Error && error.message.includes("connect")) {
       return NextResponse.json(
@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
         { status: 503 }
       );
     }
-    
+
     return NextResponse.json(
       { error: "Failed to create request" },
       { status: 500 }

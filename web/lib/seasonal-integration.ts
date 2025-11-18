@@ -1,6 +1,6 @@
 /**
  * AI Integration Helpers for Seasonal and Holiday Logic
- * 
+ *
  * This module provides helper functions that integrate seasonal and holiday
  * detection with the AI music and script generation modules.
  */
@@ -12,28 +12,36 @@ import {
   getContextTags,
   type Hemisphere,
 } from "./seasonal";
-import type { MusicGenerationRequest, ScriptGenerationRequest } from "./ai/types";
+import type {
+  MusicGenerationRequest,
+  ScriptGenerationRequest,
+} from "./ai/types";
 
 /**
  * Deep merge utility for arrays and objects
  * Arrays are concatenated and deduplicated
  * Objects are deeply merged
- * 
+ *
  * @param target - Target object to merge into
  * @param source - Source object to merge from
  * @returns Merged object
  */
-function deepMerge<T extends Record<string, unknown>>(target: T, source: Partial<T>): T {
+function deepMerge<T extends Record<string, unknown>>(
+  target: T,
+  source: Partial<T>
+): T {
   const result = { ...target };
-  
+
   for (const key in source) {
     if (Object.prototype.hasOwnProperty.call(source, key)) {
       const sourceValue = source[key];
       const targetValue = result[key];
-      
+
       if (Array.isArray(sourceValue) && Array.isArray(targetValue)) {
         // Concatenate and deduplicate arrays
-        result[key] = [...new Set([...targetValue, ...sourceValue])] as T[Extract<keyof T, string>];
+        result[key] = [
+          ...new Set([...targetValue, ...sourceValue]),
+        ] as T[Extract<keyof T, string>];
       } else if (
         sourceValue &&
         typeof sourceValue === "object" &&
@@ -44,7 +52,7 @@ function deepMerge<T extends Record<string, unknown>>(target: T, source: Partial
       ) {
         // Recursively merge objects
         result[key] = deepMerge(
-          targetValue as Record<string, unknown>, 
+          targetValue as Record<string, unknown>,
           sourceValue as Record<string, unknown>
         ) as T[Extract<keyof T, string>];
       } else if (sourceValue !== undefined) {
@@ -53,7 +61,7 @@ function deepMerge<T extends Record<string, unknown>>(target: T, source: Partial
       }
     }
   }
-  
+
   return result;
 }
 
@@ -69,7 +77,7 @@ export interface SeasonalIntegrationConfig {
 
 /**
  * Enhance a music generation request with seasonal context
- * 
+ *
  * @param request - Base music generation request
  * @param config - Seasonal integration configuration
  * @returns Enhanced music generation request with seasonal bias
@@ -100,7 +108,7 @@ export function enhanceMusicRequestWithSeason(
 
 /**
  * Enhance a script generation request with seasonal and holiday context
- * 
+ *
  * @param request - Base script generation request
  * @param config - Seasonal integration configuration
  * @returns Enhanced script generation request with seasonal and holiday context
@@ -137,17 +145,14 @@ export function enhanceScriptRequestWithSeason(
 /**
  * Get all context tags for content generation
  * This combines seasonal tags and holiday tags for use in topic selection
- * 
+ *
  * @param config - Seasonal integration configuration
  * @returns Array of context tags
  */
 export function getContentContextTags(
   config: SeasonalIntegrationConfig = {}
 ): string[] {
-  const {
-    hemisphere = "northern",
-    date = new Date(),
-  } = config;
+  const { hemisphere = "northern", date = new Date() } = config;
 
   return getContextTags(date, hemisphere);
 }
@@ -156,30 +161,32 @@ export function getContentContextTags(
  * Apply show-specific season overrides to the base configuration
  * This helper function checks if there are season overrides in the show config
  * and merges them with the base configuration (arrays are concatenated, objects are merged)
- * 
+ *
  * @param showConfig - The show configuration object (from config/shows/*.json)
  * @param config - Seasonal integration configuration
  * @returns Merged show configuration with season overrides applied
  */
-export function getShowSeasonOverrides<T extends {
-  primary_tags?: string[];
-  tone?: string;
-  commentary_style?: Record<string, unknown>;
-  [key: string]: unknown;
-}>(
+export function getShowSeasonOverrides<
+  T extends {
+    primary_tags?: string[];
+    tone?: string;
+    commentary_style?: Record<string, unknown>;
+    [key: string]: unknown;
+  },
+>(
   showConfig: T & {
-    season_overrides?: Record<string, {
-      tone_adjustment?: string;
-      additional_topics?: string[];
-      [key: string]: unknown;
-    }>;
+    season_overrides?: Record<
+      string,
+      {
+        tone_adjustment?: string;
+        additional_topics?: string[];
+        [key: string]: unknown;
+      }
+    >;
   },
   config: SeasonalIntegrationConfig = {}
 ): T {
-  const {
-    hemisphere = "northern",
-    date = new Date(),
-  } = config;
+  const { hemisphere = "northern", date = new Date() } = config;
 
   const season = getSeason(date, hemisphere);
   const overrides = showConfig.season_overrides?.[season];
@@ -193,7 +200,8 @@ export function getShowSeasonOverrides<T extends {
 
   // Map additional_topics to primary_tags
   if (overrides.additional_topics) {
-    overrideConfig.primary_tags = overrides.additional_topics as T["primary_tags"];
+    overrideConfig.primary_tags =
+      overrides.additional_topics as T["primary_tags"];
   }
 
   // Map tone_adjustment to tone
@@ -215,24 +223,29 @@ export function getShowSeasonOverrides<T extends {
 /**
  * Apply show-specific holiday overrides to the base configuration
  * This helper function merges holiday overrides with the base show configuration
- * 
+ *
  * @param showConfig - The show configuration object
  * @param config - Seasonal integration configuration
  * @returns Merged show configuration with holiday overrides applied, or original config if no match
  */
-export function getShowHolidayOverrides<T extends {
-  tone?: string;
-  commentary_style?: Record<string, unknown>;
-  [key: string]: unknown;
-}>(
+export function getShowHolidayOverrides<
+  T extends {
+    tone?: string;
+    commentary_style?: Record<string, unknown>;
+    [key: string]: unknown;
+  },
+>(
   showConfig: T & {
-    holiday_overrides?: Record<string, {
-      dates?: string[];
-      tone_adjustment?: string;
-      sample_line?: string;
-      notes?: string;
-      [key: string]: unknown;
-    }>;
+    holiday_overrides?: Record<
+      string,
+      {
+        dates?: string[];
+        tone_adjustment?: string;
+        sample_line?: string;
+        notes?: string;
+        [key: string]: unknown;
+      }
+    >;
   },
   config: SeasonalIntegrationConfig = {}
 ): T {
@@ -265,7 +278,11 @@ export function getShowHolidayOverrides<T extends {
 
       // Include notes and any other override properties
       for (const key in override) {
-        if (key !== "dates" && key !== "tone_adjustment" && key !== "sample_line") {
+        if (
+          key !== "dates" &&
+          key !== "tone_adjustment" &&
+          key !== "sample_line"
+        ) {
           (overrideConfig as Record<string, unknown>)[key] = override[key];
         }
       }

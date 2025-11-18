@@ -1,6 +1,6 @@
 /**
  * Text-to-Speech (TTS) Module
- * 
+ *
  * Converts presenter scripts to audio using TTS services.
  * Supports OpenAI TTS and ElevenLabs.
  */
@@ -12,11 +12,7 @@ import OpenAI from "openai";
 import { getAIConfig } from "./config";
 import { createCache } from "./cache";
 import { withRetry, isRetryableError } from "./retry";
-import type {
-  TTSRequest,
-  TTSResult,
-  TTSMetadata,
-} from "./types";
+import type { TTSRequest, TTSResult, TTSMetadata } from "./types";
 import { TTSError } from "./types";
 
 // OpenAI client (lazy-loaded)
@@ -54,15 +50,13 @@ const ttsCache = createCache<TTSResult>(
 /**
  * Convert text to speech
  */
-export async function generateTTS(
-  request: TTSRequest
-): Promise<TTSResult> {
+export async function generateTTS(request: TTSRequest): Promise<TTSResult> {
   // Check cache first
   // Cache key includes text, voiceId, and speed to avoid incorrect cache hits
-  const cacheKey = { 
-    text: request.text, 
+  const cacheKey = {
+    text: request.text,
     voiceId: request.voiceId,
-    speed: request.speed || 1.0
+    speed: request.speed || 1.0,
   };
   const cached = ttsCache.get(cacheKey);
   if (cached) {
@@ -71,17 +65,14 @@ export async function generateTTS(
   }
 
   try {
-    const result = await withRetry(
-      () => generateTTSInternal(request),
-      {
-        maxAttempts: config.retry.maxAttempts,
-        baseDelay: config.retry.baseDelay,
-        maxDelay: config.retry.maxDelay,
-        onRetry: (attempt, error) => {
-          console.warn(`TTS attempt ${attempt} failed: ${error.message}`);
-        },
-      }
-    );
+    const result = await withRetry(() => generateTTSInternal(request), {
+      maxAttempts: config.retry.maxAttempts,
+      baseDelay: config.retry.baseDelay,
+      maxDelay: config.retry.maxDelay,
+      onRetry: (attempt, error) => {
+        console.warn(`TTS attempt ${attempt} failed: ${error.message}`);
+      },
+    });
 
     // Cache successful result
     if (result.success && result.filePath) {
@@ -106,66 +97,66 @@ export async function generateTTS(
 /**
  * Internal TTS generation logic
  */
-async function generateTTSInternal(
-  request: TTSRequest
-): Promise<TTSResult> {
+async function generateTTSInternal(request: TTSRequest): Promise<TTSResult> {
   const config = getAIConfig();
-  
+
   if (config.tts.provider === "openai") {
     return await generateTTSWithOpenAI(request);
   } else if (config.tts.provider === "elevenlabs") {
     return await generateTTSWithElevenLabs(request);
   } else {
-    throw new TTSError(
-      `Unsupported TTS provider: ${config.tts.provider}`,
-      { provider: config.tts.provider }
-    );
+    throw new TTSError(`Unsupported TTS provider: ${config.tts.provider}`, {
+      provider: config.tts.provider,
+    });
   }
 }
 
 /**
  * Generate TTS using OpenAI
  */
-async function generateTTSWithOpenAI(
-  request: TTSRequest
-): Promise<TTSResult> {
+async function generateTTSWithOpenAI(request: TTSRequest): Promise<TTSResult> {
   const config = getAIConfig();
   const openai = getOpenAIClient();
-  
+
   // Map voice IDs to OpenAI voices
   // Supports both generic voice IDs and presenter-specific voice IDs
-  const openaiVoiceMap: Record<string, "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"> = {
+  const openaiVoiceMap: Record<
+    string,
+    "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer"
+  > = {
     // Generic voice IDs (backwards compatibility)
-    "voice_1": "alloy",
-    "voice_2": "echo",
-    "voice_3": "fable",
-    "voice_4": "onyx",
-    "voice_5": "nova",
-    "voice_6": "shimmer",
+    voice_1: "alloy",
+    voice_2: "echo",
+    voice_3: "fable",
+    voice_4: "onyx",
+    voice_5: "nova",
+    voice_6: "shimmer",
     // Presenter-specific voice IDs mapped to OpenAI voices
     // These can be customized based on presenter personalities
-    "voice_alex_contemplative": "onyx",
-    "voice_sam_quiet": "echo",
-    "voice_jordan_gentle": "nova",
-    "voice_casey_calm": "shimmer",
-    "voice_morgan_resigned": "fable",
-    "voice_riley_practical": "alloy",
-    "voice_taylor_focused": "onyx",
-    "voice_drew_quiet": "echo",
-    "voice_avery_conversational": "nova",
-    "voice_reese_friendly": "shimmer",
-    "voice_quinn_determined": "fable",
-    "voice_sage_steady": "alloy",
-    "voice_rowan_relaxed": "echo",
-    "voice_finley_easygoing": "nova",
-    "voice_harper_calm": "shimmer",
-    "voice_river_thoughtful": "onyx",
+    voice_alex_contemplative: "onyx",
+    voice_sam_quiet: "echo",
+    voice_jordan_gentle: "nova",
+    voice_casey_calm: "shimmer",
+    voice_morgan_resigned: "fable",
+    voice_riley_practical: "alloy",
+    voice_taylor_focused: "onyx",
+    voice_drew_quiet: "echo",
+    voice_avery_conversational: "nova",
+    voice_reese_friendly: "shimmer",
+    voice_quinn_determined: "fable",
+    voice_sage_steady: "alloy",
+    voice_rowan_relaxed: "echo",
+    voice_finley_easygoing: "nova",
+    voice_harper_calm: "shimmer",
+    voice_river_thoughtful: "onyx",
   };
 
   const openaiVoice = openaiVoiceMap[request.voiceId] || "alloy";
   const ttsModel = config.tts.model || "tts-1";
 
-  console.log(`Generating TTS with OpenAI (model: ${ttsModel}, voice: ${openaiVoice} [${request.voiceId}], ${request.text.length} chars)`);
+  console.log(
+    `Generating TTS with OpenAI (model: ${ttsModel}, voice: ${openaiVoice} [${request.voiceId}], ${request.text.length} chars)`
+  );
 
   try {
     const mp3 = await openai.audio.speech.create({
@@ -176,7 +167,11 @@ async function generateTTSWithOpenAI(
     });
 
     // Save audio to file
-    const filePath = await saveAudioBuffer(await mp3.arrayBuffer(), request, "mp3");
+    const filePath = await saveAudioBuffer(
+      await mp3.arrayBuffer(),
+      request,
+      "mp3"
+    );
 
     // Estimate duration (rough: ~150 words per minute)
     const wordCount = request.text.split(/\s+/).length;
@@ -200,15 +195,15 @@ async function generateTTSWithOpenAI(
     };
   } catch (error) {
     const err = error as Error;
-    
+
     if (isRetryableError(err)) {
       throw err;
     }
 
-    throw new TTSError(
-      `OpenAI TTS failed: ${err.message}`,
-      { error: err.message, voiceId: request.voiceId }
-    );
+    throw new TTSError(`OpenAI TTS failed: ${err.message}`, {
+      error: err.message,
+      voiceId: request.voiceId,
+    });
   }
 }
 
@@ -225,8 +220,10 @@ async function generateTTSWithElevenLabs(
       { provider: "elevenlabs" }
     );
   }
-  
-  console.log(`Generating TTS with ElevenLabs (voice: ${request.voiceId}, ${request.text.length} chars)`);
+
+  console.log(
+    `Generating TTS with ElevenLabs (voice: ${request.voiceId}, ${request.text.length} chars)`
+  );
 
   try {
     const config = getAIConfig();
@@ -235,7 +232,7 @@ async function generateTTSWithElevenLabs(
       {
         method: "POST",
         headers: {
-          "Accept": "audio/mpeg",
+          Accept: "audio/mpeg",
           "Content-Type": "application/json",
           "xi-api-key": apiKey,
         },
@@ -244,7 +241,8 @@ async function generateTTSWithElevenLabs(
           model_id: "eleven_monolingual_v1",
           voice_settings: {
             stability: request.stability ?? config.tts.stability ?? 0.5,
-            similarity_boost: request.similarityBoost ?? config.tts.similarityBoost ?? 0.75,
+            similarity_boost:
+              request.similarityBoost ?? config.tts.similarityBoost ?? 0.75,
           },
         }),
       }
@@ -281,15 +279,15 @@ async function generateTTSWithElevenLabs(
     };
   } catch (error) {
     const err = error as Error;
-    
+
     if (isRetryableError(err)) {
       throw err;
     }
 
-    throw new TTSError(
-      `ElevenLabs TTS failed: ${err.message}`,
-      { error: err.message, voiceId: request.voiceId }
-    );
+    throw new TTSError(`ElevenLabs TTS failed: ${err.message}`, {
+      error: err.message,
+      voiceId: request.voiceId,
+    });
   }
 }
 
@@ -303,7 +301,7 @@ async function saveAudioBuffer(
 ): Promise<string> {
   const config = getAIConfig();
   const fsPromises = fs.promises;
-  
+
   // Ensure storage directory exists
   try {
     await fsPromises.mkdir(config.storage.audioPath, { recursive: true });
@@ -312,7 +310,8 @@ async function saveAudioBuffer(
   }
 
   // Generate filename
-  const hash = crypto.createHash("md5")
+  const hash = crypto
+    .createHash("md5")
     .update(request.text + request.voiceId)
     .digest("hex")
     .substring(0, 8);
@@ -327,10 +326,9 @@ async function saveAudioBuffer(
     console.log(`TTS audio saved to: ${filePath}`);
     return filePath;
   } catch (error) {
-    throw new TTSError(
-      `Failed to save audio: ${(error as Error).message}`,
-      { error: (error as Error).message }
-    );
+    throw new TTSError(`Failed to save audio: ${(error as Error).message}`, {
+      error: (error as Error).message,
+    });
   }
 }
 

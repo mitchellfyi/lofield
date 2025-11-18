@@ -53,12 +53,13 @@ export interface ShowConfig {
   timing: {
     max_link_seconds: number;
     min_gap_between_links_seconds: number;
-    typical_track_length_seconds: number;
+    typical_track_length_seconds?: number;
   };
   presenters: {
     primary_duo: string[];
     duo_probability: number;
     solo_probability: number;
+    notes?: string;
   };
   tone: {
     keywords: string[];
@@ -67,8 +68,76 @@ export interface ShowConfig {
   };
   topics: {
     primary_tags: string[];
-    banned_tags: string[];
+    banned_tags?: string[];
+    allow_listener_requests?: boolean;
+    typical_request_themes?: string[];
   };
+  commentary_style?: {
+    typical_intro_length_seconds: number;
+    longer_segment_frequency: string;
+    longer_segment_length_seconds: number;
+    check_ins?: string[];
+    sample_lines: string[];
+  };
+  handover?: {
+    duration_seconds: number;
+    style: string;
+    typical_themes?: string[];
+  };
+  season_overrides?: {
+    [season: string]: {
+      tone_adjustment: string;
+      additional_topics?: string[];
+    };
+  };
+  holiday_overrides?: {
+    [holiday: string]: {
+      dates: string[];
+      tone_adjustment: string;
+      notes?: string;
+      sample_line?: string;
+    };
+  };
+  ai_budget?: {
+    max_tokens_per_show: number;
+    max_tts_seconds_per_show: number;
+    max_music_minutes_per_show: number;
+    notes?: string;
+  };
+}
+
+export interface Presenter {
+  id: string;
+  name: string;
+  voice_id: string;
+  role: "anchor" | "sidekick" | "producer";
+  persona: string;
+  shows: string[];
+  quirks?: string[];
+}
+
+export interface PresentersConfig {
+  presenters: Presenter[];
+  voice_profiles?: {
+    description?: string;
+    notes?: string[];
+  };
+}
+
+export interface SeasonalContext {
+  season: "winter" | "spring" | "summer" | "autumn";
+  month: number;
+  isHoliday: boolean;
+  holidayName?: string;
+  additionalTags: string[];
+  toneAdjustment?: string;
+}
+
+export interface TopicSelectionOptions {
+  showConfig: ShowConfig;
+  seasonalContext: SeasonalContext;
+  excludeTags?: string[];
+  maxTags?: number;
 }
 
 export interface Request {

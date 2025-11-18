@@ -72,11 +72,11 @@ export function calculateQueueStats(segments: QueuedSegment[]): QueueStats {
 /**
  * Check if queue meets the show's talk/music ratio requirements
  */
-export function validateQueueRatios(
+export async function validateQueueRatios(
   segments: QueuedSegment[],
   show: Show
-): { valid: boolean; stats: QueueStats; message?: string } {
-  const showConfig = getShowConfig(show.id);
+): Promise<{ valid: boolean; stats: QueueStats; message?: string }> {
+  const showConfig = await getShowConfig(show.id);
   if (!showConfig) {
     return {
       valid: false,
@@ -112,12 +112,12 @@ export function validateQueueRatios(
  * Determine what type of segment should be generated next
  * to maintain proper ratios over the hour
  */
-export function determineNextSegmentType(
+export async function determineNextSegmentType(
   currentQueue: QueuedSegment[],
   show: Show,
   hoursSinceShowStart: number = 0
-): "music" | "talk" | "balanced" {
-  const showConfig = getShowConfig(show.id);
+): Promise<"music" | "talk" | "balanced"> {
+  const showConfig = await getShowConfig(show.id);
   if (!showConfig) {
     return "balanced";
   }
@@ -156,18 +156,18 @@ export function determineNextSegmentType(
  * Calculate how many more segments of each type are needed
  * to fill a target duration while maintaining ratios
  */
-export function calculateSegmentNeeds(
+export async function calculateSegmentNeeds(
   currentQueue: QueuedSegment[],
   show: Show,
   targetDurationMinutes: number,
   averageMusicDuration: number = 180, // 3 minutes
   averageTalkDuration: number = 30 // 30 seconds
-): {
+): Promise<{
   musicSegmentsNeeded: number;
   talkSegmentsNeeded: number;
   totalDurationNeeded: number;
-} {
-  const showConfig = getShowConfig(show.id);
+}> {
+  const showConfig = await getShowConfig(show.id);
   if (!showConfig) {
     return {
       musicSegmentsNeeded: 0,
@@ -207,8 +207,8 @@ export function calculateSegmentNeeds(
 /**
  * Get the minimum gap duration between presenter links from show config
  */
-export function getMinGapBetweenLinks(show: Show): number {
-  const showConfig = getShowConfig(show.id);
+export async function getMinGapBetweenLinks(show: Show): Promise<number> {
+  const showConfig = await getShowConfig(show.id);
   if (!showConfig) {
     return 180; // Default 3 minutes
   }
@@ -218,11 +218,11 @@ export function getMinGapBetweenLinks(show: Show): number {
 /**
  * Check if enough time has passed since last talk segment
  */
-export function canAddTalkSegment(
+export async function canAddTalkSegment(
   currentQueue: QueuedSegment[],
   show: Show
-): boolean {
-  const minGap = getMinGapBetweenLinks(show);
+): Promise<boolean> {
+  const minGap = await getMinGapBetweenLinks(show);
   
   // Find the last talk segment
   let lastTalkEndTime: Date | null = null;

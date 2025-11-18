@@ -12,9 +12,24 @@ env:
   REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
 
 jobs:
+  # Ensure CI checks pass before deploying
+  check-ci:
+    name: Verify CI Checks
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Wait for CI checks
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.ref }}
+          check-name: 'All CI Checks Passed'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+
   build-and-push:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
+    needs: check-ci
 
     permissions:
       contents: read
@@ -124,9 +139,24 @@ jobs:
     name: Deploy to DigitalOcean
     runs-on: ubuntu-latest
     needs: build-and-push
+    environment:
+      name: production
+      url: http://${{ secrets.DEPLOY_HOST }}
+
+    permissions:
+      deployments: write
 
     steps:
+      - name: Create deployment
+        uses: chrnorm/deployment-action@v2
+        id: deployment
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          environment: production
+          initial-status: in_progress
+
       - name: Deploy via SSH
+        id: deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -169,3 +199,20 @@ jobs:
             fi
 
             echo "Deployment successful!"
+
+      - name: Update deployment status (success)
+        if: success()
+        uses: chrnorm/deployment-status@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          deployment-id: ${{ steps.deployment.outputs.deployment_id }}
+          state: success
+          environment-url: http://${{ secrets.DEPLOY_HOST }}
+
+      - name: Update deployment status (failure)
+        if: failure()
+        uses: chrnorm/deployment-status@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          deployment-id: ${{ steps.deployment.outputs.deployment_id }}
+          state: failure

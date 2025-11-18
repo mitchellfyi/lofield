@@ -1,0 +1,122 @@
+name: Full Application CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  validate-config:
+    runs-on: ubuntu-latest
+    name: Validate Configuration Files
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Validate JSON configuration
+        run: python3 scripts/validate_config.py
+
+  frontend:
+    runs-on: ubuntu-latest
+    name: Frontend (Next.js)
+
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Check formatting
+        run: npx prettier --check "**/*.{ts,tsx,js,jsx,json,css,md}"
+
+      - name: Run tests
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://lofield:password@localhost:5432/lofield_fm
+
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://lofield:password@localhost:5432/lofield_fm
+
+  scheduler:
+    runs-on: ubuntu-latest
+    name: Scheduler Service
+
+    defaults:
+      run:
+        working-directory: services/scheduler
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: services/scheduler/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://lofield:password@localhost:5432/lofield_fm
+
+  playout:
+    runs-on: ubuntu-latest
+    name: Playout Service
+
+    defaults:
+      run:
+        working-directory: services/playout
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: services/playout/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://lofield:password@localhost:5432/lofield_fm
+
+  # Summary job that requires all checks to pass
+  all-checks:
+    runs-on: ubuntu-latest
+    name: All CI Checks Passed
+    needs: [validate-config, frontend, scheduler, playout]
+    
+    steps:
+      - name: All checks passed
+        run: echo "All CI checks have passed successfully!"

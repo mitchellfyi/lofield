@@ -1,0 +1,66 @@
+name: Backend Services CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "services/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "services/**"
+      - ".github/workflows/backend-ci.yml"
+
+jobs:
+  scheduler-tests:
+    runs-on: ubuntu-latest
+    name: Test Scheduler Service
+
+    defaults:
+      run:
+        working-directory: services/scheduler
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: services/scheduler/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://lofield:password@localhost:5432/lofield_fm
+
+  playout-tests:
+    runs-on: ubuntu-latest
+    name: Test Playout Service
+
+    defaults:
+      run:
+        working-directory: services/playout
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: services/playout/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://lofield:password@localhost:5432/lofield_fm

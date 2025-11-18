@@ -5,13 +5,12 @@ import { prisma } from "@/lib/db";
 
 /**
  * GET /api/health/stream
- * 
+ *
  * Returns health status of the streaming infrastructure
  */
 export async function GET() {
   try {
-    const streamPath =
-      process.env.STREAM_OUTPUT_PATH || "/var/lofield/stream";
+    const streamPath = process.env.STREAM_OUTPUT_PATH || "/var/lofield/stream";
     const archivePath =
       process.env.ARCHIVE_OUTPUT_PATH || "/var/lofield/archive";
 
@@ -67,7 +66,7 @@ export async function GET() {
       const indexPath = path.join(archivePath, "archive-index.json");
       const indexData = await fs.readFile(indexPath, "utf-8");
       const archiveIndex = JSON.parse(indexData);
-      
+
       let totalSize = 0;
       for (const entry of archiveIndex.slice(0, 100)) {
         // Sample first 100

@@ -4,7 +4,7 @@ import path from "path";
 
 /**
  * GET /api/archive/time?ts=2024-01-15T14:00:00Z
- * 
+ *
  * Generates an HLS playlist for time-shifted playback starting at a specific timestamp
  */
 export async function GET(request: NextRequest) {
@@ -59,9 +59,7 @@ export async function GET(request: NextRequest) {
     // Find segments starting from the requested timestamp
     // Look ahead 1 hour by default
     const durationMinutes = parseInt(searchParams.get("duration") || "60", 10);
-    const endTime = new Date(
-      timestamp.getTime() + durationMinutes * 60 * 1000
-    );
+    const endTime = new Date(timestamp.getTime() + durationMinutes * 60 * 1000);
 
     const segments = archiveIndex.filter((entry) => {
       const entryTime = new Date(entry.timestamp);
@@ -123,7 +121,7 @@ function generateHLSPlaylist(
 
   for (const segment of segments) {
     lines.push(`#EXTINF:${segment.duration.toFixed(1)},`);
-    
+
     // Convert file system path to API path
     const filename = path.basename(segment.segmentPath);
     const dir = path.dirname(segment.segmentPath);
@@ -132,7 +130,7 @@ function generateHLSPlaylist(
     const month = parts[parts.length - 3];
     const day = parts[parts.length - 2];
     const hour = parts[parts.length - 1];
-    
+
     lines.push(
       `/api/archive/segments/${year}/${month}/${day}/${hour}/${filename}`
     );

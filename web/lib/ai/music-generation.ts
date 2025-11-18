@@ -259,9 +259,7 @@ async function saveAudioFile(
     .digest("hex")
     .substring(0, 8);
   const timestamp = Date.now();
-  const safeExtension = extension.startsWith(".")
-    ? extension
-    : `.${extension}`;
+  const safeExtension = extension.startsWith(".") ? extension : `.${extension}`;
   const filename = `music_${timestamp}_${hash}${safeExtension}`;
   const filePath = path.join(config.storage.audioPath, filename);
 

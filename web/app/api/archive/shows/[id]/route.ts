@@ -4,7 +4,7 @@ import path from "path";
 
 /**
  * GET /api/archive/shows/:id?date=2024-01-15
- * 
+ *
  * Generates an HLS playlist for a complete show episode on a specific date
  */
 export async function GET(
@@ -134,7 +134,7 @@ function generateHLSPlaylist(
 
   for (const segment of segments) {
     lines.push(`#EXTINF:${segment.duration.toFixed(1)},`);
-    
+
     // Convert file system path to API path
     const filename = path.basename(segment.segmentPath);
     const dir = path.dirname(segment.segmentPath);
@@ -143,7 +143,7 @@ function generateHLSPlaylist(
     const month = parts[parts.length - 3];
     const day = parts[parts.length - 2];
     const hour = parts[parts.length - 1];
-    
+
     lines.push(
       `/api/archive/segments/${year}/${month}/${day}/${hour}/${filename}`
     );

@@ -36,7 +36,7 @@ export function AudioPlayer({ audioUrl, isLive = true }: AudioPlayerProps) {
     const wasPlaying = isPlaying;
 
     // Check if the URL is an HLS stream (.m3u8)
-    const isHLS = audioUrl.endsWith('.m3u8');
+    const isHLS = audioUrl.endsWith(".m3u8");
 
     if (isHLS && Hls.isSupported()) {
       // Use HLS.js for browsers that don't natively support HLS

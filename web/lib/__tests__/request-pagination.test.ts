@@ -40,7 +40,14 @@ describe("Request Feed Pagination and Filtering", () => {
     it("should support page-based pagination", async () => {
       (prisma.request.count as jest.Mock).mockResolvedValue(50);
       (prisma.request.findMany as jest.Mock).mockResolvedValue([
-        { id: "1", type: "music", rawText: "test", votes: 10, status: "pending", createdAt: new Date() },
+        {
+          id: "1",
+          type: "music",
+          rawText: "test",
+          votes: 10,
+          status: "pending",
+          createdAt: new Date(),
+        },
       ]);
 
       const request = new NextRequest(

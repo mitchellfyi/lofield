@@ -4,13 +4,12 @@ import path from "path";
 
 /**
  * GET /api/stream/live.m3u8
- * 
+ *
  * Serves the live HLS manifest for continuous streaming
  */
 export async function GET() {
   try {
-    const streamPath =
-      process.env.STREAM_OUTPUT_PATH || "/var/lofield/stream";
+    const streamPath = process.env.STREAM_OUTPUT_PATH || "/var/lofield/stream";
     const manifestPath = path.join(streamPath, "live.m3u8");
 
     // Check if manifest exists

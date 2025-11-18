@@ -75,7 +75,48 @@ See [BACKEND.md](BACKEND.md) for comprehensive backend documentation.
 
 This project is currently in development.
 
-### Frontend Development
+### Docker Setup (Recommended)
+
+The easiest way to run Lofield FM is using Docker. This approach handles all dependencies and services automatically.
+
+**Prerequisites**:
+- [Docker](https://docs.docker.com/get-docker/) (version 20.10+)
+- [Docker Compose](https://docs.docker.com/compose/install/) (version 2.0+)
+- API keys for AI services (OpenAI, Replicate)
+
+**Quick start**:
+```bash
+# 1. Set up environment
+cp .env.docker .env
+
+# 2. Edit .env and set required values:
+#    - POSTGRES_PASSWORD
+#    - ICECAST_*_PASSWORD (3 passwords)
+#    - OPENAI_API_KEY
+#    - REPLICATE_API_TOKEN
+
+# 3. Start all services
+docker-compose up --build -d
+
+# 4. Run database migrations
+docker-compose exec web npx prisma migrate deploy
+
+# 5. Seed the database
+docker-compose exec web npx tsx prisma/seed/seed.ts
+```
+
+Access the application:
+- **Web UI**: http://localhost:3000
+- **Live Stream**: http://localhost:8000/lofield
+- **Icecast Admin**: http://localhost:8000/admin/
+
+For comprehensive Docker documentation, see [DOCKER.md](DOCKER.md).
+
+### Manual Setup (Alternative)
+
+If you prefer to run services manually without Docker:
+
+#### Frontend Development
 
 The web frontend is built with Next.js 16 and lives in the `web/` directory.
 
@@ -103,7 +144,7 @@ npm run lint
 npm run format
 ```
 
-### Backend Development
+#### Backend Development
 
 The backend uses Next.js API Routes with Prisma and PostgreSQL. See [BACKEND.md](BACKEND.md) for full documentation.
 
@@ -121,7 +162,7 @@ cp .env.example .env
 
 # Start database services
 cd ..
-docker-compose up -d
+docker-compose up -d postgres icecast
 
 cd web
 # Install dependencies

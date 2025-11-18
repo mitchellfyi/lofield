@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
     container_name: lofield_postgres
@@ -12,9 +13,16 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lofield}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
+    networks:
+      - lofield
 
-  # Optional: Icecast streaming server
+  # Icecast Streaming Server
   icecast:
     image: moul/icecast
     container_name: lofield_icecast
@@ -25,7 +33,150 @@ services:
       ICECAST_HOSTNAME: ${ICECAST_HOSTNAME:-localhost}
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8000/status.xsl"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     restart: unless-stopped
+    networks:
+      - lofield
+
+  # Web Application (Next.js 16)
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: lofield_web
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-lofield}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lofield_fm}?schema=public
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+      NEXT_PUBLIC_STREAM_URL: ${NEXT_PUBLIC_STREAM_URL:-http://localhost:8000/live.mp3}
+      NEXT_PUBLIC_ARCHIVE_BASE_URL: ${NEXT_PUBLIC_ARCHIVE_BASE_URL:-http://localhost:8000/archive}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      STABILITY_AI_API_KEY: ${STABILITY_AI_API_KEY:-}
+      AUTO_MODERATION_ENABLED: ${AUTO_MODERATION_ENABLED:-true}
+      RATE_LIMIT_PER_HOUR: ${RATE_LIMIT_PER_HOUR:-100}
+      NODE_ENV: ${NODE_ENV:-production}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      scheduler:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - lofield
+
+  # Scheduler Service
+  scheduler:
+    build:
+      context: .
+      dockerfile: services/scheduler/Dockerfile
+    container_name: lofield_scheduler
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-lofield}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lofield_fm}?schema=public
+      OPENAI_API_KEY: ${OPENAI_API_KEY:?OPENAI_API_KEY must be set in .env file}
+      REPLICATE_API_TOKEN: ${REPLICATE_API_TOKEN:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      MUSIC_PROVIDER: ${MUSIC_PROVIDER:-replicate}
+      MUSIC_MODEL: ${MUSIC_MODEL:-meta/musicgen:671ac645ce5e552cc63a54a2bbff63fcf798043055d2dac5fc9e36a837eedcfb}
+      MUSIC_DEFAULT_DURATION: ${MUSIC_DEFAULT_DURATION:-180}
+      MUSIC_CACHE_ENABLED: ${MUSIC_CACHE_ENABLED:-true}
+      MUSIC_CACHE_TTL: ${MUSIC_CACHE_TTL:-86400}
+      SCRIPT_PROVIDER: ${SCRIPT_PROVIDER:-openai}
+      SCRIPT_MODEL: ${SCRIPT_MODEL:-gpt-4o-mini}
+      SCRIPT_TEMPERATURE: ${SCRIPT_TEMPERATURE:-0.7}
+      SCRIPT_MAX_TOKENS: ${SCRIPT_MAX_TOKENS:-1000}
+      SCRIPT_CACHE_ENABLED: ${SCRIPT_CACHE_ENABLED:-true}
+      SCRIPT_CACHE_TTL: ${SCRIPT_CACHE_TTL:-3600}
+      TTS_PROVIDER: ${TTS_PROVIDER:-openai}
+      TTS_MODEL: ${TTS_MODEL:-tts-1}
+      TTS_CACHE_ENABLED: ${TTS_CACHE_ENABLED:-true}
+      TTS_CACHE_TTL: ${TTS_CACHE_TTL:-86400}
+      TTS_STABILITY: ${TTS_STABILITY:-0.5}
+      TTS_SIMILARITY_BOOST: ${TTS_SIMILARITY_BOOST:-0.75}
+      AUDIO_STORAGE_PATH: ${AUDIO_STORAGE_PATH:-/var/lofield/audio}
+      CACHE_DIR: ${CACHE_DIR:-/var/lofield/cache}
+      RETRY_MAX_ATTEMPTS: ${RETRY_MAX_ATTEMPTS:-3}
+      RETRY_BASE_DELAY: ${RETRY_BASE_DELAY:-1000}
+      RETRY_MAX_DELAY: ${RETRY_MAX_DELAY:-10000}
+      SCHEDULER_BUFFER_MINUTES: ${SCHEDULER_BUFFER_MINUTES:-45}
+      SCHEDULER_CHECK_INTERVAL: ${SCHEDULER_CHECK_INTERVAL:-60}
+    volumes:
+      - audio_storage:/var/lofield/audio
+      - cache_storage:/var/lofield/cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy --schema=../web/prisma/schema.prisma && npm start"
+    restart: unless-stopped
+    networks:
+      - lofield
+
+  # Playout/Streaming Service
+  playout:
+    build:
+      context: .
+      dockerfile: services/playout/Dockerfile
+    container_name: lofield_playout
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-lofield}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-lofield_fm}?schema=public
+      STREAM_OUTPUT_PATH: ${STREAM_OUTPUT_PATH:-/var/lofield/stream}
+      ARCHIVE_OUTPUT_PATH: ${ARCHIVE_OUTPUT_PATH:-/var/lofield/archive}
+      HLS_SEGMENT_DURATION: ${HLS_SEGMENT_DURATION:-6}
+      ICECAST_HOST: ${ICECAST_HOST:-icecast}
+      ICECAST_PORT: ${ICECAST_PORT:-8000}
+      ICECAST_MOUNT_POINT: ${ICECAST_MOUNT_POINT:-/lofield}
+      ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD:?ICECAST_SOURCE_PASSWORD must be set in .env file}
+    volumes:
+      - stream_output:/var/lofield/stream
+      - archive_output:/var/lofield/archive
+      - audio_storage:/var/lofield/audio:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      icecast:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy --schema=../web/prisma/schema.prisma && npm start"
+    restart: unless-stopped
+    networks:
+      - lofield
+
+  # Nginx Reverse Proxy (Optional - for production)
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: lofield_nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - web
+      - playout
+    restart: unless-stopped
+    networks:
+      - lofield
+    profiles:
+      - production
 
 volumes:
   postgres_data:
+  audio_storage:
+  cache_storage:
+  stream_output:
+  archive_output:
+
+networks:
+  lofield:
+    driver: bridge
+

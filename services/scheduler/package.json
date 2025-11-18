@@ -10,12 +10,19 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"
   },
-  "keywords": ["lofield", "scheduler", "radio", "ai"],
+  "keywords": [
+    "lofield",
+    "scheduler",
+    "radio",
+    "ai"
+  ],
   "author": "Lofield FM",
   "license": "MIT",
   "dependencies": {
     "@prisma/client": "^6.19.0",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "pino": "^10.1.0",
+    "pino-pretty": "^13.1.2"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

@@ -9,6 +9,7 @@ import * as fs from "fs/promises";
 import * as fsSync from "fs";
 import * as path from "path";
 import { PrismaClient } from "@prisma/client";
+import logger from "./logger";
 import type { ArchiveIndex, QueuedSegment } from "./types";
 
 // Allow prisma to be undefined for testing
@@ -18,7 +19,7 @@ try {
   prisma = new PrismaClient();
 } catch (error) {
   // Prisma not initialized (e.g., in test environment without database)
-  console.warn("Prisma client not initialized - database operations will fail");
+  logger.warn("Prisma client not initialized - database operations will fail");
 }
 
 // In-memory index (in production, this would be persisted to database or file)
@@ -60,7 +61,7 @@ export async function recordSegmentToArchive(
     try {
       await fs.access(segment.filePath);
     } catch {
-      console.warn(
+      logger.warn(
         `Segment file not found: ${segment.filePath}, skipping archive`
       );
       return;
@@ -98,11 +99,11 @@ export async function recordSegmentToArchive(
 
     archiveIndex.push(indexEntry);
 
-    console.log(
+    logger.debug(
       `Archived segment ${segment.id} to ${archiveFile} at offset ${offset}`
     );
   } catch (error) {
-    console.error(`Error archiving segment ${segment.id}:`, error);
+    logger.error({ err: error, segmentId: segment.id }, `Error archiving segment ${segment.id}`);
     throw error;
   }
 }
@@ -132,7 +133,7 @@ export async function assembleShowEpisode(
   }
 
   try {
-    console.log(`Assembling episode for show ${showId} on ${date.toISOString()}`);
+    logger.info(`Assembling episode for show ${showId} on ${date.toISOString()}`);
 
     // Get show from database
     const show = await prisma.show.findUnique({
@@ -214,10 +215,10 @@ export async function assembleShowEpisode(
       });
     });
 
-    console.log(`Episode assembled: ${outputFile}`);
+    logger.info(`Episode assembled: ${outputFile}`);
     return outputFile;
   } catch (error) {
-    console.error(`Error assembling episode for show ${showId}:`, error);
+    logger.error({ err: error, showId }, `Error assembling episode for show ${showId}`);
     throw error;
   }
 }
@@ -259,7 +260,7 @@ export async function cleanupOldArchives(
     deletedCount++;
   });
 
-  console.log(
+  logger.info(
     `Cleaned up ${deletedCount} archive entries older than ${retentionDays} days`
   );
 

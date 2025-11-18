@@ -9,6 +9,7 @@
  * - Broadcasting
  */
 
+import logger from "./logger";
 import type { SchedulerConfig, Show, QueuedSegment, ShowConfig } from "./types";
 import {
   getCurrentShow,
@@ -56,10 +57,10 @@ export class SchedulerService {
    * Start the scheduler service
    */
   async start(): Promise<void> {
-    console.log("Starting Lofield FM Scheduler Service...");
-    console.log(`Buffer: ${this.config.bufferMinutes} minutes`);
-    console.log(`Check interval: ${this.config.checkIntervalSeconds} seconds`);
-    console.log(`Min queue depth: ${this.config.minQueueDepthMinutes} minutes`);
+    logger.info("Starting Lofield FM Scheduler Service...");
+    logger.info(`Buffer: ${this.config.bufferMinutes} minutes`);
+    logger.info(`Check interval: ${this.config.checkIntervalSeconds} seconds`);
+    logger.info(`Min queue depth: ${this.config.minQueueDepthMinutes} minutes`);
 
     this.isRunning = true;
 
@@ -71,7 +72,7 @@ export class SchedulerService {
    * Stop the scheduler service
    */
   async stop(): Promise<void> {
-    console.log("Stopping scheduler service...");
+    logger.info("Stopping scheduler service...");
     this.isRunning = false;
   }
 
@@ -83,7 +84,7 @@ export class SchedulerService {
       try {
         await this.scheduleTick();
       } catch (error) {
-        console.error("Error in scheduling loop:", error);
+        logger.error({ err: error }, "Error in scheduling loop");
       }
 
       // Wait for the next check
@@ -100,7 +101,7 @@ export class SchedulerService {
     // 1. Get current show
     const currentShow = await getCurrentShow();
     if (!currentShow) {
-      console.warn("No active show found, waiting for next check");
+      logger.warn("No active show found, waiting for next check");
       return;
     }
 
@@ -150,11 +151,11 @@ export class SchedulerService {
     try {
       const nextShow = await getNextShow(currentShow);
       if (!nextShow) {
-        console.log("No next show found, skipping handover");
+        logger.info("No next show found, skipping handover");
         return;
       }
 
-      console.log(
+      logger.info(
         `Generating handover from ${currentShow.name} to ${nextShow.name}`
       );
 
@@ -166,7 +167,7 @@ export class SchedulerService {
       );
 
       if (!handoverResult.success || !handoverResult.filePath) {
-        console.error("Handover generation failed, using fallback");
+        logger.error("Handover generation failed, using fallback");
         const fallback = await generateFallbackContent(
           "talk",
           this.config.audioStoragePath
@@ -194,9 +195,9 @@ export class SchedulerService {
         },
       });
 
-      console.log(`Handover segment scheduled at ${handoverStart.toISOString()}`);
+      logger.info(`Handover segment scheduled at ${handoverStart.toISOString()}`);
     } catch (error) {
-      console.error("Error generating handover:", error);
+      logger.error({ err: error }, "Error generating handover");
     }
   }
 
@@ -206,7 +207,7 @@ export class SchedulerService {
   private async checkAndGenerateContent(currentShow: Show): Promise<void> {
     const replenishment = await needsReplenishment(this.config);
 
-    console.log(
+    logger.debug(
       `Queue status: ${replenishment.currentMinutes.toFixed(1)}/${replenishment.targetMinutes} minutes`
     );
 
@@ -214,7 +215,7 @@ export class SchedulerService {
       return;
     }
 
-    console.log(
+    logger.info(
       `Queue running low, generating ${replenishment.minutesNeeded.toFixed(1)} minutes of content...`
     );
 
@@ -237,13 +238,13 @@ export class SchedulerService {
       const musicMinutesNeeded = minutesNeeded * musicRatio;
       const talkMinutesNeeded = minutesNeeded * talkRatio;
 
-      console.log(
+      logger.info(
         `Generating content with ${(musicRatio * 100).toFixed(0)}% music (${musicMinutesNeeded.toFixed(1)} min) / ${(talkRatio * 100).toFixed(0)}% talk (${talkMinutesNeeded.toFixed(1)} min)`
       );
 
       // Get top requests
       const requests = await getTopRequests(10);
-      console.log(`Found ${requests.length} requests to process`);
+      logger.info(`Found ${requests.length} requests to process`);
 
       let musicMinutesGenerated = 0;
       let talkMinutesGenerated = 0;
@@ -267,7 +268,7 @@ export class SchedulerService {
             );
 
             if (!musicResult.success || !musicResult.filePath) {
-              console.error("Music generation failed, using fallback");
+              logger.error("Music generation failed, using fallback");
               const fallback = await generateFallbackContent(
                 "music",
                 this.config.audioStoragePath
@@ -301,7 +302,7 @@ export class SchedulerService {
               );
 
               if (!commentaryResult.success || !commentaryResult.filePath) {
-                console.warn("Commentary generation failed, skipping");
+                logger.warn("Commentary generation failed, skipping");
                 commentaryResult = null;
               }
             }
@@ -350,12 +351,12 @@ export class SchedulerService {
             // Publish request played notification
             publishRequestPlayed(request.id, musicResult.metadata?.title || "Track");
 
-            console.log(
+            logger.debug(
               `Generated content for "${request.rawText}" - Music: ${musicMinutesGenerated.toFixed(1)}/${musicMinutesNeeded.toFixed(1)} min, Talk: ${talkMinutesGenerated.toFixed(1)}/${talkMinutesNeeded.toFixed(1)} min`
             );
           }
         } catch (error) {
-          console.error(`Error processing request ${request.id}:`, error);
+          logger.error({ err: error, requestId: request.id }, `Error processing request ${request.id}`);
           continue;
         }
       }
@@ -386,11 +387,11 @@ export class SchedulerService {
       }
 
       const totalGenerated = musicMinutesGenerated + talkMinutesGenerated;
-      console.log(
+      logger.info(
         `Content generation complete: ${totalGenerated.toFixed(1)} minutes (Music: ${musicMinutesGenerated.toFixed(1)} min, Talk: ${talkMinutesGenerated.toFixed(1)} min)`
       );
     } catch (error) {
-      console.error("Error in generateContent:", error);
+      logger.error({ err: error }, "Error in generateContent");
       throw error;
     }
   }
@@ -431,7 +432,7 @@ export class SchedulerService {
         }
       }
     } catch (error) {
-      console.error("Error publishing updates:", error);
+      logger.error({ err: error }, "Error publishing updates");
     }
   }
 
@@ -450,9 +451,9 @@ export class SchedulerService {
       const cutoff = new Date(now.getTime() - 3600000);
       // await cleanupOldSegments(cutoff);
 
-      console.log("Cleanup completed");
+      logger.debug("Cleanup completed");
     } catch (error) {
-      console.error("Error during cleanup:", error);
+      logger.error({ err: error }, "Error during cleanup");
     }
   }
 

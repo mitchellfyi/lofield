@@ -9,6 +9,7 @@ import * as fs from "fs/promises";
 import * as fsSync from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
+import logger from "./logger";
 import type { Show, ShowConfig, Request } from "./types";
 import { getShowConfig } from "./show-manager";
 import { selectPresenters, getPresenterVoiceId, splitScriptForDuo } from "./presenter-manager";
@@ -69,8 +70,8 @@ export async function generateMusicTrack(
     const seasonalContext = getSeasonalContextWithOverrides(showConfig);
     const moodKeywords = getMoodKeywords(showConfig, seasonalContext);
     
-    console.log(`  [AI] Generating music for request: "${request.rawText}"`);
-    console.log(`  [AI] Mood keywords: ${moodKeywords.join(", ")}`);
+    logger.debug(`  [AI] Generating music for request: "${request.rawText}"`);
+    logger.debug(`  [AI] Mood keywords: ${moodKeywords.join(", ")}`);
     
     // In a real implementation, this would call the music generation AI
     // const result = await generateMusic({
@@ -106,7 +107,7 @@ export async function generateMusicTrack(
       },
     };
   } catch (error) {
-    console.error("  [ERROR] Music generation failed:", error);
+    logger.error({ err: error }, "  [ERROR] Music generation failed");
     return {
       success: false,
       error: (error as Error).message,
@@ -142,8 +143,8 @@ export async function generateCommentary(
       : false;
     const targetDuration = getSegmentDuration(showConfig, isLonger);
 
-    console.log(`  [AI] Generating ${isDuo ? 'duo' : 'solo'} ${segmentType} commentary for show: ${show.name}`);
-    console.log(`  [AI] Presenters: ${presenters.join(", ")}, target duration: ${targetDuration}s`);
+    logger.debug(`  [AI] Generating ${isDuo ? 'duo' : 'solo'} ${segmentType} commentary for show: ${show.name}`);
+    logger.debug(`  [AI] Presenters: ${presenters.join(", ")}, target duration: ${targetDuration}s`);
 
     // Build prompt context
     const promptContext = buildPromptContext(showConfig, seasonalContext);
@@ -166,7 +167,7 @@ export async function generateCommentary(
       ? `That was ${trackTitle}, requested by a listener. Hope you're enjoying it.`
       : `Coming up next: ${trackTitle}. Perfect for this time of day.`;
 
-    console.log(`  [AI] Generated script: "${script}"`);
+    logger.debug(`  [AI] Generated script: "${script}"`);
 
     // Step 2: If duo, split script between presenters
     let audioSegments: { presenterId: string; text: string }[];
@@ -181,7 +182,7 @@ export async function generateCommentary(
     for (const segment of audioSegments) {
       const voiceId = getPresenterVoiceId(segment.presenterId);
       if (!voiceId) {
-        console.warn(`  [WARN] Voice ID not found for presenter ${segment.presenterId}`);
+        logger.warn(`  [WARN] Voice ID not found for presenter ${segment.presenterId}`);
         continue;
       }
 
@@ -219,7 +220,7 @@ export async function generateCommentary(
       },
     };
   } catch (error) {
-    console.error("  [ERROR] Commentary generation failed:", error);
+    logger.error({ err: error }, "  [ERROR] Commentary generation failed");
     return {
       success: false,
       error: (error as Error).message,
@@ -249,11 +250,11 @@ export async function generateHandoverSegment(
 
     const handoverDuration = currentConfig.handover?.duration_seconds || 300; // 5 minutes
 
-    console.log(
+    logger.debug(
       `  [AI] Generating handover from ${currentShow.name} to ${nextShow.name}`
     );
-    console.log(`  [AI] Outgoing: ${outgoingPresenters.join(", ")}`);
-    console.log(`  [AI] Incoming: ${incomingPresenters.join(", ")}`);
+    logger.debug(`  [AI] Outgoing: ${outgoingPresenters.join(", ")}`);
+    logger.debug(`  [AI] Incoming: ${incomingPresenters.join(", ")}`);
 
     // Get seasonal context for handover
     const seasonalContext = getSeasonalContextWithOverrides(currentConfig);
@@ -280,7 +281,7 @@ export async function generateHandoverSegment(
     // Stub script with all four presenters
     const script = `And that's it for ${currentShow.name}. Coming up next is ${nextShow.name}. Stay tuned.`;
 
-    console.log(`  [AI] Generated handover script`);
+    logger.debug(`  [AI] Generated handover script`);
 
     // Step 2: Split script among all presenters
     // For handovers, we want a conversation between all four
@@ -291,7 +292,7 @@ export async function generateHandoverSegment(
     for (const segment of scriptSegments) {
       const voiceId = getPresenterVoiceId(segment.presenterId);
       if (!voiceId) {
-        console.warn(`  [WARN] Voice ID not found for presenter ${segment.presenterId}`);
+        logger.warn(`  [WARN] Voice ID not found for presenter ${segment.presenterId}`);
         continue;
       }
 
@@ -339,7 +340,7 @@ export async function generateHandoverSegment(
       },
     };
   } catch (error) {
-    console.error("  [ERROR] Handover generation failed:", error);
+    logger.error({ err: error }, "  [ERROR] Handover generation failed");
     return {
       success: false,
       error: (error as Error).message,
@@ -389,7 +390,7 @@ export async function generateIdent(
       throw new Error(`Show config not found for ${show.id}`);
     }
 
-    console.log(`  [AI] Generating station ident for ${show.name}`);
+    logger.debug(`  [AI] Generating station ident for ${show.name}`);
 
     const { presenters } = selectPresenters(
       showConfig.presenters.primary_duo,
@@ -431,7 +432,7 @@ export async function generateIdent(
       },
     };
   } catch (error) {
-    console.error("  [ERROR] Ident generation failed:", error);
+    logger.error({ err: error }, "  [ERROR] Ident generation failed");
     return {
       success: false,
       error: (error as Error).message,
@@ -446,7 +447,7 @@ export async function generateFallbackContent(
   type: "music" | "talk",
   audioStoragePath: string
 ): Promise<{ filePath: string; duration: number }> {
-  console.log(`  [FALLBACK] Generating fallback ${type} content`);
+  logger.info(`  [FALLBACK] Generating fallback ${type} content`);
 
   const filename = `fallback_${type}_${crypto.randomBytes(8).toString("hex")}.mp3`;
   const filePath = path.join(audioStoragePath, "fallback", filename);

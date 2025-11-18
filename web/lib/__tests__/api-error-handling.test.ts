@@ -21,6 +21,7 @@ jest.mock("@/lib/db", () => ({
       create: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+      count: jest.fn(),
     },
     segment: {
       findMany: jest.fn(),
@@ -37,6 +38,15 @@ jest.mock("@/lib/classification", () => ({
   classifyRequest: jest.fn(),
 }));
 
+// Mock request events
+jest.mock("@/lib/request-events", () => ({
+  requestEventEmitter: {
+    emitRequestCreated: jest.fn(),
+    emitRequestVoted: jest.fn(),
+    emitRequestStatusChanged: jest.fn(),
+  },
+}));
+
 import { prisma } from "@/lib/db";
 import { moderateRequest } from "@/lib/moderation";
 import { classifyRequest } from "@/lib/classification";
@@ -47,6 +57,12 @@ describe("API Error Handling", () => {
   });
 
   describe("GET /api/requests", () => {
+    beforeEach(() => {
+      // Mock both count and findMany for all GET tests
+      (prisma.request.count as jest.Mock).mockResolvedValue(0);
+      (prisma.request.findMany as jest.Mock).mockResolvedValue([]);
+    });
+
     it("should return 400 for invalid status parameter", async () => {
       const request = new NextRequest(
         "http://localhost:3000/api/requests?status=invalid"
@@ -83,20 +99,20 @@ describe("API Error Handling", () => {
       expect(data.error).toContain("maximum value is 100");
     });
 
-    it("should return 400 for negative offset", async () => {
+    it("should return 400 for invalid page parameter", async () => {
       const request = new NextRequest(
-        "http://localhost:3000/api/requests?offset=-5"
+        "http://localhost:3000/api/requests?page=0"
       );
 
       const response = await GET(request);
       const data = await response.json();
 
       expect(response.status).toBe(400);
-      expect(data.error).toContain("Invalid offset parameter");
+      expect(data.error).toContain("Invalid page parameter");
     });
 
     it("should return 503 for database connection errors", async () => {
-      (prisma.request.findMany as jest.Mock).mockRejectedValueOnce(
+      (prisma.request.count as jest.Mock).mockRejectedValueOnce(
         new Error("connect ECONNREFUSED")
       );
 
@@ -110,7 +126,7 @@ describe("API Error Handling", () => {
     });
 
     it("should return 500 for other database errors", async () => {
-      (prisma.request.findMany as jest.Mock).mockRejectedValueOnce(
+      (prisma.request.count as jest.Mock).mockRejectedValueOnce(
         new Error("Some other database error")
       );
 

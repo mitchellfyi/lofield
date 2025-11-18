@@ -9,6 +9,16 @@ import * as fs from "fs";
 import * as path from "path";
 import * as crypto from "crypto";
 import type { Show, ShowConfig, Request } from "./types";
+import { getShowConfig } from "./show-manager";
+import { selectPresenters, getPresenterVoiceId, splitScriptForDuo } from "./presenter-manager";
+import { 
+  selectTopics, 
+  getMoodKeywords, 
+  buildPromptContext,
+  getSegmentDuration,
+  shouldGenerateLongerSegment
+} from "./topic-selector";
+import { getSeasonalContextWithOverrides } from "./show-scheduler";
 
 // Placeholder for AI module integration
 // In a real implementation, these would import from the web/lib/ai modules
@@ -50,16 +60,22 @@ export async function generateMusicTrack(
   audioStoragePath: string
 ): Promise<MusicGenerationResult> {
   try {
-    // In a real implementation, this would call the music generation AI
-    // For now, we'll create a stub implementation
+    const showConfig = getShowConfig(show.id);
+    if (!showConfig) {
+      throw new Error(`Show config not found for ${show.id}`);
+    }
+
+    const seasonalContext = getSeasonalContextWithOverrides(showConfig);
+    const moodKeywords = getMoodKeywords(showConfig, seasonalContext);
     
     console.log(`  [AI] Generating music for request: "${request.rawText}"`);
+    console.log(`  [AI] Mood keywords: ${moodKeywords.join(", ")}`);
     
-    // Simulate AI call
+    // In a real implementation, this would call the music generation AI
     // const result = await generateMusic({
     //   prompt: request.normalized || request.rawText,
     //   duration: 180,
-    //   mood: ["lofi", "chill"],
+    //   mood: moodKeywords,
     // });
 
     // For stub: create a placeholder file path
@@ -103,21 +119,40 @@ export async function generateCommentary(
   segmentType: "track_intro" | "segment" = "track_intro"
 ): Promise<TTSResult> {
   try {
-    const config: ShowConfig = JSON.parse(show.configJson);
-    const presenterIds = config.presenters.primary_duo;
+    const showConfig = getShowConfig(show.id);
+    if (!showConfig) {
+      throw new Error(`Show config not found for ${show.id}`);
+    }
 
-    console.log(`  [AI] Generating ${segmentType} commentary for show: ${show.name}`);
+    const seasonalContext = getSeasonalContextWithOverrides(showConfig);
+    const { presenters, isDuo } = selectPresenters(
+      showConfig.presenters.primary_duo,
+      showConfig.presenters.duo_probability
+    );
+
+    // Determine segment duration
+    const isLonger = showConfig.commentary_style 
+      ? shouldGenerateLongerSegment(showConfig.commentary_style.longer_segment_frequency)
+      : false;
+    const targetDuration = getSegmentDuration(showConfig, isLonger);
+
+    console.log(`  [AI] Generating ${isDuo ? 'duo' : 'solo'} ${segmentType} commentary for show: ${show.name}`);
+    console.log(`  [AI] Presenters: ${presenters.join(", ")}, target duration: ${targetDuration}s`);
+
+    // Build prompt context
+    const promptContext = buildPromptContext(showConfig, seasonalContext);
 
     // Step 1: Generate script with LLM
     // const scriptResult = await generateScript({
     //   segmentType: segmentType,
-    //   showStyle: show.id as ShowStyle,
+    //   showContext: promptContext,
     //   trackInfo: {
     //     title: trackTitle,
     //     requester: request?.userId ?? undefined,
     //   },
-    //   presenterIds: presenterIds,
-    //   durationSeconds: 30,
+    //   presenterIds: presenters,
+    //   durationSeconds: targetDuration,
+    //   isDuo: isDuo,
     // });
 
     // Stub script for now
@@ -127,31 +162,52 @@ export async function generateCommentary(
 
     console.log(`  [AI] Generated script: "${script}"`);
 
-    // Step 2: Convert script to audio with TTS
-    // const ttsResult = await generateTTS({
-    //   text: script,
-    //   voiceId: presenterVoiceId,
-    //   presenterName: presenterIds[0],
-    // });
-
-    // For stub: create a placeholder file path
-    const filename = `commentary_${crypto.randomBytes(8).toString("hex")}.mp3`;
-    const filePath = path.join(audioStoragePath, "commentary", filename);
-
-    // Ensure directory exists
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    // Step 2: If duo, split script between presenters
+    let audioSegments: { presenterId: string; text: string }[];
+    if (isDuo) {
+      audioSegments = splitScriptForDuo(script, presenters);
+    } else {
+      audioSegments = [{ presenterId: presenters[0], text: script }];
     }
 
-    // Create a stub file
-    fs.writeFileSync(filePath, Buffer.from("stub_tts_audio_data"));
+    // Step 3: Generate TTS for each segment
+    const audioFiles: string[] = [];
+    for (const segment of audioSegments) {
+      const voiceId = getPresenterVoiceId(segment.presenterId);
+      if (!voiceId) {
+        console.warn(`  [WARN] Voice ID not found for presenter ${segment.presenterId}`);
+        continue;
+      }
+
+      // const ttsResult = await generateTTS({
+      //   text: segment.text,
+      //   voiceId: voiceId,
+      //   presenterName: segment.presenterId,
+      // });
+
+      // For stub: create a placeholder file
+      const filename = `commentary_${segment.presenterId}_${crypto.randomBytes(4).toString("hex")}.mp3`;
+      const filePath = path.join(audioStoragePath, "commentary", filename);
+      
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      fs.writeFileSync(filePath, Buffer.from("stub_tts_audio_data"));
+      audioFiles.push(filePath);
+    }
+
+    // Step 4: If duo, mix the audio files
+    // In reality, we would mix/sequence the audio files here
+    // For now, we just use the first one
+    const finalFilePath = audioFiles[0] || path.join(audioStoragePath, "commentary", `fallback_${crypto.randomBytes(8).toString("hex")}.mp3`);
 
     return {
       success: true,
-      filePath,
+      filePath: finalFilePath,
       metadata: {
-        duration: 30, // 30 seconds
+        duration: targetDuration,
       },
     };
   } catch (error) {
@@ -172,50 +228,102 @@ export async function generateHandoverSegment(
   audioStoragePath: string
 ): Promise<TTSResult> {
   try {
-    const currentConfig: ShowConfig = JSON.parse(currentShow.configJson);
-    const nextConfig: ShowConfig = JSON.parse(nextShow.configJson);
+    const currentConfig = getShowConfig(currentShow.id);
+    const nextConfig = getShowConfig(nextShow.id);
+    
+    if (!currentConfig || !nextConfig) {
+      throw new Error("Show config not found for handover generation");
+    }
 
     const outgoingPresenters = currentConfig.presenters.primary_duo;
     const incomingPresenters = nextConfig.presenters.primary_duo;
+    const allPresenters = [...outgoingPresenters, ...incomingPresenters];
+
+    const handoverDuration = currentConfig.handover?.duration_seconds || 300; // 5 minutes
 
     console.log(
       `  [AI] Generating handover from ${currentShow.name} to ${nextShow.name}`
     );
+    console.log(`  [AI] Outgoing: ${outgoingPresenters.join(", ")}`);
+    console.log(`  [AI] Incoming: ${incomingPresenters.join(", ")}`);
 
-    // Step 1: Generate handover script with both presenter duos
+    // Get seasonal context for handover
+    const seasonalContext = getSeasonalContextWithOverrides(currentConfig);
+    
+    // Build handover themes
+    const handoverThemes = currentConfig.handover?.typical_themes || [];
+
+    // Step 1: Generate handover script with all presenters
     // const scriptResult = await generateScript({
     //   segmentType: "handover",
-    //   showStyle: currentShow.id as ShowStyle,
-    //   presenterIds: [...outgoingPresenters, ...incomingPresenters],
-    //   durationSeconds: 300, // 5 minutes
+    //   showContext: {
+    //     currentShow: currentConfig.name,
+    //     nextShow: nextConfig.name,
+    //     currentMood: currentConfig.tone.mood,
+    //     nextMood: nextConfig.tone.mood,
+    //     handoverThemes: handoverThemes,
+    //     seasonalContext: seasonalContext,
+    //   },
+    //   presenterIds: allPresenters,
+    //   durationSeconds: handoverDuration,
+    //   isDuo: true, // Handovers are always multi-presenter
     // });
 
-    // Stub script
+    // Stub script with all four presenters
     const script = `And that's it for ${currentShow.name}. Coming up next is ${nextShow.name}. Stay tuned.`;
 
     console.log(`  [AI] Generated handover script`);
 
-    // Step 2: Convert to audio with multiple TTS calls for each presenter
-    // In reality, we'd generate multiple audio files and mix them
+    // Step 2: Split script among all presenters
+    // For handovers, we want a conversation between all four
+    const scriptSegments = splitHandoverScript(script, outgoingPresenters, incomingPresenters);
 
-    // For stub: create a placeholder file path
+    // Step 3: Generate TTS for each presenter segment
+    const audioFiles: string[] = [];
+    for (const segment of scriptSegments) {
+      const voiceId = getPresenterVoiceId(segment.presenterId);
+      if (!voiceId) {
+        console.warn(`  [WARN] Voice ID not found for presenter ${segment.presenterId}`);
+        continue;
+      }
+
+      // const ttsResult = await generateTTS({
+      //   text: segment.text,
+      //   voiceId: voiceId,
+      //   presenterName: segment.presenterId,
+      // });
+
+      // For stub: create a placeholder file
+      const filename = `handover_${segment.presenterId}_${crypto.randomBytes(4).toString("hex")}.mp3`;
+      const filePath = path.join(audioStoragePath, "handovers", filename);
+      
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      fs.writeFileSync(filePath, Buffer.from("stub_handover_audio_data"));
+      audioFiles.push(filePath);
+    }
+
+    // Step 4: Mix/sequence all audio segments
+    // In reality, we would create a mixed audio file with all presenters
+    // For now, create a combined placeholder
     const filename = `handover_${crypto.randomBytes(8).toString("hex")}.mp3`;
     const filePath = path.join(audioStoragePath, "handovers", filename);
-
-    // Ensure directory exists
+    
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-
-    // Create a stub file
+    
     fs.writeFileSync(filePath, Buffer.from("stub_handover_audio_data"));
 
     return {
       success: true,
       filePath,
       metadata: {
-        duration: 300, // 5 minutes
+        duration: handoverDuration,
       },
     };
   } catch (error) {
@@ -228,6 +336,35 @@ export async function generateHandoverSegment(
 }
 
 /**
+ * Split handover script among outgoing and incoming presenters
+ */
+function splitHandoverScript(
+  script: string,
+  outgoingPresenters: string[],
+  incomingPresenters: string[]
+): { presenterId: string; text: string }[] {
+  const sentences = script.split(/(?<=[.!?])\s+/);
+  const lines: { presenterId: string; text: string }[] = [];
+  
+  // Distribute sentences alternating between outgoing and incoming
+  // Pattern: outgoing anchor, outgoing sidekick, incoming anchor, incoming sidekick
+  const presenterOrder = [
+    ...outgoingPresenters,
+    ...incomingPresenters,
+  ];
+  
+  for (let i = 0; i < sentences.length; i++) {
+    const presenterIndex = i % presenterOrder.length;
+    lines.push({
+      presenterId: presenterOrder[presenterIndex],
+      text: sentences[i],
+    });
+  }
+  
+  return lines;
+}
+
+/**
  * Generate a station ident segment
  */
 export async function generateIdent(
@@ -235,13 +372,29 @@ export async function generateIdent(
   audioStoragePath: string
 ): Promise<TTSResult> {
   try {
+    const showConfig = getShowConfig(show.id);
+    if (!showConfig) {
+      throw new Error(`Show config not found for ${show.id}`);
+    }
+
     console.log(`  [AI] Generating station ident for ${show.name}`);
 
-    const config: ShowConfig = JSON.parse(show.configJson);
-    const presenterIds = config.presenters.primary_duo;
+    const { presenters } = selectPresenters(
+      showConfig.presenters.primary_duo,
+      0.5 // 50% chance of duo for idents
+    );
 
     // Stub ident script
     const script = "You're listening to Lofield FM. Background noise for people just trying to make it through the day.";
+
+    // Generate TTS for the ident
+    const voiceId = getPresenterVoiceId(presenters[0]);
+    
+    // const ttsResult = await generateTTS({
+    //   text: script,
+    //   voiceId: voiceId || "default_voice",
+    //   presenterName: presenters[0],
+    // });
 
     // For stub: create a placeholder file path
     const filename = `ident_${crypto.randomBytes(8).toString("hex")}.mp3`;

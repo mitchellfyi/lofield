@@ -243,4 +243,59 @@ export function getSeasonalContext(date: Date = new Date()): {
   return { season, month, isHoliday, holidayName };
 }
 
+/**
+ * Get seasonal context with show-specific overrides applied
+ */
+export function getSeasonalContextWithOverrides(
+  showConfig: ShowConfig,
+  date: Date = new Date()
+): {
+  season: "winter" | "spring" | "summer" | "autumn";
+  month: number;
+  isHoliday: boolean;
+  holidayName?: string;
+  additionalTags: string[];
+  toneAdjustment?: string;
+} {
+  const baseContext = getSeasonalContext(date);
+  const additionalTags: string[] = [];
+  let toneAdjustment: string | undefined;
+
+  // Apply seasonal overrides
+  if (showConfig.season_overrides && showConfig.season_overrides[baseContext.season]) {
+    const override = showConfig.season_overrides[baseContext.season];
+    toneAdjustment = override.tone_adjustment;
+    if (override.additional_topics) {
+      additionalTags.push(...override.additional_topics);
+    }
+  }
+
+  // Apply holiday overrides
+  if (baseContext.isHoliday && baseContext.holidayName && showConfig.holiday_overrides) {
+    for (const [key, override] of Object.entries(showConfig.holiday_overrides)) {
+      // Check if this holiday matches (case-insensitive partial match)
+      if (key.toLowerCase().includes(baseContext.holidayName.toLowerCase())) {
+        // Check if current date is in the holiday date range
+        const currentDate = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        if (override.dates.includes(currentDate)) {
+          // Override tone adjustment with holiday-specific one
+          if (override.tone_adjustment) {
+            toneAdjustment = `${toneAdjustment || ''} ${override.tone_adjustment}`.trim();
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  return {
+    season: baseContext.season as "winter" | "spring" | "summer" | "autumn",
+    month: baseContext.month,
+    isHoliday: baseContext.isHoliday,
+    holidayName: baseContext.holidayName,
+    additionalTags,
+    toneAdjustment,
+  };
+}
+
 export { prisma };

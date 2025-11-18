@@ -18,6 +18,7 @@ export {
   getContextTags,
   getSeasonalMusicMood,
   applySeasonalBiasToMusicPrompt,
+  getHolidayScriptGuidance,
   type Season,
   type Hemisphere,
   type SeasonalMoodProfile,

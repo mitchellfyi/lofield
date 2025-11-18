@@ -264,7 +264,8 @@ function formatDateISO(date: Date): string {
 
 /**
  * Get a seasonal music mood descriptor
- * Returns a random descriptor from the seasonal mood profile
+ * Returns a deterministic descriptor based on the day of year
+ * This ensures consistency across multiple calls for the same date
  * 
  * @param date - The date to check (defaults to current date)
  * @param hemisphere - Northern or Southern hemisphere (defaults to Northern)
@@ -275,13 +276,21 @@ export function getSeasonalMusicMood(
   hemisphere: Hemisphere = "northern"
 ): string {
   const profile = getSeasonalMoodProfile(date, hemisphere);
-  const index = Math.floor(Math.random() * profile.musicMood.length);
+  
+  // Calculate day of year for deterministic selection
+  const startOfYear = new Date(date.getFullYear(), 0, 0);
+  const diff = date.getTime() - startOfYear.getTime();
+  const oneDay = 1000 * 60 * 60 * 24;
+  const dayOfYear = Math.floor(diff / oneDay);
+  
+  // Use day of year to select a consistent mood descriptor
+  const index = dayOfYear % profile.musicMood.length;
   return profile.musicMood[index];
 }
 
 /**
  * Apply seasonal bias to a music prompt
- * Enhances the prompt with seasonal mood descriptors
+ * Enhances the prompt with seasonal mood descriptors using natural phrasing
  * 
  * @param basePrompt - The original music prompt
  * @param date - The date to check (defaults to current date)
@@ -294,5 +303,72 @@ export function applySeasonalBiasToMusicPrompt(
   hemisphere: Hemisphere = "northern"
 ): string {
   const seasonalMood = getSeasonalMusicMood(date, hemisphere);
-  return `${basePrompt}, ${seasonalMood}`;
+  return `${basePrompt}, with a ${seasonalMood}`;
+}
+
+/**
+ * Generate understated holiday script guidance for presenters
+ * Provides example lines that align with Lofield FM's dry, self-aware tone
+ * 
+ * @param date - The date to check for holidays (defaults to current date)
+ * @returns Holiday script guidance with examples, or null if no holiday
+ */
+export function getHolidayScriptGuidance(
+  date: Date = new Date()
+): {
+  holidayTags: string[];
+  guidance: string;
+  exampleLines: string[];
+} | null {
+  const holidayTags = getHolidaysForDate(date);
+  
+  if (holidayTags.length === 0) {
+    return null;
+  }
+
+  // Generate understated, dry guidance based on the holiday
+  const guidance = "Reference the holiday with restraint and dry wit. Acknowledge it matter-of-factly without forced cheerfulness. Focus on relatable remote work experiences during holidays.";
+  
+  // Example lines for common holidays (dry, understated, Lofield FM style)
+  const exampleLines: string[] = [];
+  
+  for (const tag of holidayTags) {
+    switch (tag) {
+      case "new_year":
+        exampleLines.push("New year, same video calls.");
+        exampleLines.push("January 1st. The emails are still there.");
+        break;
+      case "christmas_day":
+      case "christmas_eve":
+        exampleLines.push("Christmas. Some of us are still online.");
+        exampleLines.push("Festive period. Your Slack status says 'away,' but we know better.");
+        break;
+      case "halloween":
+        exampleLines.push("Halloween. The scariest thing today is your inbox.");
+        exampleLines.push("October 31st. Nothing quite as terrifying as a surprise meeting invite.");
+        break;
+      case "bonfire_night":
+        exampleLines.push("Bonfire Night. Remember, remember... that deadline in November.");
+        exampleLines.push("Guy Fawkes Night. Fireworks outside, deadlines inside.");
+        break;
+      case "valentines_day":
+        exampleLines.push("Valentine's Day. You, your laptop, and a questionable Wi-Fi connection.");
+        exampleLines.push("February 14th. Love is in the air. Deadline pressure is in the calendar.");
+        break;
+      case "easter":
+      case "easter_monday":
+        exampleLines.push("Easter Monday. Bank holiday for some, another Monday for others.");
+        exampleLines.push("Easter. The only thing rising is your unread count.");
+        break;
+      default:
+        // Generic understated holiday reference
+        exampleLines.push(`${tag.replace(/_/g, " ")} today. Work continues.`);
+    }
+  }
+
+  return {
+    holidayTags,
+    guidance,
+    exampleLines,
+  };
 }

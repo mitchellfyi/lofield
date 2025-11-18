@@ -289,14 +289,14 @@ Assumptions:
 
 ## Rollout Plan
 
-### Phase 1: MVP (Current)
+### Phase 1: MVP (Current) ✅ COMPLETE
 - ✅ Module implementation
 - ✅ Unit tests
 - ✅ Documentation
 - ✅ Environment configuration
-- [ ] Integration with scheduler
+- ✅ Integration with scheduler
 
-### Phase 2: Testing
+### Phase 2: Testing (In Progress)
 - [ ] Test with real API keys in development
 - [ ] Generate sample content
 - [ ] Validate quality and consistency
@@ -313,6 +313,173 @@ Assumptions:
 - [ ] Fine-tune prompts for better quality
 - [ ] Consider custom model fine-tuning
 - [ ] Implement A/B testing
+
+## Integration Details
+
+### Script Generation
+
+**Location**: `services/scheduler/src/ai/script-generator.ts`
+
+**Features**:
+- OpenAI GPT-4o-mini integration for natural language generation
+- Context-aware prompts incorporating:
+  - Show configuration (mood, energy level, tone keywords)
+  - Presenter personas and quirks
+  - Seasonal context and holiday tags
+  - Listener request metadata
+  - Topic selection based on show themes
+- In-memory caching with 1-hour TTL
+- Automatic script splitting for duo presenters
+- Lofield FM voice guidelines enforcement
+
+**Usage**:
+```typescript
+const { script, estimatedDuration } = await generateScript({
+  segmentType: "track_intro",
+  showConfig: showConfig,
+  presenters: [presenter1, presenter2],
+  trackTitle: "Rainfall on a Tuesday",
+  request: request,
+  seasonalContext: { season: "winter", holidayTags: ["new-year"] },
+  targetDuration: 30,
+});
+```
+
+### Text-to-Speech
+
+**Location**: `services/scheduler/src/ai/tts-generator.ts`
+
+**Features**:
+- Dual provider support: OpenAI TTS (default) and ElevenLabs (optional)
+- Presenter voice mapping to TTS voices
+- Returns actual audio file and duration
+- Automatic audio storage management
+
+**Voice Mapping** (OpenAI):
+- `voice_alex_contemplative` → onyx
+- `voice_sam_quiet` → echo
+- `voice_jordan_gentle` → nova
+- `voice_casey_calm` → shimmer
+- ... (see tts-generator.ts for full mapping)
+
+**Usage**:
+```typescript
+const { filePath, duration } = await generateTTS(
+  "That was Rainfall on a Tuesday, requested by Sarah in Sheffield.",
+  "voice_alex_contemplative",
+  "/tmp/lofield/audio/commentary"
+);
+```
+
+### Audio Mixing
+
+**Location**: `services/scheduler/src/ai/audio-mixer.ts`
+
+**Features**:
+- FFmpeg-based audio concatenation
+- Configurable gaps between segments
+- Automatic duration extraction
+- Fallback to simple concatenation if ffmpeg unavailable
+- Supports duo presenter audio mixing
+
+**Requirements**:
+- FFmpeg installed on system (optional but recommended)
+- FFprobe for accurate duration detection
+
+**Usage**:
+```typescript
+const duration = await concatenateAudioFiles(
+  ["audio1.mp3", "audio2.mp3"],
+  "output.mp3",
+  0.3 // 0.3 second gap
+);
+```
+
+### Content Generator Integration
+
+**Location**: `services/scheduler/src/content-generator.ts`
+
+All content generation functions have been updated to use real AI modules:
+
+1. **`generateCommentary()`** - Track intros and commentary segments
+   - Generates script with LLM
+   - Converts to speech with TTS
+   - Mixes duo audio if needed
+   - Returns actual duration
+
+2. **`generateIdent()`** - Station identification
+   - Generates brief ident script
+   - Converts to speech
+   - Returns actual duration
+
+3. **`generateHandoverSegment()`** - Show transitions
+   - Generates multi-presenter handover script
+   - Splits among 4 presenters (2 outgoing, 2 incoming)
+   - Mixes all audio segments
+   - Returns actual duration
+
+4. **`generateMusicTrack()`** - Music generation
+   - Currently uses placeholder (music AI integration pending)
+
+### Environment Variables
+
+**Required**:
+```bash
+# OpenAI API key (required for script generation and TTS)
+OPENAI_API_KEY=sk-...
+
+# Audio storage paths
+AUDIO_STORAGE_PATH=/tmp/lofield/audio
+```
+
+**Optional**:
+```bash
+# Script generation
+SCRIPT_MODEL=gpt-4o-mini  # or gpt-4
+SCRIPT_TEMPERATURE=0.7
+
+# TTS provider selection
+TTS_PROVIDER=openai  # or elevenlabs
+TTS_MODEL=tts-1      # or tts-1-hd
+
+# ElevenLabs (if using as TTS provider)
+ELEVENLABS_API_KEY=...
+
+# Music generation (future)
+REPLICATE_API_TOKEN=...
+```
+
+### Installation
+
+1. **Install dependencies**:
+```bash
+cd services/scheduler
+npm install
+```
+
+2. **Install FFmpeg** (recommended):
+```bash
+# Ubuntu/Debian
+sudo apt-get install ffmpeg
+
+# macOS
+brew install ffmpeg
+
+# Verify installation
+ffmpeg -version
+```
+
+3. **Configure environment**:
+```bash
+cp .env.example .env
+# Edit .env and add your OPENAI_API_KEY
+```
+
+4. **Test the integration**:
+```bash
+npm test
+```
+
 
 ## Future Enhancements
 

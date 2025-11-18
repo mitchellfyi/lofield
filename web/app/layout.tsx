@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,13 +33,41 @@ export default function RootLayout({
         <div className="flex min-h-screen flex-col">
           <header className="border-b bg-card px-4 py-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-7xl">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                Lofield FM
-              </h1>
+              <Link href="/">
+                <h1 className="text-2xl font-bold tracking-tight text-foreground hover:opacity-80 sm:text-3xl">
+                  Lofield FM
+                </h1>
+              </Link>
               <p className="mt-1 text-sm text-muted-foreground sm:text-base">
                 Background noise for people just trying to make it through the
                 day
               </p>
+              <nav className="mt-4 flex flex-wrap gap-4 text-sm">
+                <Link
+                  href="/"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Home
+                </Link>
+                <Link
+                  href="/schedule"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Schedule
+                </Link>
+                <Link
+                  href="/archive"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Archive
+                </Link>
+                <Link
+                  href="/requests"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Requests
+                </Link>
+              </nav>
             </div>
           </header>
           <main className="flex-1">{children}</main>

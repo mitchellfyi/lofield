@@ -1,0 +1,20 @@
+# Scheduler service .dockerignore
+# Exclude files not needed in Docker image
+
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+IMPLEMENTATION.md
+SHOW_PRESENTER_MANAGEMENT.md
+.env
+.env.local
+.env.example
+Dockerfile
+.dockerignore
+*.md
+.DS_Store
+coverage
+.vscode
+.idea

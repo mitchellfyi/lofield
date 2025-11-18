@@ -1,4 +1,4 @@
-# Environment variables (keep .env.example)
+# Environment variables (keep .env.example and .env.docker)
 .env
 .env.local
 .env.*.local
@@ -19,6 +19,14 @@ yarn-error.log*
 
 # Docker volumes data
 postgres_data/
+audio_storage/
+cache_storage/
+stream_output/
+archive_output/
+
+# Next.js build output
+.next/
+out/
 
 # Editor directories
 .vscode/

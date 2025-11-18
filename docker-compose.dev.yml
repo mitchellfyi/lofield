@@ -1,0 +1,44 @@
+# docker-compose.dev.yml
+# Development-specific overrides for hot reload and debugging
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile.dev
+      target: development
+    volumes:
+      # Mount source code for hot reload
+      - ./web:/app
+      - /app/node_modules
+      - /app/.next
+      # Mount config directory for runtime access
+      - ./config:/config:ro
+    environment:
+      NODE_ENV: development
+    command: npm run dev
+
+  scheduler:
+    volumes:
+      # Mount source code for hot reload
+      - ./services/scheduler:/app
+      - /app/node_modules
+      - ./web/prisma:/app/prisma:ro
+      # Mount config directory for runtime access
+      - ./config:/config:ro
+    environment:
+      NODE_ENV: development
+    command: npm run dev
+
+  playout:
+    volumes:
+      # Mount source code for hot reload
+      - ./services/playout:/app
+      - /app/node_modules
+      - ./web/prisma:/app/prisma:ro
+    environment:
+      NODE_ENV: development
+    command: npm run dev

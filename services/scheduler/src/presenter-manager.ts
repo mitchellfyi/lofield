@@ -90,6 +90,13 @@ export async function getPresenter(presenterId: string): Promise<Presenter | nul
 }
 
 /**
+ * Alias for getPresenter - returns full presenter details
+ */
+export async function getPresenterDetails(presenterId: string): Promise<Presenter | null> {
+  return getPresenter(presenterId);
+}
+
+/**
  * Get all presenters
  */
 export async function getAllPresenters(): Promise<Presenter[]> {

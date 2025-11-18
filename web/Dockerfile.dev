@@ -1,0 +1,31 @@
+# Development Dockerfile for Lofield FM Web Service
+# Enables hot reload for local development
+# Note: Build context should be repository root
+
+FROM node:20-alpine AS development
+
+WORKDIR /app
+
+# Install dependencies for development
+RUN apk add --no-cache libc6-compat
+
+# Copy package files from web directory
+COPY web/package.json web/package-lock.json* ./
+
+# Install all dependencies (including dev dependencies)
+RUN npm install
+
+# Copy prisma schema
+COPY web/prisma ./prisma
+
+# Set dummy DATABASE_URL for Prisma Client generation
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy?schema=public"
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Expose port
+EXPOSE 3000
+
+# Development server with hot reload
+CMD ["npm", "run", "dev"]

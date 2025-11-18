@@ -1,0 +1,27 @@
+# Root .dockerignore for multi-service builds
+# Used when building with context at repository root
+
+.git
+.github
+.vscode
+.idea
+*.md
+README.md
+DOCKER.md
+BACKEND.md
+QUICKSTART.md
+SECURITY.md
+TESTING.md
+docs
+.env
+.env.local
+.env.*.local
+.DS_Store
+*.log
+node_modules
+
+# Keep necessary directories for service builds
+!web
+!services
+!config
+!nginx

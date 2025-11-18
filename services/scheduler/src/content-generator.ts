@@ -9,9 +9,9 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import * as crypto from "crypto";
 import logger from "./logger";
-import type { Show, ShowConfig, Request } from "./types";
+import type { Show, ShowConfig, Request, Presenter } from "./types";
 import { getShowConfig } from "./show-manager";
-import { selectPresenters, getPresenterVoiceId, splitScriptForDuo } from "./presenter-manager";
+import { selectPresenters, getPresenterVoiceId, getPresenterDetails } from "./presenter-manager";
 import { 
   selectTopics, 
   getMoodKeywords, 
@@ -20,35 +20,9 @@ import {
   shouldGenerateLongerSegment
 } from "./topic-selector";
 import { getSeasonalContextWithOverrides } from "./show-scheduler";
-
-/**
- * Mix/concatenate multiple audio files into a single file
- * In production, this would use actual audio processing libraries
- */
-async function mixAudioFiles(
-  audioFiles: string[],
-  outputPath: string
-): Promise<void> {
-  // In a real implementation, this would:
-  // 1. Load all audio files
-  // 2. Concatenate them sequentially
-  // 3. Save to outputPath
-  // For stub: combine file contents as placeholder
-  
-  const combinedContent = Buffer.concat(
-    await Promise.all(
-      audioFiles.map(async (file) => {
-        try {
-          return await fs.readFile(file);
-        } catch {
-          return Buffer.from("stub_audio_data");
-        }
-      })
-    )
-  );
-  
-  await fs.writeFile(outputPath, combinedContent);
-}
+import { generateScript, splitScriptForDuo } from "./ai/script-generator";
+import { generateTTS } from "./ai/tts-generator";
+import { concatenateAudioFiles } from "./ai/audio-mixer";
 
 interface MusicGenerationResult {
   success: boolean;
@@ -172,39 +146,46 @@ export async function generateCommentary(
     logger.debug(`  [AI] Generating ${isDuo ? 'duo' : 'solo'} ${segmentType} commentary for show: ${show.name}`);
     logger.debug(`  [AI] Presenters: ${presenters.join(", ")}, target duration: ${targetDuration}s`);
 
-    // Build prompt context
-    const promptContext = buildPromptContext(showConfig, seasonalContext);
+    // Get full presenter details for script generation
+    const presenterDetails = await Promise.all(
+      presenters.map((id) => getPresenterDetails(id))
+    );
+    const validPresenters = presenterDetails.filter((p): p is Presenter => p !== null);
+
+    if (validPresenters.length === 0) {
+      throw new Error("No valid presenters found");
+    }
 
     // Step 1: Generate script with LLM
-    // const scriptResult = await generateScript({
-    //   segmentType: segmentType,
-    //   showContext: promptContext,
-    //   trackInfo: {
-    //     title: trackTitle,
-    //     requester: request?.userId ?? undefined,
-    //   },
-    //   presenterIds: presenters,
-    //   durationSeconds: targetDuration,
-    //   isDuo: isDuo,
-    // });
-
-    // Stub script for now
-    const script = request
-      ? `That was ${trackTitle}, requested by a listener. Hope you're enjoying it.`
-      : `Coming up next: ${trackTitle}. Perfect for this time of day.`;
+    const { script, estimatedDuration } = await generateScript({
+      segmentType: segmentType,
+      showConfig: showConfig,
+      presenters: validPresenters,
+      trackTitle: segmentType === "track_intro" ? trackTitle : undefined,
+      request: request,
+      topic: segmentType === "segment" ? selectTopics({ showConfig, seasonalContext })[0] : undefined,
+      seasonalContext: {
+        season: seasonalContext.season,
+        holidayTags: seasonalContext.additionalTags,
+      },
+      targetDuration: targetDuration,
+    });
 
     logger.debug(`  [AI] Generated script: "${script}"`);
 
     // Step 2: If duo, split script between presenters
     let audioSegments: { presenterId: string; text: string }[];
-    if (isDuo) {
-      audioSegments = await splitScriptForDuo(script, presenters);
+    if (isDuo && validPresenters.length > 1) {
+      audioSegments = splitScriptForDuo(script, validPresenters);
     } else {
-      audioSegments = [{ presenterId: presenters[0], text: script }];
+      audioSegments = [{ presenterId: validPresenters[0].id, text: script }];
     }
 
     // Step 3: Generate TTS for each segment
-    const audioFiles: string[] = [];
+    const ttsStoragePath = path.join(audioStoragePath, "commentary");
+    const audioFiles: { presenterId: string; filePath: string }[] = [];
+    let totalDuration = 0;
+
     for (const segment of audioSegments) {
       const voiceId = await getPresenterVoiceId(segment.presenterId);
       if (!voiceId) {
@@ -212,49 +193,45 @@ export async function generateCommentary(
         continue;
       }
 
-      // const ttsResult = await generateTTS({
-      //   text: segment.text,
-      //   voiceId: voiceId,
-      //   presenterName: segment.presenterId,
-      // });
+      // Generate TTS audio
+      const { filePath, duration } = await generateTTS(
+        segment.text,
+        voiceId,
+        ttsStoragePath
+      );
 
-      // For stub: create a placeholder file
-      const filename = `commentary_${segment.presenterId}_${crypto.randomBytes(4).toString("hex")}.mp3`;
-      const filePath = path.join(audioStoragePath, "commentary", filename);
-      
-      const dir = path.dirname(filePath);
-      try {
-        await fs.access(dir);
-      } catch {
-        await fs.mkdir(dir, { recursive: true });
-      }
-      
-      await fs.writeFile(filePath, Buffer.from("stub_tts_audio_data"));
-      audioFiles.push(filePath);
+      audioFiles.push({ presenterId: segment.presenterId, filePath });
+      totalDuration += duration;
     }
 
     // Step 4: Mix audio files if duo (concatenate sequentially)
     let finalFilePath: string;
+    let finalDuration: number;
+
     if (audioFiles.length > 1) {
       // Mix all audio files into a single file
       const mixedFilename = `commentary_mixed_${crypto.randomBytes(8).toString("hex")}.mp3`;
-      finalFilePath = path.join(audioStoragePath, "commentary", mixedFilename);
-      await mixAudioFiles(audioFiles, finalFilePath);
+      finalFilePath = path.join(ttsStoragePath, mixedFilename);
+      
+      finalDuration = await concatenateAudioFiles(
+        audioFiles.map((f) => f.filePath),
+        finalFilePath,
+        0.3 // 0.3 second gap between presenters
+      );
       
       logger.debug(`  [AI] Mixed ${audioFiles.length} audio segments into ${mixedFilename}`);
+    } else if (audioFiles.length === 1) {
+      finalFilePath = audioFiles[0].filePath;
+      finalDuration = totalDuration;
     } else {
-      finalFilePath = audioFiles[0] || path.join(
-        audioStoragePath, 
-        "commentary", 
-        `fallback_${crypto.randomBytes(8).toString("hex")}.mp3`
-      );
+      throw new Error("No audio files generated");
     }
 
     return {
       success: true,
       filePath: finalFilePath,
       metadata: {
-        duration: targetDuration,
+        duration: finalDuration,
       },
     };
   } catch (error) {
@@ -333,7 +310,10 @@ export async function generateHandoverSegment(
     const scriptSegments = splitHandoverScript(script, outgoingPresenters, incomingPresenters);
 
     // Step 3: Generate TTS for each presenter segment
+    const ttsStoragePath = path.join(audioStoragePath, "handovers");
     const audioFiles: string[] = [];
+    let totalDuration = 0;
+
     for (const segment of scriptSegments) {
       const voiceId = await getPresenterVoiceId(segment.presenterId);
       if (!voiceId) {
@@ -341,33 +321,23 @@ export async function generateHandoverSegment(
         continue;
       }
 
-      // const ttsResult = await generateTTS({
-      //   text: segment.text,
-      //   voiceId: voiceId,
-      //   presenterName: segment.presenterId,
-      // });
+      // Generate TTS audio
+      const { filePath, duration } = await generateTTS(
+        segment.text,
+        voiceId,
+        ttsStoragePath
+      );
 
-      // For stub: create a placeholder file
-      const filename = `handover_${segment.presenterId}_${crypto.randomBytes(4).toString("hex")}.mp3`;
-      const filePath = path.join(audioStoragePath, "handovers", filename);
-      
-      const dir = path.dirname(filePath);
-      try {
-        await fs.access(dir);
-      } catch {
-        await fs.mkdir(dir, { recursive: true });
-      }
-      
-      await fs.writeFile(filePath, Buffer.from("stub_handover_audio_data"));
       audioFiles.push(filePath);
+      totalDuration += duration;
     }
 
     // Step 4: Mix/sequence all audio segments
     const mixedFilename = `handover_${crypto.randomBytes(8).toString("hex")}.mp3`;
-    const filePath = path.join(audioStoragePath, "handovers", mixedFilename);
+    const filePath = path.join(ttsStoragePath, mixedFilename);
     
     // Mix all presenter audio files
-    await mixAudioFiles(audioFiles, filePath);
+    const finalDuration = await concatenateAudioFiles(audioFiles, filePath, 0.3);
     
     logger.debug(`  [AI] Mixed ${audioFiles.length} handover segments into ${mixedFilename}`);
 
@@ -375,7 +345,7 @@ export async function generateHandoverSegment(
       success: true,
       filePath,
       metadata: {
-        duration: handoverDuration,
+        duration: finalDuration,
       },
     };
   } catch (error) {
@@ -467,38 +437,38 @@ export async function generateIdent(
       show.id
     );
 
-    // Stub ident script
-    const script = "You're listening to Lofield FM. Background noise for people just trying to make it through the day.";
+    // Get presenter details
+    const presenterDetails = await Promise.all(
+      presenters.map((id) => getPresenterDetails(id))
+    );
+    const validPresenters = presenterDetails.filter((p): p is Presenter => p !== null);
 
-    // Generate TTS for the ident
-    const voiceId = await getPresenterVoiceId(presenters[0]);
-    
-    // const ttsResult = await generateTTS({
-    //   text: script,
-    //   voiceId: voiceId || "default_voice",
-    //   presenterName: presenters[0],
-    // });
-
-    // For stub: create a placeholder file path
-    const filename = `ident_${crypto.randomBytes(8).toString("hex")}.mp3`;
-    const filePath = path.join(audioStoragePath, "idents", filename);
-
-    // Ensure directory exists
-    const dir = path.dirname(filePath);
-    try {
-      await fs.access(dir);
-    } catch {
-      await fs.mkdir(dir, { recursive: true });
+    if (validPresenters.length === 0) {
+      throw new Error("No valid presenters found");
     }
 
-    // Create a stub file
-    await fs.writeFile(filePath, Buffer.from("stub_ident_audio_data"));
+    // Generate ident script
+    const { script } = await generateScript({
+      segmentType: "ident",
+      showConfig: showConfig,
+      presenters: validPresenters,
+      targetDuration: 10,
+    });
+
+    // Generate TTS for the ident
+    const voiceId = await getPresenterVoiceId(validPresenters[0].id);
+    if (!voiceId) {
+      throw new Error(`Voice ID not found for presenter ${validPresenters[0].id}`);
+    }
+
+    const ttsStoragePath = path.join(audioStoragePath, "idents");
+    const { filePath, duration } = await generateTTS(script, voiceId, ttsStoragePath);
 
     return {
       success: true,
       filePath,
       metadata: {
-        duration: 10, // 10 seconds
+        duration,
       },
     };
   } catch (error) {

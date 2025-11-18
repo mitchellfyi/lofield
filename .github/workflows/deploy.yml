@@ -1,0 +1,171 @@
+name: Build and Deploy to DigitalOcean
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  REGISTRY: ${{ secrets.REGISTRY }}
+  REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
+  REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Images
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ env.REGISTRY_USERNAME }}
+          password: ${{ env.REGISTRY_PASSWORD }}
+
+      - name: Extract metadata for web
+        id: meta-web
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/web
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and push web image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: web/Dockerfile
+          push: true
+          tags: ${{ steps.meta-web.outputs.tags }}
+          labels: ${{ steps.meta-web.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/web:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/web:buildcache,mode=max
+
+      - name: Extract metadata for scheduler
+        id: meta-scheduler
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/scheduler
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and push scheduler image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: services/scheduler/Dockerfile
+          push: true
+          tags: ${{ steps.meta-scheduler.outputs.tags }}
+          labels: ${{ steps.meta-scheduler.outputs.labels }}
+          cache-from: |
+            type=registry,ref=${{ env.REGISTRY }}/scheduler:buildcache
+          cache-to: |
+            type=registry,ref=${{ env.REGISTRY }}/scheduler:buildcache,mode=max
+
+      - name: Extract metadata for playout
+        id: meta-playout
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/playout
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and push playout image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: services/playout/Dockerfile
+          push: true
+          tags: ${{ steps.meta-playout.outputs.tags }}
+          labels: ${{ steps.meta-playout.outputs.labels }}
+          cache-from: |
+            type=registry,ref=${{ env.REGISTRY }}/playout:buildcache
+          cache-to: |
+            type=registry,ref=${{ env.REGISTRY }}/playout:buildcache,mode=max
+
+      - name: Extract metadata for nginx
+        id: meta-nginx
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/nginx
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
+      - name: Build and push nginx image
+        uses: docker/build-push-action@v5
+        with:
+          context: nginx
+          file: nginx/Dockerfile
+          push: true
+          tags: ${{ steps.meta-nginx.outputs.tags }}
+          labels: ${{ steps.meta-nginx.outputs.labels }}
+          cache-from: |
+            type=registry,ref=${{ env.REGISTRY }}/nginx:buildcache
+          cache-to: |
+            type=registry,ref=${{ env.REGISTRY }}/nginx:buildcache,mode=max
+
+  deploy:
+    name: Deploy to DigitalOcean
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+
+            # Navigate to application directory
+            cd /home/deploy/lofield
+
+            # Pull latest code (optional - if using git on server)
+            # git pull origin main
+
+            # Log in to container registry
+            echo "${{ secrets.REGISTRY_PASSWORD }}" | \
+              docker login ${{ secrets.REGISTRY }} \
+              -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin
+
+            # Pull the latest images
+            docker compose pull
+
+            # Run database migrations
+            docker compose run --rm scheduler npx prisma migrate deploy
+
+            # Restart services with zero downtime
+            docker compose up -d
+
+            # Clean up old images
+            docker image prune -f
+
+            # Wait for services to start
+            sleep 10
+
+            # Health check - stream endpoint (includes archive info)
+            echo "Checking stream health..."
+            if ! curl -f http://localhost:3000/api/health/stream; then
+              echo "Stream health check failed!"
+              exit 1
+            fi
+
+            echo "Deployment successful!"

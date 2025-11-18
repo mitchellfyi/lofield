@@ -3,6 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { Show, ArchiveSegment } from "@/lib/types";
+import { formatDateTimeToLocal } from "@/lib/time-utils";
 
 interface ArchiveBrowserProps {
   shows: Show[];
@@ -57,6 +58,7 @@ export function ArchiveBrowser({ shows }: ArchiveBrowserProps) {
               value={selectedShow}
               onChange={(e) => setSelectedShow(e.target.value)}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              aria-label="Filter episodes by show"
             >
               <option value="">All Shows</option>
               {shows.map((show) => (
@@ -79,6 +81,7 @@ export function ArchiveBrowser({ shows }: ArchiveBrowserProps) {
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              aria-label="Filter episodes from this date onwards"
             />
           </div>
           <div>
@@ -94,6 +97,7 @@ export function ArchiveBrowser({ shows }: ArchiveBrowserProps) {
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+              aria-label="Filter episodes up to this date"
             />
           </div>
         </div>
@@ -102,6 +106,7 @@ export function ArchiveBrowser({ shows }: ArchiveBrowserProps) {
             <button
               onClick={handleClearFilters}
               className="text-sm text-muted-foreground hover:text-foreground"
+              aria-label="Clear all filters"
             >
               Clear filters
             </button>
@@ -152,11 +157,7 @@ export function ArchiveBrowser({ shows }: ArchiveBrowserProps) {
                       <h3 className="font-semibold">{segment.showName}</h3>
                       <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
                         <span>
-                          {new Date(segment.startTime).toLocaleDateString()} at{" "}
-                          {new Date(segment.startTime).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {formatDateTimeToLocal(segment.startTime)}
                         </span>
                         <span>•</span>
                         <span className="capitalize">{segment.type}</span>
@@ -168,6 +169,7 @@ export function ArchiveBrowser({ shows }: ArchiveBrowserProps) {
                         onClick={() => {
                           window.open(segment.streamUrl, "_blank");
                         }}
+                        aria-label={`Play ${segment.showName} from ${formatDateTimeToLocal(segment.startTime)}`}
                       >
                         Play
                       </button>

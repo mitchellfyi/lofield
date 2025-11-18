@@ -62,7 +62,7 @@ export async function GET() {
     return NextResponse.json(nowPlaying);
   } catch (error) {
     console.error("Error fetching now playing:", error);
-    
+
     // Check for database connection errors
     if (error instanceof Error && error.message.includes("connect")) {
       return NextResponse.json(
@@ -70,7 +70,7 @@ export async function GET() {
         { status: 503 }
       );
     }
-    
+
     return NextResponse.json(
       { error: "Failed to fetch now playing data" },
       { status: 500 }

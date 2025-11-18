@@ -156,9 +156,7 @@ export function ArchiveBrowser({ shows }: ArchiveBrowserProps) {
                     <div className="flex-1">
                       <h3 className="font-semibold">{segment.showName}</h3>
                       <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
-                        <span>
-                          {formatDateTimeToLocal(segment.startTime)}
-                        </span>
+                        <span>{formatDateTimeToLocal(segment.startTime)}</span>
                         <span>•</span>
                         <span className="capitalize">{segment.type}</span>
                       </div>

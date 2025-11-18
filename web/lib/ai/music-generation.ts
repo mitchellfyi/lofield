@@ -1,6 +1,6 @@
 /**
  * Music Generation Module
- * 
+ *
  * Generates lofi music tracks using text-to-music AI models.
  * Supports Replicate API with MusicGen and other models.
  */
@@ -70,22 +70,23 @@ export async function generateMusic(
   // Check cache first
   const cached = musicCache.get(request);
   if (cached) {
-    console.log(`Music cache hit for prompt: "${request.prompt.substring(0, 50)}..."`);
+    console.log(
+      `Music cache hit for prompt: "${request.prompt.substring(0, 50)}..."`
+    );
     return { ...cached, cached: true };
   }
 
   try {
-    const result = await withRetry(
-      () => generateMusicInternal(request),
-      {
-        maxAttempts: config.retry.maxAttempts,
-        baseDelay: config.retry.baseDelay,
-        maxDelay: config.retry.maxDelay,
-        onRetry: (attempt, error) => {
-          console.warn(`Music generation attempt ${attempt} failed: ${error.message}`);
-        },
-      }
-    );
+    const result = await withRetry(() => generateMusicInternal(request), {
+      maxAttempts: config.retry.maxAttempts,
+      baseDelay: config.retry.baseDelay,
+      maxDelay: config.retry.maxDelay,
+      onRetry: (attempt, error) => {
+        console.warn(
+          `Music generation attempt ${attempt} failed: ${error.message}`
+        );
+      },
+    });
 
     // Cache successful result
     if (result.success && result.filePath) {
@@ -113,7 +114,7 @@ async function generateMusicInternal(
   request: MusicGenerationRequest
 ): Promise<MusicGenerationResult> {
   const config = getAIConfig();
-  
+
   if (config.music.provider === "replicate") {
     return await generateMusicWithReplicate(request);
   } else {
@@ -134,11 +135,13 @@ async function generateMusicWithReplicate(
   const replicate = getReplicateClient();
 
   const duration = request.duration || config.music.defaultDuration;
-  
+
   // Enhance prompt with lofi-specific instructions
   const enhancedPrompt = enhancePromptForLofi(request.prompt, request);
 
-  console.log(`Generating music with Replicate (${duration}s): "${enhancedPrompt.substring(0, 100)}..."`);
+  console.log(
+    `Generating music with Replicate (${duration}s): "${enhancedPrompt.substring(0, 100)}..."`
+  );
 
   try {
     // Run the model
@@ -190,7 +193,7 @@ async function generateMusicWithReplicate(
     };
   } catch (error) {
     const err = error as Error;
-    
+
     if (isRetryableError(err)) {
       throw err; // Let retry logic handle it
     }
@@ -213,7 +216,7 @@ function enhancePromptForLofi(
 
   // Add lofi characteristics if not already present
   const lofiKeywords = ["lofi", "lo-fi", "chill", "hip-hop"];
-  const hasLofiKeyword = lofiKeywords.some((kw) => 
+  const hasLofiKeyword = lofiKeywords.some((kw) =>
     prompt.toLowerCase().includes(kw)
   );
 
@@ -251,7 +254,7 @@ async function downloadAudio(
 ): Promise<string> {
   const config = getAIConfig();
   const fsPromises = fs.promises;
-  
+
   // Ensure storage directory exists
   try {
     await fsPromises.mkdir(config.storage.audioPath, { recursive: true });
@@ -260,7 +263,11 @@ async function downloadAudio(
   }
 
   // Generate filename
-  const hash = crypto.createHash("md5").update(request.prompt).digest("hex").substring(0, 8);
+  const hash = crypto
+    .createHash("md5")
+    .update(request.prompt)
+    .digest("hex")
+    .substring(0, 8);
   const timestamp = Date.now();
   const filename = `music_${timestamp}_${hash}.wav`;
   const filePath = path.join(config.storage.audioPath, filename);
@@ -299,8 +306,8 @@ function generateTitle(request: MusicGenerationRequest): string {
     .slice(0, 3);
 
   // Capitalize first letter of each word
-  const titleWords = words.map((w) => 
-    w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
+  const titleWords = words.map(
+    (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
   );
 
   return titleWords.join(" ") || "Lofi Track";

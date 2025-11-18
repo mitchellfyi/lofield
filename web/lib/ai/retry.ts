@@ -1,6 +1,6 @@
 /**
  * Retry utility with exponential backoff
- * 
+ *
  * Provides robust retry logic for API calls.
  */
 
@@ -55,7 +55,7 @@ export async function withRetry<T>(
  */
 export function isRetryableError(error: Error): boolean {
   const message = error.message.toLowerCase();
-  
+
   // Network errors
   if (message.includes("network") || message.includes("timeout")) {
     return true;
@@ -67,7 +67,12 @@ export function isRetryableError(error: Error): boolean {
   }
 
   // Server errors (5xx)
-  if (message.includes("500") || message.includes("502") || message.includes("503") || message.includes("504")) {
+  if (
+    message.includes("500") ||
+    message.includes("502") ||
+    message.includes("503") ||
+    message.includes("504")
+  ) {
     return true;
   }
 

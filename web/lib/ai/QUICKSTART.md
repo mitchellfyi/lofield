@@ -99,22 +99,26 @@ npm test -- --coverage lib/ai/__tests__
 ## Troubleshooting
 
 ### "API key not set"
+
 - Check `.env` file exists in `web/` directory
 - Verify environment variables are set correctly
 - Restart dev server after changing `.env`
 
 ### "Module not found: replicate"
+
 ```bash
 cd web
 npm install replicate
 ```
 
 ### "Failed to download audio"
+
 - Check `AUDIO_STORAGE_PATH` is writable
 - Default: `/tmp/lofield/audio`
 - Ensure sufficient disk space
 
 ### "Rate limit exceeded"
+
 - Wait a few minutes before retrying
 - Check API usage in provider dashboard
 - Consider upgrading API plan
@@ -141,7 +145,9 @@ TTS_PROVIDER=elevenlabs
 ## Cost Management
 
 ### Enable Caching (Default)
+
 Reduces costs by ~60%:
+
 ```bash
 MUSIC_CACHE_ENABLED=true  # 24h TTL
 SCRIPT_CACHE_ENABLED=true # 1h TTL
@@ -165,11 +171,7 @@ console.log("TTS cache:", getTTSCacheStats());
 ### Clear Caches
 
 ```typescript
-import {
-  clearMusicCache,
-  clearScriptCache,
-  clearTTSCache,
-} from "@/lib/ai";
+import { clearMusicCache, clearScriptCache, clearTTSCache } from "@/lib/ai";
 
 clearMusicCache();
 clearScriptCache();
@@ -180,11 +182,7 @@ clearTTSCache();
 
 ```typescript
 // In services/scheduler/index.ts
-import {
-  generateMusic,
-  generateScript,
-  generateTTS,
-} from "../../web/lib/ai";
+import { generateMusic, generateScript, generateTTS } from "../../web/lib/ai";
 
 // Generate content pipeline
 const musicResult = await generateMusic({
@@ -238,12 +236,12 @@ if (!result.success) {
 ### Batch Processing
 
 ```typescript
-const requests = [/* ... */];
-const results = await Promise.all(
-  requests.map(req => generateMusic(req))
-);
+const requests = [
+  /* ... */
+];
+const results = await Promise.all(requests.map((req) => generateMusic(req)));
 
-const successful = results.filter(r => r.success);
+const successful = results.filter((r) => r.success);
 console.log(`Generated ${successful.length}/${requests.length} tracks`);
 ```
 
@@ -292,4 +290,4 @@ validateAIConfig(config); // Throws if invalid
 
 ---
 
-*Quick Start Guide • Lofield FM AI Modules*
+_Quick Start Guide • Lofield FM AI Modules_

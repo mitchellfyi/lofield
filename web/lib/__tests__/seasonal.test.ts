@@ -301,6 +301,15 @@ describe("Seasonal Logic", () => {
 
       expect(typeof mood).toBe("string");
       expect(mood.length).toBeGreaterThan(0);
+      // Should be from winter mood profile
+      const winterMoods = [
+        "warm and comforting",
+        "soft ambient textures",
+        "cosy winter atmosphere",
+        "muted and reflective",
+        "gentle winter ambience",
+      ];
+      expect(winterMoods).toContain(mood);
     });
 
     it("should return a mood descriptor for summer", () => {
@@ -309,6 +318,15 @@ describe("Seasonal Logic", () => {
 
       expect(typeof mood).toBe("string");
       expect(mood.length).toBeGreaterThan(0);
+      // Should be from summer mood profile
+      const summerMoods = [
+        "bright and breezy",
+        "relaxed summer vibes",
+        "airy and open",
+        "warm summer atmosphere",
+        "light and easy",
+      ];
+      expect(summerMoods).toContain(mood);
     });
 
     it("should return consistent mood for the same date", () => {
@@ -325,12 +343,83 @@ describe("Seasonal Logic", () => {
       // Same day in different years should map to same index in mood array
       const date2025 = new Date("2025-03-15");
       const date2026 = new Date("2026-03-15");
-      
+
       const mood2025 = getSeasonalMusicMood(date2025, "northern");
       const mood2026 = getSeasonalMusicMood(date2026, "northern");
-      
+
       // Should be the same since it's the same day of year
       expect(mood2025).toBe(mood2026);
+    });
+
+    it("should cycle through all available moods over different days", () => {
+      // Test several days in the same season to ensure variety
+      const moods = new Set<string>();
+      const winterMonth = 0; // January
+
+      for (let day = 1; day <= 20; day++) {
+        const date = new Date(2025, winterMonth, day);
+        const mood = getSeasonalMusicMood(date, "northern");
+        moods.add(mood);
+      }
+
+      // Should have at least 2 different moods (mood array has 5 items, 20 days should hit multiple)
+      expect(moods.size).toBeGreaterThanOrEqual(2);
+    });
+
+    it("should return different moods for different hemispheres on same date", () => {
+      const date = new Date("2025-01-15"); // Winter in north, summer in south
+      const northernMood = getSeasonalMusicMood(date, "northern");
+      const southernMood = getSeasonalMusicMood(date, "southern");
+
+      // Different seasons = potentially different moods
+      // (they could be same by coincidence, but verify they're from right season)
+      const winterMoods = [
+        "warm and comforting",
+        "soft ambient textures",
+        "cosy winter atmosphere",
+        "muted and reflective",
+        "gentle winter ambience",
+      ];
+      const summerMoods = [
+        "bright and breezy",
+        "relaxed summer vibes",
+        "airy and open",
+        "warm summer atmosphere",
+        "light and easy",
+      ];
+
+      expect(winterMoods).toContain(northernMood);
+      expect(summerMoods).toContain(southernMood);
+    });
+
+    it("should handle edge case dates (start/end of year)", () => {
+      const newYearDate = new Date("2025-01-01");
+      const newYearMood = getSeasonalMusicMood(newYearDate, "northern");
+      expect(typeof newYearMood).toBe("string");
+      expect(newYearMood.length).toBeGreaterThan(0);
+
+      const endOfYearDate = new Date("2025-12-31");
+      const endYearMood = getSeasonalMusicMood(endOfYearDate, "northern");
+      expect(typeof endYearMood).toBe("string");
+      expect(endYearMood.length).toBeGreaterThan(0);
+    });
+
+    it("should handle leap years correctly", () => {
+      const leapDayDate = new Date("2024-02-29");
+      const mood = getSeasonalMusicMood(leapDayDate, "northern");
+
+      expect(typeof mood).toBe("string");
+      expect(mood.length).toBeGreaterThan(0);
+
+      // Should be from winter mood profile
+      const winterMoods = [
+        "warm and comforting",
+        "soft ambient textures",
+        "cosy winter atmosphere",
+        "muted and reflective",
+        "gentle winter ambience",
+      ];
+      expect(winterMoods).toContain(mood);
     });
   });
 
@@ -383,7 +472,95 @@ describe("Seasonal Logic", () => {
       expect(enhanced).toMatch(/^.+, with a .+$/);
       // Should not have awkward concatenation
       expect(enhanced).not.toMatch(/cosy winter atmosphere$/); // Old format
-      expect(enhanced).toMatch(/with a cosy winter atmosphere$|with a warm and comforting$|with a soft ambient textures$|with a muted and reflective$|with a gentle winter ambience$/); // New format with "with a"
+      expect(enhanced).toMatch(
+        /with a cosy winter atmosphere$|with a warm and comforting$|with a soft ambient textures$|with a muted and reflective$|with a gentle winter ambience$/
+      ); // New format with "with a"
+    });
+
+    it("should handle prompts with trailing punctuation", () => {
+      const date = new Date("2025-01-15");
+      const basePrompt = "relaxing ambient music.";
+      const enhanced = applySeasonalBiasToMusicPrompt(
+        basePrompt,
+        date,
+        "northern"
+      );
+
+      // Should still add the seasonal bias naturally
+      expect(enhanced).toContain(basePrompt);
+      expect(enhanced).toMatch(/.*,\s+with a .+/);
+    });
+
+    it("should handle prompts that already have commas", () => {
+      const date = new Date("2025-06-15");
+      const basePrompt = "soft, gentle lofi tracks";
+      const enhanced = applySeasonalBiasToMusicPrompt(
+        basePrompt,
+        date,
+        "northern"
+      );
+
+      // Should add seasonal bias after the entire prompt
+      expect(enhanced).toContain(basePrompt);
+      expect(enhanced).toMatch(/soft, gentle lofi tracks, with a .+/);
+    });
+
+    it("should work with short prompts", () => {
+      const date = new Date("2025-03-15");
+      const basePrompt = "lofi";
+      const enhanced = applySeasonalBiasToMusicPrompt(
+        basePrompt,
+        date,
+        "northern"
+      );
+
+      expect(enhanced).toMatch(/^lofi, with a .+$/);
+    });
+
+    it("should be consistent across multiple calls with same date", () => {
+      const date = new Date("2025-01-15");
+      const basePrompt = "ambient study music";
+
+      const enhanced1 = applySeasonalBiasToMusicPrompt(
+        basePrompt,
+        date,
+        "northern"
+      );
+      const enhanced2 = applySeasonalBiasToMusicPrompt(
+        basePrompt,
+        date,
+        "northern"
+      );
+      const enhanced3 = applySeasonalBiasToMusicPrompt(
+        basePrompt,
+        date,
+        "northern"
+      );
+
+      // All should be identical since mood is deterministic by date
+      expect(enhanced1).toBe(enhanced2);
+      expect(enhanced2).toBe(enhanced3);
+    });
+
+    it("should work with southern hemisphere", () => {
+      const date = new Date("2025-01-15"); // Winter in north, summer in south
+      const basePrompt = "chill beats";
+
+      const northern = applySeasonalBiasToMusicPrompt(
+        basePrompt,
+        date,
+        "northern"
+      );
+      const southern = applySeasonalBiasToMusicPrompt(
+        basePrompt,
+        date,
+        "southern"
+      );
+
+      // Should have different seasonal moods
+      expect(northern).not.toBe(southern);
+      expect(northern).toContain("chill beats");
+      expect(southern).toContain("chill beats");
     });
   });
 
@@ -413,9 +590,10 @@ describe("Seasonal Logic", () => {
       expect(guidance?.exampleLines.length).toBeGreaterThan(0);
       // Check for dry, understated tone (should NOT be overly cheerful)
       const hasUnderstatedTone = guidance?.exampleLines.some(
-        line => line.toLowerCase().includes("still") || 
-                line.toLowerCase().includes("same") ||
-                line.toLowerCase().includes("some of us")
+        (line) =>
+          line.toLowerCase().includes("still") ||
+          line.toLowerCase().includes("same") ||
+          line.toLowerCase().includes("some of us")
       );
       expect(hasUnderstatedTone).toBe(true);
     });

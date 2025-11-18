@@ -17,7 +17,10 @@ export function ShowCard({ slot }: ShowCardProps) {
   const localEndTime = formatUTCTimeToLocal(endTime);
 
   return (
-    <Link href={`/shows/${show.id}`} aria-label={`View details for ${show.name}`}>
+    <Link
+      href={`/shows/${show.id}`}
+      aria-label={`View details for ${show.name}`}
+    >
       <div className="rounded-lg border bg-card p-4 shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground">
         <div className="space-y-2">
           <div className="text-sm text-muted-foreground">

@@ -42,7 +42,7 @@ export async function POST(
     });
   } catch (error) {
     console.error("Error upvoting request:", error);
-    
+
     // Check for database connection errors
     if (error instanceof Error && error.message.includes("connect")) {
       return NextResponse.json(
@@ -50,7 +50,7 @@ export async function POST(
         { status: 503 }
       );
     }
-    
+
     return NextResponse.json(
       { error: "Failed to upvote request" },
       { status: 500 }

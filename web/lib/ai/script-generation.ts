@@ -1,6 +1,6 @@
 /**
  * Script Generation Module
- * 
+ *
  * Generates DJ scripts for presenter segments using LLMs.
  * Supports different segment types and show styles.
  */
@@ -10,6 +10,7 @@ import { getAIConfig } from "./config";
 import { createCache } from "./cache";
 import { withRetry, isRetryableError } from "./retry";
 import { getStyleGuideExcerpt } from "../config-loader";
+import { getHolidayScriptGuidance } from "../seasonal";
 import type {
   ScriptGenerationRequest,
   ScriptGenerationResult,
@@ -71,25 +72,26 @@ export async function generateScript(
     presenterIds: request.presenterIds,
     durationSeconds: request.durationSeconds,
   };
-  
+
   const cached = scriptCache.get(cacheKey);
   if (cached) {
-    console.log(`Script cache hit for ${request.segmentType} / ${request.showStyle}`);
+    console.log(
+      `Script cache hit for ${request.segmentType} / ${request.showStyle}`
+    );
     return { ...cached, cached: true };
   }
 
   try {
-    const result = await withRetry(
-      () => generateScriptInternal(request),
-      {
-        maxAttempts: config.retry.maxAttempts,
-        baseDelay: config.retry.baseDelay,
-        maxDelay: config.retry.maxDelay,
-        onRetry: (attempt, error) => {
-          console.warn(`Script generation attempt ${attempt} failed: ${error.message}`);
-        },
-      }
-    );
+    const result = await withRetry(() => generateScriptInternal(request), {
+      maxAttempts: config.retry.maxAttempts,
+      baseDelay: config.retry.baseDelay,
+      maxDelay: config.retry.maxDelay,
+      onRetry: (attempt, error) => {
+        console.warn(
+          `Script generation attempt ${attempt} failed: ${error.message}`
+        );
+      },
+    });
 
     // Cache successful result
     if (result.success && result.transcript) {
@@ -118,7 +120,7 @@ async function generateScriptInternal(
   request: ScriptGenerationRequest
 ): Promise<ScriptGenerationResult> {
   const config = getAIConfig();
-  
+
   if (config.script.provider === "openai") {
     return await generateScriptWithOpenAI(request);
   } else {
@@ -141,7 +143,9 @@ async function generateScriptWithOpenAI(
   const systemPrompt = buildSystemPrompt(request);
   const userPrompt = buildUserPrompt(request);
 
-  console.log(`Generating ${request.segmentType} script for ${request.showStyle}`);
+  console.log(
+    `Generating ${request.segmentType} script for ${request.showStyle}`
+  );
 
   try {
     const completion = await openai.chat.completions.create({
@@ -161,7 +165,7 @@ async function generateScriptWithOpenAI(
     }
 
     const parsed = JSON.parse(content);
-    
+
     if (!parsed.transcript) {
       throw new ScriptGenerationError("No transcript in response");
     }
@@ -170,7 +174,8 @@ async function generateScriptWithOpenAI(
       segmentType: request.segmentType,
       tone: parsed.tone || "matter-of-fact",
       tags: parsed.tags || [],
-      estimatedDuration: parsed.estimatedDuration || estimateDuration(parsed.transcript),
+      estimatedDuration:
+        parsed.estimatedDuration || estimateDuration(parsed.transcript),
       presenterIds: request.presenterIds,
       generatedAt: new Date(),
       model: config.script.model,
@@ -184,7 +189,7 @@ async function generateScriptWithOpenAI(
     };
   } catch (error) {
     const err = error as Error;
-    
+
     if (isRetryableError(err)) {
       throw err;
     }
@@ -269,9 +274,38 @@ function buildUserPrompt(request: ScriptGenerationRequest): string {
     if (request.contextInfo.weather) {
       prompt += `\n- Weather: ${request.contextInfo.weather}`;
     }
-    if (request.contextInfo.holidayTags && request.contextInfo.holidayTags.length > 0) {
-      prompt += `\n- Holidays/Events: ${request.contextInfo.holidayTags.join(", ")}`;
-      prompt += `\n  (Reference these in a low-key, understated way if appropriate)`;
+    if (
+      request.contextInfo.holidayTags &&
+      request.contextInfo.holidayTags.length > 0
+    ) {
+      // Get detailed holiday guidance from the seasonal module
+      const holidayGuidance = getHolidayScriptGuidance(
+        request.contextInfo.currentTime || new Date()
+      );
+
+      if (holidayGuidance) {
+        prompt += `\n\n**HOLIDAY CONTEXT**`;
+        prompt += `\n- Holiday/Event: ${holidayGuidance.holidayTags.join(", ")}`;
+        prompt += `\n\n${holidayGuidance.guidance}`;
+        prompt += `\n\n**Style Guidelines for Holidays:**`;
+        prompt += `\n- Keep references low-key and understated`;
+        prompt += `\n- Acknowledge the date without being overly festive or enthusiastic`;
+        prompt += `\n- Recognize that not everyone celebrates - avoid assumptions`;
+        prompt += `\n- Reference practical impacts (e.g., "reduced traffic", "shops closed") rather than celebration expectations`;
+        prompt += `\n- Maintain the dry, self-deprecating Lofield FM tone`;
+        prompt += `\n- DO NOT be overly cheerful or give advice about how people should celebrate`;
+
+        if (holidayGuidance.exampleLines.length > 0) {
+          prompt += `\n\n**Example Lines (Lofield FM style):**`;
+          for (const example of holidayGuidance.exampleLines.slice(0, 3)) {
+            prompt += `\n- "${example}"`;
+          }
+        }
+      } else {
+        // Fallback if guidance not available
+        prompt += `\n- Holidays/Events: ${request.contextInfo.holidayTags.join(", ")}`;
+        prompt += `\n  (Reference these in a low-key, understated way if appropriate. Avoid assumptions about celebration.)`;
+      }
     }
   }
 
@@ -331,14 +365,22 @@ Examples: "Lofield FM. Now playing on a frequency that probably doesn't exist."
  */
 function getShowContext(showStyle: string): string {
   const contexts: Record<string, string> = {
-    mild_panic_mornings: "Mild Panic Mornings: 6-9 AM. Controlled chaos, acknowledging morning panic without being cheerful about it. Topics: morning routines, inbox anxiety, meeting prep, coffee, first call of the day.",
-    deep_work_allegedly: "Deep Work, Allegedly: 6-9 AM (early hours). For people starting the work day very early. Gentle, soft energy, not quite awake yet. Topics: early morning focus, quiet hours, coffee, pre-dawn productivity.",
-    deep_work_calendar_blocks: "Deep Work (According to Calendar Blocks): 9 AM-12 PM. Focused work time, minimal interruptions (in theory). Topics: concentration, meetings, productivity theater, deep work aspirations vs reality.",
-    lunch_procrastination_club: "Lunch Procrastination Club: 12-3 PM. Mid-day energy, slightly lighter. Topics: lunch breaks, pretending to socialize, inbox management, afternoon procrastination.",
-    afternoon_survival_session: "Afternoon Survival Session: 3-6 PM. Late afternoon energy dip, technically still operational. Topics: afternoon slump, existential meetings, counting down to end of day, survival mode.",
-    commute_to_nowhere: "Commute to Nowhere: 6-9 PM. Evening wind-down, acknowledging the fictional commute. Topics: end of workday, disconnecting, evening plans (or lack thereof), pretending to have a commute.",
-    lofield_night_school: "Lofield Night School: 9 PM-12 AM. Thoughtful, reflective, for people who read documentation. Topics: learning, side projects, curiosity, late-night focus.",
-    insomniac_office: "Insomniac Office: 12-3 AM. Quiet, contemplative, for people who can't sleep anyway. Topics: insomnia, late-night thoughts, unconventional schedules, surreal 2am energy.",
+    mild_panic_mornings:
+      "Mild Panic Mornings: 6-9 AM. Controlled chaos, acknowledging morning panic without being cheerful about it. Topics: morning routines, inbox anxiety, meeting prep, coffee, first call of the day.",
+    deep_work_allegedly:
+      "Deep Work, Allegedly: 6-9 AM (early hours). For people starting the work day very early. Gentle, soft energy, not quite awake yet. Topics: early morning focus, quiet hours, coffee, pre-dawn productivity.",
+    deep_work_calendar_blocks:
+      "Deep Work (According to Calendar Blocks): 9 AM-12 PM. Focused work time, minimal interruptions (in theory). Topics: concentration, meetings, productivity theater, deep work aspirations vs reality.",
+    lunch_procrastination_club:
+      "Lunch Procrastination Club: 12-3 PM. Mid-day energy, slightly lighter. Topics: lunch breaks, pretending to socialize, inbox management, afternoon procrastination.",
+    afternoon_survival_session:
+      "Afternoon Survival Session: 3-6 PM. Late afternoon energy dip, technically still operational. Topics: afternoon slump, existential meetings, counting down to end of day, survival mode.",
+    commute_to_nowhere:
+      "Commute to Nowhere: 6-9 PM. Evening wind-down, acknowledging the fictional commute. Topics: end of workday, disconnecting, evening plans (or lack thereof), pretending to have a commute.",
+    lofield_night_school:
+      "Lofield Night School: 9 PM-12 AM. Thoughtful, reflective, for people who read documentation. Topics: learning, side projects, curiosity, late-night focus.",
+    insomniac_office:
+      "Insomniac Office: 12-3 AM. Quiet, contemplative, for people who can't sleep anyway. Topics: insomnia, late-night thoughts, unconventional schedules, surreal 2am energy.",
   };
 
   return contexts[showStyle] || "General show context.";

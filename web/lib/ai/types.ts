@@ -1,6 +1,6 @@
 /**
  * Type definitions for AI modules
- * 
+ *
  * This file contains shared types for music generation, script generation,
  * and text-to-speech modules.
  */
@@ -42,7 +42,7 @@ export interface MusicMetadata {
 // Script Generation Types
 // ============================================================================
 
-export type SegmentType = 
+export type SegmentType =
   | "track_intro" // 15-30 seconds: Introduce upcoming track
   | "segment" // 1-2 minutes: Topical chat, Lofield references
   | "handover" // 5 minutes: Duo-to-duo transition between shows

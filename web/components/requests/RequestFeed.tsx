@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ArrowUp, Music, MessageSquare, CheckCircle2, XCircle } from "lucide-react";
+import {
+  ArrowUp,
+  Music,
+  MessageSquare,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import type { Request } from "@/lib/types";
 import { formatDateTimeToLocal } from "@/lib/time-utils";
 import {
@@ -68,7 +74,10 @@ export function RequestFeed({ refreshKey = 0 }: RequestFeedProps) {
                 if (b.upvotes !== a.upvotes) {
                   return b.upvotes - a.upvotes;
                 }
-                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                return (
+                  new Date(b.createdAt).getTime() -
+                  new Date(a.createdAt).getTime()
+                );
               });
             });
           } catch (err) {
@@ -82,12 +91,17 @@ export function RequestFeed({ refreshKey = 0 }: RequestFeedProps) {
             const { id, votes } = JSON.parse(event.data);
             setRequests((prev) =>
               prev
-                .map((req) => (req.id === id ? { ...req, upvotes: votes } : req))
+                .map((req) =>
+                  req.id === id ? { ...req, upvotes: votes } : req
+                )
                 .sort((a, b) => {
                   if (b.upvotes !== a.upvotes) {
                     return b.upvotes - a.upvotes;
                   }
-                  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  return (
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+                  );
                 })
             );
           } catch (err) {
@@ -141,7 +155,9 @@ export function RequestFeed({ refreshKey = 0 }: RequestFeedProps) {
     async (requestId: string) => {
       // Check if already voted
       if (hasVotedForRequest(requestId)) {
-        setVoteErrors((prev) => new Map(prev).set(requestId, "You've already voted for this request"));
+        setVoteErrors((prev) =>
+          new Map(prev).set(requestId, "You've already voted for this request")
+        );
         setTimeout(() => {
           setVoteErrors((prev) => {
             const newMap = new Map(prev);
@@ -169,9 +185,12 @@ export function RequestFeed({ refreshKey = 0 }: RequestFeedProps) {
           )
         );
 
-        const response = await fetch(`${API_URL}/api/requests/${requestId}/vote`, {
-          method: "POST",
-        });
+        const response = await fetch(
+          `${API_URL}/api/requests/${requestId}/vote`,
+          {
+            method: "POST",
+          }
+        );
 
         if (!response.ok) {
           const data = await response.json();
@@ -183,7 +202,8 @@ export function RequestFeed({ refreshKey = 0 }: RequestFeedProps) {
         setVotedIds((prev) => new Set(prev).add(requestId));
       } catch (err) {
         console.error("Failed to vote:", err);
-        const errorMessage = err instanceof Error ? err.message : "Failed to vote";
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to vote";
         setVoteErrors((prev) => new Map(prev).set(requestId, errorMessage));
 
         // Revert optimistic update on error
@@ -269,7 +289,9 @@ export function RequestFeed({ refreshKey = 0 }: RequestFeedProps) {
                     : "hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                 }`}
                 aria-label={`Upvote request (${request.upvotes} votes)`}
-                title={hasVoted ? "You've already voted" : "Upvote this request"}
+                title={
+                  hasVoted ? "You've already voted" : "Upvote this request"
+                }
               >
                 <ArrowUp
                   size={20}

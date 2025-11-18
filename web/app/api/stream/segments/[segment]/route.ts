@@ -4,7 +4,7 @@ import path from "path";
 
 /**
  * GET /api/stream/segments/[segment]
- * 
+ *
  * Serves HLS segment files (.ts)
  */
 export async function GET(
@@ -22,18 +22,14 @@ export async function GET(
       );
     }
 
-    const streamPath =
-      process.env.STREAM_OUTPUT_PATH || "/var/lofield/stream";
+    const streamPath = process.env.STREAM_OUTPUT_PATH || "/var/lofield/stream";
     const segmentPath = path.join(streamPath, segment);
 
     // Check if segment exists
     try {
       await fs.access(segmentPath);
     } catch {
-      return NextResponse.json(
-        { error: "Segment not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Segment not found" }, { status: 404 });
     }
 
     // Read and serve the segment

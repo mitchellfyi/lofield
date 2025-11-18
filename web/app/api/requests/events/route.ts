@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requestEventEmitter } from "@/lib/request-events";
+import type { Request } from "@prisma/client";
 
 // Server-Sent Events endpoint for real-time request updates
 // Clients subscribe to get notifications when:
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
 
             sendEvent(
               {
-                requests: requests.map((req) => ({
+                requests: requests.map((req: Request) => ({
                   id: req.id,
                   type: req.type,
                   text: req.rawText,
@@ -81,10 +82,7 @@ export async function GET(request: NextRequest) {
           sendEvent(requestData, "request-created");
         };
 
-        const handleRequestVoted = (data: {
-          id: string;
-          votes: number;
-        }) => {
+        const handleRequestVoted = (data: { id: string; votes: number }) => {
           sendEvent(data, "request-voted");
         };
 

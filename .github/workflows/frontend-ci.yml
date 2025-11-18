@@ -39,5 +39,12 @@ jobs:
       - name: Check formatting
         run: npx prettier --check "**/*.{ts,tsx,js,jsx,json,css,md}"
 
+      - name: Run tests
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://lofield:password@localhost:5432/lofield_fm
+
       - name: Build
         run: npm run build
+        env:
+          DATABASE_URL: postgresql://lofield:password@localhost:5432/lofield_fm

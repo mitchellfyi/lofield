@@ -22,12 +22,11 @@ export function TimeShift({
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     setMinutesBack(value);
-    
+
     // Calculate timestamp for time-shifted playback
-    const timestamp = value > 0 
-      ? new Date(Date.now() - value * 60 * 1000).toISOString()
-      : null;
-    
+    const timestamp =
+      value > 0 ? new Date(Date.now() - value * 60 * 1000).toISOString() : null;
+
     onTimeShift(value, timestamp);
   };
 

@@ -4,7 +4,7 @@ import path from "path";
 
 /**
  * GET /api/archive/segments/[...path]
- * 
+ *
  * Serves archived HLS segment files
  * Path format: YYYY/MM/DD/HH/filename.ts
  */
@@ -55,20 +55,14 @@ export async function GET(
     const resolvedPath = path.resolve(segmentPath);
     const resolvedArchivePath = path.resolve(archivePath);
     if (!resolvedPath.startsWith(resolvedArchivePath)) {
-      return NextResponse.json(
-        { error: "Invalid path" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid path" }, { status: 400 });
     }
 
     // Check if segment exists
     try {
       await fs.access(segmentPath);
     } catch {
-      return NextResponse.json(
-        { error: "Segment not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Segment not found" }, { status: 404 });
     }
 
     // Read and serve the segment

@@ -1,0 +1,379 @@
+# Streaming Architecture
+
+This document outlines the streaming and playback engine architecture for Lofield FM.
+
+## Technology Selection
+
+### Streaming Protocol: HLS (HTTP Live Streaming)
+
+**Selected Approach**: HLS (HTTP Live Streaming) over Icecast
+
+**Rationale**:
+
+1. **Browser Compatibility**: HLS is natively supported by modern browsers via Media Source Extensions (MSE) and works well with HTML5 `<audio>` and `<video>` elements
+2. **Next.js Integration**: HLS streams are just HTTP endpoints, making them trivial to integrate with Next.js API routes
+3. **Time-Shift Friendly**: HLS segments are naturally suited for time-shifted playback - we can serve different playlists pointing to archived segments
+4. **No Additional Server**: Unlike Icecast, HLS doesn't require a separate streaming server - we can serve segments directly from Next.js
+5. **Scalability**: HLS segments can be easily cached on CDN for better global distribution
+6. **Adaptive Bitrate**: HLS supports adaptive bitrate streaming (future enhancement)
+
+**Trade-offs**:
+- **Latency**: HLS has ~6-30 second latency vs Icecast's ~2-5 seconds (acceptable for our use case)
+- **Segment Management**: Need to manage segment files vs continuous stream (handled by our implementation)
+
+### Alternative Considered: Icecast
+
+**Pros**:
+- Lower latency (2-5 seconds)
+- Battle-tested for radio streaming
+- Built-in metadata support
+
+**Cons**:
+- Requires separate service (more infrastructure)
+- Less browser-friendly (requires additional libraries)
+- Harder to implement time-shift (would need parallel recording)
+- Additional configuration complexity
+
+**Decision**: HLS provides better integration with our stack and superior time-shift capabilities.
+
+## System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Scheduler Service                        │
+│  - Generates audio segments (music, talk, idents)          │
+│  - Queues segments with timing metadata                    │
+└────────────┬────────────────────────────────────────────────┘
+             │
+             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   Playout Service                           │
+│  - Consumes queued segments                                 │
+│  - FFmpeg: Concatenates, crossfades, normalizes             │
+│  - Outputs HLS segments (.ts files) + manifest (.m3u8)      │
+└────────────┬────────────────────────────────────────────────┘
+             │
+             ├──────────────┬───────────────────────┐
+             ▼              ▼                       ▼
+    ┌─────────────┐  ┌─────────────┐      ┌─────────────┐
+    │ Live Stream │  │   Archive   │      │  Metadata   │
+    │  (HLS)      │  │  (Segments) │      │  (JSON)     │
+    └──────┬──────┘  └──────┬──────┘      └──────┬──────┘
+           │                │                     │
+           ▼                ▼                     ▼
+    ┌─────────────────────────────────────────────────────┐
+    │              Next.js API Routes                     │
+    │  /api/stream/live.m3u8  - Live HLS playlist         │
+    │  /api/stream/live/*.ts  - Live HLS segments         │
+    │  /api/archive/time      - Time-shift HLS playlist   │
+    │  /api/archive/shows/:id - Show episode HLS playlist │
+    │  /api/now-playing       - Current segment metadata  │
+    └────────────┬────────────────────────────────────────┘
+                 │
+                 ▼
+    ┌─────────────────────────────────────────────────────┐
+    │              Frontend Audio Player                  │
+    │  - HTML5 <audio> with HLS.js fallback               │
+    │  - Time-shift controls (rewind, fast-forward)       │
+    │  - Live/Archive mode switching                      │
+    │  - Metadata display (now playing, show info)        │
+    └─────────────────────────────────────────────────────┘
+```
+
+## Playout Pipeline
+
+### FFmpeg Processing Chain
+
+The playout service uses FFmpeg to process audio segments:
+
+1. **Input**: Individual segment files from scheduler (music, talk, idents)
+2. **Concatenation**: Stitch segments together in order
+3. **Crossfading**: Apply fade-out/fade-in between segments
+   - Music-to-music: 2 second crossfade
+   - Music-to-talk: 1 second fade-out, immediate talk start
+   - Talk-to-music: Immediate music fade-in under final words (0.5s)
+4. **Volume Normalization**: Ensure consistent loudness (LUFS normalization)
+5. **Volume Ducking**: Reduce music volume during voiceovers (if mixed)
+6. **Output**: HLS segments (.ts files, typically 6 seconds each)
+
+### FFmpeg Command Structure
+
+```bash
+ffmpeg -i segment1.mp3 -i segment2.mp3 -i segment3.mp3 \
+  -filter_complex "
+    [0:a]afade=t=out:st=177:d=2[a0];
+    [1:a]afade=t=in:st=0:d=2[a1];
+    [a0][a1]acrossfade=d=2[a01];
+    [a01][2:a]concat=n=2:v=0:a=1[aout];
+    [aout]loudnorm=I=-16:TP=-1.5:LRA=11
+  " \
+  -f hls \
+  -hls_time 6 \
+  -hls_list_size 10 \
+  -hls_flags delete_segments \
+  -hls_segment_filename '/var/lofield/stream/live%03d.ts' \
+  /var/lofield/stream/live.m3u8
+```
+
+### Crossfade Configuration
+
+Crossfade durations are configurable per show or globally:
+
+- Default music-to-music: 2 seconds
+- Default music-to-talk: 1 second
+- Default talk-to-music: 0.5 seconds
+- Configurable in `config/station.json` or show configs
+
+## Live Streaming
+
+### HLS Manifest Generation
+
+The playout service continuously generates HLS manifests (`.m3u8` files):
+
+```m3u8
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:1234
+#EXTINF:6.0,
+live001.ts
+#EXTINF:6.0,
+live002.ts
+#EXTINF:6.0,
+live003.ts
+```
+
+### Live Stream Endpoint
+
+`GET /api/stream/live.m3u8`
+- Returns the current HLS manifest
+- Manifest points to latest 10 segments (~60 seconds of audio)
+- Segments auto-delete after being replaced (sliding window)
+
+`GET /api/stream/live/:segment.ts`
+- Serves individual HLS segment files
+- Cached with appropriate headers for performance
+
+### Encoding Settings
+
+- **Container**: MPEG-TS (.ts files)
+- **Audio Codec**: AAC-LC (best browser compatibility)
+- **Sample Rate**: 48 kHz
+- **Bitrate**: 128 kbps (good quality for lofi)
+- **Channels**: Stereo
+- **Segment Duration**: 6 seconds (balance between latency and overhead)
+
+## Time-Shift and Archive
+
+### Archive Recording
+
+As the playout service generates live HLS segments, it also:
+1. Copies segments to archive storage
+2. Organizes by timestamp: `/archive/2024/01/15/14/live_140000.ts`
+3. Maintains an index mapping timestamps to segment files
+
+### Archive Index Structure
+
+```json
+{
+  "timestamp": "2024-01-15T14:00:00Z",
+  "segmentPath": "/archive/2024/01/15/14/live_140000.ts",
+  "duration": 6.0,
+  "showId": "deep-work",
+  "segmentType": "music",
+  "trackId": "track_abc123"
+}
+```
+
+### Time-Shift Playlist Generation
+
+`GET /api/archive/time?ts=2024-01-15T14:00:00Z`
+
+Generates an HLS playlist starting at the specified timestamp:
+
+```m3u8
+#EXTM3U
+#EXT-X-VERSION:3
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-PLAYLIST-TYPE:EVENT
+#EXTINF:6.0,
+/api/archive/segments/2024/01/15/14/live_140000.ts
+#EXTINF:6.0,
+/api/archive/segments/2024/01/15/14/live_140006.ts
+#EXTINF:6.0,
+/api/archive/segments/2024/01/15/14/live_140012.ts
+```
+
+### Show Episode Assembly
+
+`GET /api/archive/shows/:showId?date=2024-01-15`
+
+Assembles a complete show episode from archived segments:
+
+1. Query database for show's time range on specified date
+2. Retrieve all archived segments for that time range
+3. Generate HLS playlist with all segments in order
+4. Optional: Pre-generate single MP3 file for download
+
+## Metadata and "Now Playing"
+
+### Real-Time Metadata
+
+The playout service publishes metadata as segments play:
+
+```json
+{
+  "segmentId": "seg_abc123",
+  "type": "music",
+  "startTime": "2024-01-15T14:00:00Z",
+  "endTime": "2024-01-15T14:03:30Z",
+  "showName": "Deep Work (According to Calendar Blocks)",
+  "showId": "deep-work",
+  "presenters": ["morgan", "riley"],
+  "track": {
+    "title": "Rainy Coding Session",
+    "artist": "Lofield FM",
+    "requestText": "Rainy day coffee shop vibes"
+  }
+}
+```
+
+### Frontend Integration
+
+The audio player subscribes to metadata updates via:
+- Server-Sent Events (SSE) at `/api/events`
+- Polling `/api/now-playing` every 10 seconds (fallback)
+
+## Frontend Player Implementation
+
+### Technology Stack
+
+- **HLS.js**: JavaScript library for HLS playback in browsers without native support
+- **Native HLS**: Use native browser support where available (Safari)
+- **Fallback**: Progressive MP3 download for very old browsers
+
+### Player Features
+
+1. **Play/Pause**: Standard audio controls
+2. **Volume Control**: Mute and volume slider
+3. **Live Indicator**: Visual indicator when playing live stream
+4. **Time-Shift Slider**: Scrub back up to 24 hours
+5. **"Go Live" Button**: Jump back to live stream
+6. **Show Navigation**: Skip to previous/next show
+7. **Metadata Display**: 
+   - Now playing track title
+   - Show name
+   - Presenter names
+   - Requester info
+
+### Time-Shift Implementation
+
+When user drags the time-shift slider:
+1. Calculate timestamp (current time - minutes back)
+2. Request HLS playlist for that timestamp
+3. Load new playlist into player
+4. Update UI to show "archive mode"
+5. Disable live indicator
+
+When user clicks "Go Live":
+1. Request live HLS playlist
+2. Load into player
+3. Update UI to show "live mode"
+4. Enable live indicator
+
+## Monitoring and Resilience
+
+### Health Checks
+
+`GET /api/health/stream`
+```json
+{
+  "status": "healthy",
+  "playoutService": "running",
+  "liveStreamAge": 3,
+  "queueDepth": 45,
+  "lastSegmentAt": "2024-01-15T14:00:00Z",
+  "archiveStorage": {
+    "available": "150GB",
+    "used": "50GB"
+  }
+}
+```
+
+### Failure Handling
+
+1. **Playout Service Crash**: Systemd/PM2 auto-restart
+2. **Scheduler Queue Empty**: Fall back to pre-generated loop (emergency content)
+3. **FFmpeg Error**: Skip problematic segment, log error, continue with next
+4. **Disk Full**: Alert, clean up old archives, continue streaming
+
+### Pre-Generated Fallback Loop
+
+A 30-minute emergency loop of lofi music + generic idents:
+- Used when scheduler fails or queue runs dry
+- Continuously loops until scheduler recovers
+- Logged prominently for monitoring
+
+## Storage and Retention
+
+### Live Stream Storage
+
+- Location: `/var/lofield/stream/`
+- Segments: Rolling window of last 10 segments (~60 seconds)
+- Auto-cleanup: Old segments deleted automatically
+
+### Archive Storage
+
+- Location: `/var/lofield/archive/YYYY/MM/DD/HH/`
+- Retention: 30 days (configurable)
+- Daily cleanup job removes segments older than retention period
+- Estimated storage: ~2 GB per day (128 kbps * 24 hours)
+
+### Database Storage
+
+- Segment metadata: Permanent (tracks what was played)
+- Playlog: Permanent (listening history)
+- Archive index: Permanent (maps timestamps to files)
+
+## Performance Considerations
+
+### CDN Integration
+
+For production:
+1. Serve HLS segments through CDN (Cloudflare, CloudFront)
+2. Set appropriate cache headers on segments (immutable)
+3. Set short TTL on manifests (5-10 seconds)
+
+### Segment Caching Strategy
+
+- Live segments: `Cache-Control: public, max-age=60, immutable`
+- Archive segments: `Cache-Control: public, max-age=31536000, immutable`
+- Live manifest: `Cache-Control: no-cache`
+- Archive manifests: `Cache-Control: public, max-age=3600`
+
+### Scaling Considerations
+
+- HLS segments are stateless - easy to scale horizontally
+- Archive storage can use object storage (S3, R2)
+- Playout service runs on single instance (stateful) - scale with multiple shows/stations
+
+## Security Considerations
+
+- **No DRM**: Content is openly streamable (this is a free radio station)
+- **Rate Limiting**: Prevent abuse of archive endpoints
+- **Hotlinking Prevention**: Optional referer check for production
+- **CORS**: Configure appropriate CORS headers for streaming endpoints
+
+## Future Enhancements
+
+- **Adaptive Bitrate**: Multiple quality tiers (64 kbps, 128 kbps, 256 kbps)
+- **Visualizer**: Real-time audio waveform visualization
+- **Lyrics/Transcripts**: Display presenter scripts as they play
+- **Social Features**: Share timestamps of favorite moments
+- **Download Episodes**: Pre-generate MP3 files of show episodes
+- **Stats**: Track listening hours, popular shows, peak times
+
+---
+
+*Lofield FM: Now streaming in a format that actually works.*

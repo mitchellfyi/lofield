@@ -7,7 +7,7 @@ import { SkipBack, RotateCcw } from "lucide-react";
 const DEFAULT_STEP_SIZE_MINUTES = 5;
 
 interface TimeShiftProps {
-  onTimeShift: (minutesBack: number) => void;
+  onTimeShift: (minutesBack: number, timestamp: string | null) => void;
   maxMinutes?: number;
   stepSize?: number;
 }
@@ -22,12 +22,18 @@ export function TimeShift({
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value);
     setMinutesBack(value);
-    onTimeShift(value);
+    
+    // Calculate timestamp for time-shifted playback
+    const timestamp = value > 0 
+      ? new Date(Date.now() - value * 60 * 1000).toISOString()
+      : null;
+    
+    onTimeShift(value, timestamp);
   };
 
   const goLive = () => {
     setMinutesBack(0);
-    onTimeShift(0);
+    onTimeShift(0, null);
   };
 
   const formatTime = (minutes: number) => {

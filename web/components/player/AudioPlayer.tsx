@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
+import Hls from "hls.js";
 
 interface AudioPlayerProps {
   audioUrl: string;
@@ -14,6 +15,7 @@ export function AudioPlayer({ audioUrl, isLive = true }: AudioPlayerProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -22,20 +24,95 @@ export function AudioPlayer({ audioUrl, isLive = true }: AudioPlayerProps) {
   }, [volume, isMuted]);
 
   useEffect(() => {
-    // Update audio source when URL changes
-    if (audioRef.current && audioUrl) {
-      const wasPlaying = isPlaying;
-      audioRef.current.pause();
-      audioRef.current.load();
-      setError(null); // Clear any previous errors
+    // Cleanup previous HLS instance
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+
+    if (!audioRef.current || !audioUrl) return;
+
+    const audio = audioRef.current;
+    const wasPlaying = isPlaying;
+
+    // Check if the URL is an HLS stream (.m3u8)
+    const isHLS = audioUrl.endsWith('.m3u8');
+
+    if (isHLS && Hls.isSupported()) {
+      // Use HLS.js for browsers that don't natively support HLS
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 90,
+      });
+
+      hlsRef.current = hls;
+
+      hls.loadSource(audioUrl);
+      hls.attachMedia(audio);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        setError(null);
+        if (wasPlaying) {
+          audio.play().catch((err) => {
+            console.error("Failed to play HLS audio:", err);
+            setError("Failed to play audio stream. Please try again.");
+            setIsPlaying(false);
+          });
+        }
+      });
+
+      hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error("HLS error:", data);
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              setError("Network error. Attempting to recover...");
+              hls.startLoad();
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              setError("Media error. Attempting to recover...");
+              hls.recoverMediaError();
+              break;
+            default:
+              setError("Fatal error occurred. Please refresh the page.");
+              hls.destroy();
+              break;
+          }
+        }
+      });
+    } else if (isHLS) {
+      // Native HLS support (Safari)
+      audio.src = audioUrl;
+      audio.load();
+      setError(null);
       if (wasPlaying) {
-        audioRef.current.play().catch((err) => {
+        audio.play().catch((err) => {
+          console.error("Failed to play native HLS:", err);
+          setError("Failed to play audio stream. Please try again.");
+          setIsPlaying(false);
+        });
+      }
+    } else {
+      // Regular MP3 or other format
+      audio.src = audioUrl;
+      audio.load();
+      setError(null);
+      if (wasPlaying) {
+        audio.play().catch((err) => {
           console.error("Failed to play audio:", err);
           setError("Failed to load audio stream. Please try again.");
           setIsPlaying(false);
         });
       }
     }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioUrl]);
 

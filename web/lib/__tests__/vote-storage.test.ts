@@ -26,7 +26,8 @@ global.window = {
 } as unknown as Window & typeof globalThis;
 
 // Also set localStorage as a global
-(global as any).localStorage = localStorageMock;
+(global as unknown as { localStorage: typeof localStorageMock }).localStorage =
+  localStorageMock;
 
 import {
   getVotedRequests,

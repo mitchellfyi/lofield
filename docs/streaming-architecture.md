@@ -117,12 +117,28 @@ ffmpeg -i segment1.mp3 -i segment2.mp3 -i segment3.mp3 \
 
 ### Crossfade Configuration
 
-Crossfade durations are configurable per show or globally:
+Crossfade durations are configurable per show or globally via environment variables:
 
-- Default music-to-music: 2 seconds
-- Default music-to-talk: 1 second
-- Default talk-to-music: 0.5 seconds
-- Configurable in `config/station.json` or show configs
+- Default music-to-music: 2 seconds (`CROSSFADE_MUSIC_TO_MUSIC`)
+- Default music-to-talk: 1 second (`CROSSFADE_MUSIC_TO_TALK`)
+- Default talk-to-music: 0.5 seconds (`CROSSFADE_TALK_TO_MUSIC`)
+
+**Environment Variable Configuration:**
+```bash
+# In services/playout/.env
+CROSSFADE_MUSIC_TO_MUSIC=2.0
+CROSSFADE_MUSIC_TO_TALK=1.0
+CROSSFADE_TALK_TO_MUSIC=0.5
+```
+
+**Current Implementation:**
+The HLS manager implements crossfading using FFmpeg's `afade` filter for smooth transitions between segments. The crossfade duration is automatically selected based on the types of adjacent segments (music, talk, ident, handover).
+
+**Trade-offs:**
+- Crossfading adds processing overhead during segment encoding
+- Longer crossfades provide smoother transitions but may overlap content
+- Very short crossfades (< 0.5s) may sound abrupt on some audio material
+- Crossfading is applied during HLS segment generation, not in real-time
 
 ## Live Streaming
 
@@ -326,15 +342,115 @@ A 30-minute emergency loop of lofi music + generic idents:
 ### Archive Storage
 
 - Location: `/var/lofield/archive/YYYY/MM/DD/HH/`
-- Retention: 30 days (configurable)
+- Retention: 30 days (configurable via `ARCHIVE_RETENTION_DAYS`)
 - Daily cleanup job removes segments older than retention period
 - Estimated storage: ~2 GB per day (128 kbps * 24 hours)
+- Cleanup runs in parallel with concurrency control (10 concurrent deletions)
+- Empty directories are automatically removed after cleanup
+
+**Environment Variable Configuration:**
+```bash
+# In services/playout/.env
+ARCHIVE_RETENTION_DAYS=30  # Keep archives for 30 days
+```
+
+### Archive Retrieval and Performance
+
+**Sorted Segment Retrieval:**
+All archive retrieval methods return segments sorted by timestamp in ascending order to ensure proper chronological playback during time-shift.
+
+**Pagination Support:**
+Archive retrieval functions support optional pagination parameters:
+- `limit`: Maximum number of segments to return
+- `offset`: Number of segments to skip
+
+Example usage:
+```typescript
+// Get first 100 segments starting at a timestamp
+const segments = await archiveManager.getSegmentsFromTimestamp(
+  new Date('2024-01-15T14:00:00Z'),
+  60, // duration in minutes
+  100, // limit
+  0   // offset
+);
+```
+
+**Performance Considerations:**
+- File operations use async I/O (`fs.promises.*`) to prevent blocking the event loop
+- Archive cleanup uses parallel deletion with concurrency limits
+- Directory cleanup removes empty archive directories after segment deletion
+- Statistics gathering processes files in batches to avoid overwhelming I/O
 
 ### Database Storage
 
 - Segment metadata: Permanent (tracks what was played)
 - Playlog: Permanent (listening history)
 - Archive index: Permanent (maps timestamps to files)
+
+## Configuration Reference
+
+The playout service can be configured via environment variables:
+
+```bash
+# Stream and Archive Paths
+STREAM_OUTPUT_PATH=/var/lofield/stream      # HLS live stream output
+ARCHIVE_OUTPUT_PATH=/var/lofield/archive    # Archive storage location
+
+# HLS Settings
+HLS_SEGMENT_DURATION=6                      # Segment duration in seconds
+HLS_LIST_SIZE=10                            # Number of segments in manifest
+
+# Crossfade Settings (in seconds)
+CROSSFADE_MUSIC_TO_MUSIC=2.0               # Music to music transitions
+CROSSFADE_MUSIC_TO_TALK=1.0                # Music to talk transitions
+CROSSFADE_TALK_TO_MUSIC=0.5                # Talk to music transitions
+
+# Audio Quality
+AUDIO_BITRATE=128k                          # Output audio bitrate
+AUDIO_SAMPLE_RATE=48000                     # Output sample rate (Hz)
+
+# Service Settings
+POLL_INTERVAL=5                             # Segment polling interval (seconds)
+ARCHIVE_RETENTION_DAYS=30                   # Archive retention period (days)
+
+# Logging
+LOG_LEVEL=info                              # Log level: debug, info, warn, error
+```
+
+## Current Implementation Status
+
+### Implemented Features
+✅ **HLS Streaming**: Live HLS stream with configurable segment duration and playlist size  
+✅ **Crossfading**: Automatic crossfading between segments based on content type  
+✅ **Archive Management**: Time-based archiving with configurable retention  
+✅ **Sorted Retrieval**: Archive segments returned in chronological order  
+✅ **Pagination**: Limit and offset support for archive queries  
+✅ **Async I/O**: Non-blocking file operations throughout  
+✅ **Parallel Cleanup**: Concurrent deletion of old archives with concurrency control  
+✅ **Error Handling**: Graceful error recovery without service interruption  
+✅ **Loudness Normalization**: Consistent audio levels via FFmpeg filters  
+
+### Known Limitations
+
+⚠️ **Crossfade Implementation**: The current crossfade implementation applies fades to individual segments before concatenation. For optimal crossfading with `acrossfade`, segments would need to be loaded as separate FFmpeg inputs, which is more complex and memory-intensive.
+
+⚠️ **Memory Usage**: Archive statistics calculation loads file metadata in batches but may still be memory-intensive for very large archives (millions of segments).
+
+⚠️ **FFmpeg Dependency**: The service requires FFmpeg to be installed on the system with AAC encoding support.
+
+⚠️ **Single Playout Instance**: Only one playout service instance should run per stream to avoid conflicts. For multiple streams/stations, run separate instances with different output paths.
+
+⚠️ **No Adaptive Bitrate**: Currently outputs a single bitrate. ABR would require generating multiple quality tiers.
+
+### Error Recovery Behavior
+
+The playout service implements graceful error handling:
+
+- **Missing Segments**: Logged and skipped; streaming continues with remaining segments
+- **Archive Failures**: Logged but don't interrupt live streaming
+- **FFmpeg Errors**: Process is cleaned up; service retries on next poll cycle
+- **Disk Full**: Archive cleanup can be triggered manually; oldest files deleted first
+- **Database Errors**: Logged; service continues polling on next interval
 
 ## Performance Considerations
 

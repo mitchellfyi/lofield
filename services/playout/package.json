@@ -9,7 +9,12 @@
     "build": "tsc",
     "test": "jest"
   },
-  "keywords": ["lofield", "streaming", "radio", "playout"],
+  "keywords": [
+    "lofield",
+    "streaming",
+    "radio",
+    "playout"
+  ],
   "author": "Lofield FM",
   "license": "MIT",
   "dependencies": {
@@ -19,8 +24,11 @@
   },
   "devDependencies": {
     "@types/fluent-ffmpeg": "^2.1.27",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.19.25",
+    "jest": "^30.2.0",
     "prisma": "^6.19.0",
+    "ts-jest": "^29.4.5",
     "tsx": "^4.20.6",
     "typescript": "^5"
   }

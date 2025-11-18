@@ -31,8 +31,11 @@ class Logger {
       timestamp: new Date().toISOString(),
       level,
       message,
-      ...(data && { data }),
     };
+
+    if (data !== undefined) {
+      entry.data = data;
+    }
 
     const output = JSON.stringify(entry);
 

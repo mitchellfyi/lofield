@@ -38,19 +38,20 @@ function getOpenAIClient(): OpenAI {
   return openaiClient;
 }
 
-// Cache for TTS results
-const config = getAIConfig();
+// Cache for TTS results (config captured at module load for cache settings)
+const initialConfig = getAIConfig();
 const ttsCache = createCache<TTSResult>(
   "tts",
-  config.tts.cacheTTL,
-  config.tts.cacheEnabled,
-  config.storage.cacheDir
+  initialConfig.tts.cacheTTL,
+  initialConfig.tts.cacheEnabled,
+  initialConfig.storage.cacheDir
 );
 
 /**
  * Convert text to speech
  */
 export async function generateTTS(request: TTSRequest): Promise<TTSResult> {
+  const runtimeConfig = getAIConfig();
   // Check cache first
   // Cache key includes text, voiceId, and speed to avoid incorrect cache hits
   const cacheKey = {
@@ -66,9 +67,9 @@ export async function generateTTS(request: TTSRequest): Promise<TTSResult> {
 
   try {
     const result = await withRetry(() => generateTTSInternal(request), {
-      maxAttempts: config.retry.maxAttempts,
-      baseDelay: config.retry.baseDelay,
-      maxDelay: config.retry.maxDelay,
+      maxAttempts: runtimeConfig.retry.maxAttempts,
+      baseDelay: runtimeConfig.retry.baseDelay,
+      maxDelay: runtimeConfig.retry.maxDelay,
       onRetry: (attempt, error) => {
         console.warn(`TTS attempt ${attempt} failed: ${error.message}`);
       },
@@ -227,6 +228,7 @@ async function generateTTSWithElevenLabs(
 
   try {
     const config = getAIConfig();
+    const modelId = config.tts.model || "eleven_multilingual_v2";
     const response = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${request.voiceId}`,
       {
@@ -238,7 +240,7 @@ async function generateTTSWithElevenLabs(
         },
         body: JSON.stringify({
           text: request.text,
-          model_id: "eleven_monolingual_v1",
+          model_id: modelId,
           voice_settings: {
             stability: request.stability ?? config.tts.stability ?? 0.5,
             similarity_boost:

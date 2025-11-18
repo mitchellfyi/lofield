@@ -36,6 +36,10 @@ export interface MusicMetadata {
   generatedAt: Date;
   model: string; // Which AI model was used
   prompt: string; // The prompt that generated this track
+  provider?: string; // Which provider handled the request
+  sourceId?: string; // External identifier (e.g., ElevenLabs song id)
+  fileFormat?: string; // mp3, wav, etc.
+  contentType?: string; // MIME type returned by provider
 }
 
 // ============================================================================
@@ -153,7 +157,7 @@ export interface CacheStats {
 
 export interface AIModuleConfig {
   music: {
-    provider: "replicate" | "custom";
+    provider: "elevenlabs" | "custom";
     model: string;
     defaultDuration: number;
     cacheEnabled: boolean;

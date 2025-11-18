@@ -36,27 +36,20 @@ web/lib/ai/
 
 ### Required Dependencies
 
-The AI modules require the `replicate` package for music generation:
-
-```bash
-npm install replicate
-```
-
-OpenAI is already installed as a dependency.
+The AI modules require access to the ElevenLabs Music API for music generation.
+No additional npm packages are needed, but you must create an ElevenLabs
+account and generate an API key.
 
 ### API Keys
 
 Set the following environment variables:
 
 ```bash
-# Music generation (Replicate)
-REPLICATE_API_TOKEN=your_replicate_api_token
-
-# Script generation and TTS (OpenAI)
-OPENAI_API_KEY=your_openai_api_key
-
-# Optional: ElevenLabs for higher quality TTS
+# Music generation + premium TTS (ElevenLabs)
 ELEVENLABS_API_KEY=your_elevenlabs_api_key
+
+# Script generation and OpenAI TTS fallback
+OPENAI_API_KEY=your_openai_api_key
 ```
 
 ## Configuration
@@ -68,11 +61,11 @@ All configuration is done through environment variables with sensible defaults.
 #### Music Generation
 
 ```bash
-# Provider: "replicate" or "custom"
-MUSIC_PROVIDER=replicate
+# Provider: "elevenlabs" or "custom"
+MUSIC_PROVIDER=elevenlabs
 
-# Replicate model ID for MusicGen
-MUSIC_MODEL=meta/musicgen:671ac645ce5e552cc63a54a2bbff63fcf798043055d2dac5fc9e36a837eedcfb
+# ElevenLabs model ID for music generation
+MUSIC_MODEL=music_v1
 
 # Default track duration in seconds
 MUSIC_DEFAULT_DURATION=180
@@ -109,10 +102,10 @@ SCRIPT_CACHE_TTL=3600
 #### Text-to-Speech
 
 ```bash
-# Provider: "openai", "elevenlabs", or "google"
-TTS_PROVIDER=openai
+# Provider: "elevenlabs", "openai", or "google"
+TTS_PROVIDER=elevenlabs
 
-# Default voice ID (optional)
+# Default voice ID (required for ElevenLabs voices)
 TTS_DEFAULT_VOICE=voice_1
 
 # Enable/disable caching
@@ -463,9 +456,9 @@ npm test -- --coverage lib/ai/__tests__
 
 ### API Costs
 
-- **Music Generation**: ~$0.002-0.01 per generation (Replicate pricing)
+- **Music Generation**: ~$0.18-0.30 per 3-minute track (ElevenLabs music_v1, plan-dependent)
 - **Script Generation**: ~$0.001-0.005 per script (OpenAI GPT-4o-mini)
-- **TTS**: ~$0.015 per 1k characters (OpenAI TTS)
+- **TTS**: ~$0.015 per 1k characters (OpenAI TTS baseline, ElevenLabs varies by plan)
 
 ### Optimization Strategies
 
@@ -484,10 +477,10 @@ npm test -- --coverage lib/ai/__tests__
 
 ### Common Issues
 
-**"REPLICATE_API_TOKEN not set"**
+**"ELEVENLABS_API_KEY not set"**
 
-- Ensure `REPLICATE_API_TOKEN` is set in your environment
-- Get token from https://replicate.com/account
+- Ensure `ELEVENLABS_API_KEY` is set in your environment
+- Get a key from https://elevenlabs.io
 
 **"OPENAI_API_KEY not set"**
 

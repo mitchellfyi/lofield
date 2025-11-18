@@ -8,41 +8,40 @@ This document summarizes the research, selection criteria, and implementation de
 
 ### 1. Music Generation
 
-**Selected: Replicate with MusicGen**
+**Selected: ElevenLabs music_v1**
 
 #### Evaluation Criteria
 
 | Service | Quality | Speed | Cost | Licensing | Control |
 |---------|---------|-------|------|-----------|---------|
-| Replicate (MusicGen) | ★★★★☆ | ★★★★☆ | ★★★★☆ | Open | ★★★☆☆ |
+| ElevenLabs (music_v1) | ★★★★★ | ★★★★☆ | ★★★☆☆ | Commercial | ★★★☆☆ |
 | Stable Audio | ★★★★★ | ★★★☆☆ | ★★★☆☆ | Proprietary | ★★★★☆ |
 | Custom Model | ★★★☆☆ | ★★★★★ | ★★★★★ | Full Control | ★★★★★ |
 
 #### Reasons for Selection
 
 **Pros:**
-- High-quality lofi music generation
-- Reasonable generation time (30-60 seconds for 3-minute track)
-- Cost-effective (~$0.002-0.01 per generation)
-- Open-source model (MusicGen by Meta)
-- Easy API integration via Replicate
-- No licensing restrictions for generated content
-- Supports duration, temperature, and guidance parameters
+- Broadcast-ready stems with consistent lofi character
+- Reasonable generation time (30-60 seconds for a 3-minute track)
+- Commercial license included in paid tiers
+- Simple REST API with binary response (no external storage needed)
+- Native support for prompt length, duration, and instrumental styles
+- Shares the same `ELEVENLABS_API_KEY` used for premium TTS
 
 **Cons:**
-- Requires external API (not self-hosted by default)
-- Limited fine-tuning without custom deployment
-- Quality can vary with complex prompts
+- Higher cost than open-source self-hosted models
+- Requires active ElevenLabs plan/credits
+- Less fine-grained control than a bespoke MusicGen deployment
 
 **Alternatives Considered:**
-1. **Stable Audio**: Higher quality but more expensive, less accessible API
-2. **Custom Fine-tuned Model**: Best control but requires ML expertise and infrastructure
-3. **MusicLM (Google)**: Not publicly available at time of implementation
+1. **Stable Audio**: Excellent quality, but higher per-track costs and limited availability
+2. **Custom Fine-tuned Model**: Maximum control, but requires ML expertise and GPU hosting
+3. **MusicLM (Google)**: Not publicly accessible at time of implementation
 
 **Cost Analysis:**
-- ~$0.005 per 3-minute track
-- With caching: ~$5-10 per 1000 unique tracks
-- Monthly estimate for active station: $50-100
+- ~$0.18-0.30 per 3-minute track (plan-dependent)
+- With caching: ~$60-90 per 1,000 unique tracks
+- Monthly estimate for active station: $150-250 (assuming mixed live + cached usage)
 
 ### 2. Script Generation
 

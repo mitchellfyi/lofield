@@ -21,10 +21,10 @@ describe("AI Configuration", () => {
     it("should return default configuration when no env vars are set", () => {
       const config = getAIConfig();
 
-      expect(config.music.provider).toBe("replicate");
+      expect(config.music.provider).toBe("elevenlabs");
       expect(config.music.defaultDuration).toBe(180);
       expect(config.script.provider).toBe("openai");
-      expect(config.tts.provider).toBe("openai");
+      expect(config.tts.provider).toBe("elevenlabs");
     });
 
     it("should use environment variables when set", () => {

@@ -12,11 +12,19 @@ describe("TTS Module", () => {
     // Remove API key to test error handling
     delete process.env.OPENAI_API_KEY;
     delete process.env.ELEVENLABS_API_KEY;
+
+    // Speed up retries for tests
+    process.env.RETRY_MAX_ATTEMPTS = "1";
+    process.env.RETRY_BASE_DELAY = "0";
+    process.env.RETRY_MAX_DELAY = "0";
   });
 
   afterEach(() => {
     delete process.env.OPENAI_API_KEY;
     delete process.env.ELEVENLABS_API_KEY;
+    delete process.env.RETRY_MAX_ATTEMPTS;
+    delete process.env.RETRY_BASE_DELAY;
+    delete process.env.RETRY_MAX_DELAY;
   });
 
   describe("API Configuration", () => {
@@ -93,6 +101,7 @@ describe("TTS Module", () => {
 
   describe("Voice Configuration", () => {
     it("should accept different voice IDs", async () => {
+      process.env.TTS_PROVIDER = "openai";
       const voiceIds = [
         "voice_1",
         "voice_2",

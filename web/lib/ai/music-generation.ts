@@ -2,7 +2,7 @@
  * Music Generation Module
  *
  * Generates lofi music tracks using text-to-music AI models.
- * Supports Replicate API with MusicGen and other models.
+ * Supports ElevenLabs Music API for text-to-music generation.
  */
 
 import * as fs from "fs";
@@ -18,39 +18,10 @@ import type {
 } from "./types";
 import { MusicGenerationError } from "./types";
 
-// Replicate client (lazy-loaded)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let replicateClient: any = null;
-
-/**
- * Get or initialize Replicate client
- */
-function getReplicateClient() {
-  if (!process.env.REPLICATE_API_TOKEN) {
-    throw new MusicGenerationError(
-      "REPLICATE_API_TOKEN environment variable is not set. Please add REPLICATE_API_TOKEN to your .env file. Get your API token from: https://replicate.com/account",
-      { provider: "replicate" }
-    );
-  }
-
-  if (!replicateClient) {
-    try {
-      // Dynamic import to avoid requiring Replicate if not used
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const Replicate = require("replicate");
-      replicateClient = new Replicate({
-        auth: process.env.REPLICATE_API_TOKEN,
-      });
-    } catch (error) {
-      throw new MusicGenerationError(
-        "Failed to initialize Replicate client. Make sure 'replicate' package is installed.",
-        { error: (error as Error).message }
-      );
-    }
-  }
-
-  return replicateClient;
-}
+const ELEVENLABS_MUSIC_URL = "https://api.elevenlabs.io/v1/music";
+const MIN_TRACK_DURATION_MS = 3_000;
+const MAX_TRACK_DURATION_MS = 300_000;
+const DEFAULT_EXTENSION = "mp3";
 
 // Cache for music generation results
 const config = getAIConfig();
@@ -115,8 +86,8 @@ async function generateMusicInternal(
 ): Promise<MusicGenerationResult> {
   const config = getAIConfig();
 
-  if (config.music.provider === "replicate") {
-    return await generateMusicWithReplicate(request);
+  if (config.music.provider === "elevenlabs") {
+    return await generateMusicWithElevenLabs(request);
   } else {
     throw new MusicGenerationError(
       `Unsupported music provider: ${config.music.provider}`,
@@ -126,63 +97,81 @@ async function generateMusicInternal(
 }
 
 /**
- * Generate music using Replicate API (MusicGen)
+ * Generate music using ElevenLabs Music Generation API
  */
-async function generateMusicWithReplicate(
+async function generateMusicWithElevenLabs(
   request: MusicGenerationRequest
 ): Promise<MusicGenerationResult> {
   const config = getAIConfig();
-  const replicate = getReplicateClient();
+  const apiKey = process.env.ELEVENLABS_API_KEY;
+  if (!apiKey) {
+    throw new MusicGenerationError(
+      "ELEVENLABS_API_KEY environment variable is not set. Please add ELEVENLABS_API_KEY to your .env file. Get your API key from: https://elevenlabs.io",
+      { provider: "elevenlabs" }
+    );
+  }
 
-  const duration = request.duration || config.music.defaultDuration;
+  const durationSeconds = request.duration || config.music.defaultDuration;
+  const durationMs = clamp(
+    Math.round(durationSeconds * 1000),
+    MIN_TRACK_DURATION_MS,
+    MAX_TRACK_DURATION_MS
+  );
 
   // Enhance prompt with lofi-specific instructions
   const enhancedPrompt = enhancePromptForLofi(request.prompt, request);
 
+  const payload = {
+    model_id: config.music.model || "music_v1",
+    prompt: enhancedPrompt,
+    music_length_ms: durationMs,
+    force_instrumental: true,
+  };
+
   console.log(
-    `Generating music with Replicate (${duration}s): "${enhancedPrompt.substring(0, 100)}..."`
+    `Generating music with ElevenLabs (${durationSeconds}s): "${enhancedPrompt.substring(0, 100)}..."`
   );
 
   try {
-    // Run the model
-    const output = await replicate.run(config.music.model, {
-      input: {
-        prompt: enhancedPrompt,
-        duration: duration,
-        temperature: 1.0,
-        top_k: 250,
-        top_p: 0.0,
-        classifier_free_guidance: 3.0,
+    const response = await fetch(ELEVENLABS_MUSIC_URL, {
+      method: "POST",
+      headers: {
+        "xi-api-key": apiKey,
+        "Content-Type": "application/json",
+        Accept: "audio/mpeg",
       },
+      body: JSON.stringify(payload),
     });
 
-    // Download the generated audio
-    if (!output) {
-      throw new MusicGenerationError("No output from Replicate");
+    if (!response.ok) {
+      const errorText = await response.text();
+      const message = `ElevenLabs API error: ${response.status} ${response.statusText}`;
+      throw new MusicGenerationError(message, {
+        provider: "elevenlabs",
+        status: response.status,
+        body: errorText,
+      });
     }
 
-    // Replicate returns a URL to the audio file
-    const audioUrl = typeof output === "string" ? output : output[0];
-    if (!audioUrl) {
-      throw new MusicGenerationError("No audio URL in Replicate output");
-    }
-
-    // Download and save the audio file
-    const filePath = await downloadAudio(audioUrl, request);
-
-    // Get actual duration from the file (estimate for now)
-    const actualDuration = duration; // TODO: Use ffprobe or similar to get actual duration
+    const contentType = response.headers.get("content-type") || undefined;
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const extension = getExtensionFromContentType(contentType);
+    const filePath = await saveAudioFile(buffer, request, extension);
 
     const metadata: MusicMetadata = {
       title: generateTitle(request),
       artist: "Lofield FM",
-      duration: actualDuration,
+      duration: Math.round(durationMs / 1000),
       bpm: request.bpm,
       mood: request.mood,
       tags: request.tags,
       generatedAt: new Date(),
       model: config.music.model,
       prompt: enhancedPrompt,
+      provider: "elevenlabs",
+      sourceId: response.headers.get("song-id") || undefined,
+      fileFormat: extension,
+      contentType,
     };
 
     return {
@@ -199,7 +188,7 @@ async function generateMusicWithReplicate(
     }
 
     throw new MusicGenerationError(
-      `Replicate generation failed: ${err.message}`,
+      `ElevenLabs generation failed: ${err.message}`,
       { error: err.message, prompt: request.prompt }
     );
   }
@@ -246,11 +235,12 @@ function enhancePromptForLofi(
 }
 
 /**
- * Download audio from URL and save to storage
+ * Persist generated audio to the storage directory.
  */
-async function downloadAudio(
-  url: string,
-  request: MusicGenerationRequest
+async function saveAudioFile(
+  buffer: Buffer,
+  request: MusicGenerationRequest,
+  extension = DEFAULT_EXTENSION
 ): Promise<string> {
   const config = getAIConfig();
   const fsPromises = fs.promises;
@@ -269,30 +259,45 @@ async function downloadAudio(
     .digest("hex")
     .substring(0, 8);
   const timestamp = Date.now();
-  const filename = `music_${timestamp}_${hash}.wav`;
+  const safeExtension = extension.startsWith(".")
+    ? extension
+    : `.${extension}`;
+  const filename = `music_${timestamp}_${hash}${safeExtension}`;
   const filePath = path.join(config.storage.audioPath, filename);
 
   try {
-    // Download the file
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to download audio: ${response.statusText}`);
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    // Save to disk asynchronously
     await fsPromises.writeFile(filePath, buffer);
-
     console.log(`Audio saved to: ${filePath}`);
     return filePath;
   } catch (error) {
     throw new MusicGenerationError(
-      `Failed to download audio: ${(error as Error).message}`,
-      { url, error: (error as Error).message }
+      `Failed to save audio: ${(error as Error).message}`,
+      { error: (error as Error).message }
     );
   }
+}
+
+function getExtensionFromContentType(contentType?: string | null): string {
+  if (!contentType) {
+    return DEFAULT_EXTENSION;
+  }
+
+  if (contentType.includes("wav")) {
+    return "wav";
+  }
+  if (contentType.includes("flac")) {
+    return "flac";
+  }
+  if (contentType.includes("ogg")) {
+    return "ogg";
+  }
+
+  // Most ElevenLabs responses are MP3 encoded
+  return DEFAULT_EXTENSION;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
 }
 
 /**

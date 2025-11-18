@@ -206,8 +206,7 @@ Create a `.env` file in the scheduler directory (or set these in your shell envi
 
 **AI Integration Variables** (used when AI modules are configured):
 - `OPENAI_API_KEY`: For LLM-based script generation
-- `ELEVENLABS_API_KEY`: For text-to-speech (ElevenLabs provider)
-- `REPLICATE_API_TOKEN`: For music generation (Replicate provider)
+- `ELEVENLABS_API_KEY`: For music generation + ElevenLabs TTS provider
 - `STABILITY_AI_API_KEY`: For music generation (Stability AI provider)
 
 See `.env.example` for a template with all available variables.

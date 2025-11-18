@@ -14,11 +14,11 @@ describe("Music Generation Module", () => {
     clearMusicCache();
 
     // Remove API key to test error handling
-    delete process.env.REPLICATE_API_TOKEN;
+    delete process.env.ELEVENLABS_API_KEY;
   });
 
   afterEach(() => {
-    delete process.env.REPLICATE_API_TOKEN;
+    delete process.env.ELEVENLABS_API_KEY;
   });
 
   describe("API Configuration", () => {
@@ -31,7 +31,7 @@ describe("Music Generation Module", () => {
       const result = await generateMusic(request);
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("REPLICATE_API_TOKEN");
+      expect(result.error).toContain("ELEVENLABS_API_KEY");
     });
   });
 

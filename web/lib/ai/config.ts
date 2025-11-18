@@ -10,13 +10,19 @@ import type { AIModuleConfig } from "./types";
  * Get AI module configuration from environment variables
  */
 export function getAIConfig(): AIModuleConfig {
+  const musicProvider =
+    (process.env.MUSIC_PROVIDER as "elevenlabs" | "custom") || "elevenlabs";
+  const ttsProvider =
+    (process.env.TTS_PROVIDER as "elevenlabs" | "openai" | "google") ||
+    "elevenlabs";
+  const ttsModel =
+    process.env.TTS_MODEL ||
+    (ttsProvider === "elevenlabs" ? "eleven_multilingual_v2" : "tts-1");
+
   return {
     music: {
-      provider:
-        (process.env.MUSIC_PROVIDER as "replicate" | "custom") || "replicate",
-      model:
-        process.env.MUSIC_MODEL ||
-        "meta/musicgen:671ac645ce5e552cc63a54a2bbff63fcf798043055d2dac5fc9e36a837eedcfb",
+      provider: musicProvider,
+      model: process.env.MUSIC_MODEL || "music_v1",
       defaultDuration: parseInt(
         process.env.MUSIC_DEFAULT_DURATION || "180",
         10
@@ -34,10 +40,8 @@ export function getAIConfig(): AIModuleConfig {
       cacheTTL: parseInt(process.env.SCRIPT_CACHE_TTL || "3600", 10), // 1 hour
     },
     tts: {
-      provider:
-        (process.env.TTS_PROVIDER as "elevenlabs" | "openai" | "google") ||
-        "openai",
-      model: process.env.TTS_MODEL || "tts-1", // OpenAI model: "tts-1" or "tts-1-hd"
+      provider: ttsProvider,
+      model: ttsModel,
       defaultVoice: process.env.TTS_DEFAULT_VOICE,
       cacheEnabled: process.env.TTS_CACHE_ENABLED !== "false",
       cacheTTL: parseInt(process.env.TTS_CACHE_TTL || "86400", 10), // 24 hours

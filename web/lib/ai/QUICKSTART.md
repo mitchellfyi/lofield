@@ -7,14 +7,12 @@
 ```bash
 cd web
 npm install
-npm install replicate  # For music generation
 ```
 
 ### 2. Get API Keys
 
-- **OpenAI**: https://platform.openai.com/api-keys
-- **Replicate**: https://replicate.com/account
-- **ElevenLabs** (optional): https://elevenlabs.io
+- **OpenAI** (scripts + baseline TTS): https://platform.openai.com/api-keys
+- **ElevenLabs** (music + premium TTS): https://elevenlabs.io
 
 ### 3. Configure Environment
 
@@ -22,8 +20,7 @@ Copy `.env.example` to `.env` and add your keys:
 
 ```bash
 OPENAI_API_KEY=sk-...
-REPLICATE_API_TOKEN=r8_...
-ELEVENLABS_API_KEY=...  # Optional
+ELEVENLABS_API_KEY=...
 ```
 
 ## Usage Examples
@@ -103,13 +100,6 @@ npm test -- --coverage lib/ai/__tests__
 - Check `.env` file exists in `web/` directory
 - Verify environment variables are set correctly
 - Restart dev server after changing `.env`
-
-### "Module not found: replicate"
-
-```bash
-cd web
-npm install replicate
-```
 
 ### "Failed to download audio"
 

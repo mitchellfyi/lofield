@@ -46,21 +46,49 @@ import {
   generateFallbackContent,
 } from "../content-generator";
 
-const mockGetCurrentShow = getCurrentShow as jest.MockedFunction<typeof getCurrentShow>;
+const mockGetCurrentShow = getCurrentShow as jest.MockedFunction<
+  typeof getCurrentShow
+>;
 const mockGetNextShow = getNextShow as jest.MockedFunction<typeof getNextShow>;
-const mockGetShowEndTime = getShowEndTime as jest.MockedFunction<typeof getShowEndTime>;
-const mockIsNearShowTransition = isNearShowTransition as jest.MockedFunction<typeof isNearShowTransition>;
-const mockNeedsReplenishment = needsReplenishment as jest.MockedFunction<typeof needsReplenishment>;
-const mockGetNextAvailableSlot = getNextAvailableSlot as jest.MockedFunction<typeof getNextAvailableSlot>;
-const mockCreateSegment = createSegment as jest.MockedFunction<typeof createSegment>;
+const mockGetShowEndTime = getShowEndTime as jest.MockedFunction<
+  typeof getShowEndTime
+>;
+const mockIsNearShowTransition = isNearShowTransition as jest.MockedFunction<
+  typeof isNearShowTransition
+>;
+const mockNeedsReplenishment = needsReplenishment as jest.MockedFunction<
+  typeof needsReplenishment
+>;
+const mockGetNextAvailableSlot = getNextAvailableSlot as jest.MockedFunction<
+  typeof getNextAvailableSlot
+>;
+const mockCreateSegment = createSegment as jest.MockedFunction<
+  typeof createSegment
+>;
 const mockCreateTrack = createTrack as jest.MockedFunction<typeof createTrack>;
-const mockMarkRequestAsUsed = markRequestAsUsed as jest.MockedFunction<typeof markRequestAsUsed>;
-const mockGetTopRequests = getTopRequests as jest.MockedFunction<typeof getTopRequests>;
-const mockGenerateMusicTrack = generateMusicTrack as jest.MockedFunction<typeof generateMusicTrack>;
-const mockGenerateCommentary = generateCommentary as jest.MockedFunction<typeof generateCommentary>;
-const mockGenerateHandoverSegment = generateHandoverSegment as jest.MockedFunction<typeof generateHandoverSegment>;
-const mockGenerateIdent = generateIdent as jest.MockedFunction<typeof generateIdent>;
-const mockGenerateFallbackContent = generateFallbackContent as jest.MockedFunction<typeof generateFallbackContent>;
+const mockMarkRequestAsUsed = markRequestAsUsed as jest.MockedFunction<
+  typeof markRequestAsUsed
+>;
+const mockGetTopRequests = getTopRequests as jest.MockedFunction<
+  typeof getTopRequests
+>;
+const mockGenerateMusicTrack = generateMusicTrack as jest.MockedFunction<
+  typeof generateMusicTrack
+>;
+const mockGenerateCommentary = generateCommentary as jest.MockedFunction<
+  typeof generateCommentary
+>;
+const mockGenerateHandoverSegment =
+  generateHandoverSegment as jest.MockedFunction<
+    typeof generateHandoverSegment
+  >;
+const mockGenerateIdent = generateIdent as jest.MockedFunction<
+  typeof generateIdent
+>;
+const mockGenerateFallbackContent =
+  generateFallbackContent as jest.MockedFunction<
+    typeof generateFallbackContent
+  >;
 
 describe("SchedulerService", () => {
   let scheduler: SchedulerService;
@@ -203,7 +231,7 @@ describe("SchedulerService", () => {
       // - Commentary to be generated
       expect(mockGenerateMusicTrack).toHaveBeenCalled();
       expect(mockGenerateCommentary).toHaveBeenCalled();
-      
+
       // Music should use the show-specific duration (180 seconds)
       const musicCall = mockGenerateMusicTrack.mock.calls[0];
       expect(musicCall[1].id).toBe("test_show"); // Verify it's using the right show
@@ -285,7 +313,10 @@ describe("SchedulerService", () => {
         targetMinutes: 30,
         minutesNeeded: 25, // Need 25 minutes total
       });
-      mockGetTopRequests.mockResolvedValue([request, { ...request, id: "req3" }]);
+      mockGetTopRequests.mockResolvedValue([
+        request,
+        { ...request, id: "req3" },
+      ]);
       mockGetNextAvailableSlot.mockResolvedValue(new Date());
 
       // Mock music track generation (3.5 minutes as per config)

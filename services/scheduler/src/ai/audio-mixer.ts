@@ -1,6 +1,6 @@
 /**
  * Audio Mixing Utility
- * 
+ *
  * Concatenates multiple audio files into a single file using ffmpeg.
  * Handles duo presenter segments by joining their audio sequentially.
  */
@@ -27,7 +27,7 @@ export async function checkFfmpegAvailable(): Promise<boolean> {
 
 /**
  * Concatenate multiple audio files into one using ffmpeg
- * 
+ *
  * @param audioFiles Array of audio file paths to concatenate
  * @param outputPath Output file path
  * @param gapSeconds Optional gap between files in seconds (default: 0.5)
@@ -50,9 +50,11 @@ export async function concatenateAudioFiles(
   }
 
   const ffmpegAvailable = await checkFfmpegAvailable();
-  
+
   if (!ffmpegAvailable) {
-    logger.warn("  [WARN] ffmpeg not available, falling back to simple concatenation");
+    logger.warn(
+      "  [WARN] ffmpeg not available, falling back to simple concatenation"
+    );
     return await fallbackConcatenate(audioFiles, outputPath);
   }
 
@@ -75,7 +77,9 @@ export async function concatenateAudioFiles(
     // Using concat demuxer which is faster and doesn't re-encode
     const command = `ffmpeg -f concat -safe 0 -i "${fileListPath}" -c copy "${outputPath}" -y`;
 
-    logger.debug(`  [AUDIO] Concatenating ${audioFiles.length} files with ffmpeg`);
+    logger.debug(
+      `  [AUDIO] Concatenating ${audioFiles.length} files with ffmpeg`
+    );
     await execAsync(command);
 
     // Clean up temp file list
@@ -83,12 +87,14 @@ export async function concatenateAudioFiles(
 
     // Get total duration
     const duration = await getAudioDuration(outputPath);
-    
-    logger.debug(`  [AUDIO] Concatenated audio saved to ${outputPath} (${duration}s)`);
+
+    logger.debug(
+      `  [AUDIO] Concatenated audio saved to ${outputPath} (${duration}s)`
+    );
     return duration;
   } catch (error) {
     logger.error({ err: error }, "  [ERROR] Audio concatenation failed");
-    
+
     // Fallback to simple concatenation
     logger.warn("  [WARN] Falling back to simple concatenation");
     return await fallbackConcatenate(audioFiles, outputPath);
@@ -104,8 +110,10 @@ async function fallbackConcatenate(
   audioFiles: string[],
   outputPath: string
 ): Promise<number> {
-  logger.debug(`  [AUDIO] Using fallback concatenation for ${audioFiles.length} files`);
-  
+  logger.debug(
+    `  [AUDIO] Using fallback concatenation for ${audioFiles.length} files`
+  );
+
   const buffers: Buffer[] = [];
   let totalEstimatedDuration = 0;
 
@@ -113,18 +121,23 @@ async function fallbackConcatenate(
     try {
       const buffer = await fs.readFile(file);
       buffers.push(buffer);
-      
+
       // Rough duration estimate: ~1KB per second for MP3
       totalEstimatedDuration += buffer.length / 1024;
     } catch (error) {
-      logger.warn({ err: error, file }, `  [WARN] Failed to read audio file ${file}`);
+      logger.warn(
+        { err: error, file },
+        `  [WARN] Failed to read audio file ${file}`
+      );
     }
   }
 
   const combined = Buffer.concat(buffers);
   await fs.writeFile(outputPath, combined);
 
-  logger.debug(`  [AUDIO] Fallback concatenation complete (~${Math.ceil(totalEstimatedDuration)}s estimated)`);
+  logger.debug(
+    `  [AUDIO] Fallback concatenation complete (~${Math.ceil(totalEstimatedDuration)}s estimated)`
+  );
   return Math.ceil(totalEstimatedDuration);
 }
 
@@ -137,17 +150,19 @@ async function getAudioDuration(filePath: string): Promise<number> {
     const command = `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${filePath}"`;
     const { stdout } = await execAsync(command);
     const duration = parseFloat(stdout.trim());
-    
+
     if (isNaN(duration)) {
       throw new Error("Invalid duration from ffprobe");
     }
-    
+
     return Math.ceil(duration);
   } catch {
     // Fallback: estimate from file size
     const stats = await fs.stat(filePath);
     const estimatedDuration = Math.ceil(stats.size / 1024); // Rough estimate: ~1KB per second
-    logger.debug(`  [AUDIO] Estimated duration: ${estimatedDuration}s (ffprobe not available)`);
+    logger.debug(
+      `  [AUDIO] Estimated duration: ${estimatedDuration}s (ffprobe not available)`
+    );
     return estimatedDuration;
   }
 }
@@ -161,10 +176,10 @@ export async function mixDuoAudio(
   outputPath: string
 ): Promise<number> {
   const audioFiles = audioSegments.map((segment) => segment.filePath);
-  
+
   logger.debug(
     `  [AUDIO] Mixing ${audioSegments.length} duo segments: ${audioSegments.map((s) => s.presenterId).join(", ")}`
   );
-  
+
   return await concatenateAudioFiles(audioFiles, outputPath, 0.3); // Small gap between presenters
 }

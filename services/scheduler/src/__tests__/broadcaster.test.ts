@@ -69,7 +69,9 @@ describe("Broadcaster", () => {
       const data = { test: "value", number: 123 };
       const message = createSSEMessage(BroadcastEvent.NOW_PLAYING, data);
 
-      expect(message).toBe('event: now_playing\ndata: {"test":"value","number":123}\n\n');
+      expect(message).toBe(
+        'event: now_playing\ndata: {"test":"value","number":123}\n\n'
+      );
     });
 
     it("should handle different event types", () => {

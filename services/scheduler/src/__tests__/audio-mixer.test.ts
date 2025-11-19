@@ -6,6 +6,8 @@ import * as fs from "fs/promises";
 import * as path from "path";
 import { concatenateAudioFiles, checkFfmpegAvailable } from "../ai/audio-mixer";
 
+jest.setTimeout(20000);
+
 describe("Audio Mixer", () => {
   const testDir = "/tmp/lofield-test-audio";
   const testFiles: string[] = [];

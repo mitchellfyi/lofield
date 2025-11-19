@@ -1,6 +1,6 @@
 /**
  * Show Manager Module
- * 
+ *
  * Handles loading show configuration files from config/shows/*.json
  * and provides utilities for accessing show-specific settings.
  */
@@ -41,11 +41,17 @@ async function getConfigBasePath(): Promise<string> {
 /**
  * Load all show configurations from config/shows/*.json
  */
-export async function loadShowConfigs(forceReload: boolean = false): Promise<Map<string, ShowConfig>> {
+export async function loadShowConfigs(
+  forceReload: boolean = false
+): Promise<Map<string, ShowConfig>> {
   const now = Date.now();
-  
+
   // Return cached configs if recent (unless force reload)
-  if (!forceReload && showConfigCache.size > 0 && (now - configLoadTime) < 60000) {
+  if (
+    !forceReload &&
+    showConfigCache.size > 0 &&
+    now - configLoadTime < 60000
+  ) {
     return showConfigCache;
   }
 
@@ -71,7 +77,7 @@ export async function loadShowConfigs(forceReload: boolean = false): Promise<Map
       const filePath = path.join(showsPath, file);
       const content = await fs.readFile(filePath, "utf-8");
       const config: ShowConfig = JSON.parse(content);
-      
+
       // Validate required fields
       if (!config.id || !config.name || !config.schedule || !config.ratios) {
         console.warn(`Invalid show config in ${file}: missing required fields`);
@@ -94,7 +100,9 @@ export async function loadShowConfigs(forceReload: boolean = false): Promise<Map
 /**
  * Get a specific show configuration by ID
  */
-export async function getShowConfig(showId: string): Promise<ShowConfig | null> {
+export async function getShowConfig(
+  showId: string
+): Promise<ShowConfig | null> {
   const configs = await loadShowConfigs();
   return configs.get(showId) || null;
 }
@@ -119,42 +127,57 @@ export async function reloadShowConfigs(): Promise<void> {
 /**
  * Validate that a show config meets all requirements
  */
-export function validateShowConfig(config: ShowConfig): { valid: boolean; errors: string[] } {
+export function validateShowConfig(config: ShowConfig): {
+  valid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
 
   // Check music/talk ratios
-  if (config.ratios.music_fraction > 0.60) {
-    errors.push(`Music fraction ${config.ratios.music_fraction} exceeds maximum 0.60`);
+  if (config.ratios.music_fraction > 0.6) {
+    errors.push(
+      `Music fraction ${config.ratios.music_fraction} exceeds maximum 0.60`
+    );
   }
 
-  if (config.ratios.talk_fraction < 0.40) {
-    errors.push(`Talk fraction ${config.ratios.talk_fraction} below minimum 0.40`);
+  if (config.ratios.talk_fraction < 0.4) {
+    errors.push(
+      `Talk fraction ${config.ratios.talk_fraction} below minimum 0.40`
+    );
   }
 
-  const sumFractions = config.ratios.music_fraction + config.ratios.talk_fraction;
+  const sumFractions =
+    config.ratios.music_fraction + config.ratios.talk_fraction;
   if (Math.abs(sumFractions - 1.0) > 0.001) {
     errors.push(`Music + talk fractions = ${sumFractions}, must equal 1.0`);
   }
 
   // Check presenter duo size
   if (config.presenters.primary_duo.length !== 2) {
-    errors.push(`Primary duo must have exactly 2 presenters, got ${config.presenters.primary_duo.length}`);
+    errors.push(
+      `Primary duo must have exactly 2 presenters, got ${config.presenters.primary_duo.length}`
+    );
   }
 
   // Check probabilities
-  const sumProb = config.presenters.duo_probability + config.presenters.solo_probability;
+  const sumProb =
+    config.presenters.duo_probability + config.presenters.solo_probability;
   if (Math.abs(sumProb - 1.0) > 0.001) {
     errors.push(`Duo + solo probability = ${sumProb}, must equal 1.0`);
   }
 
   // Check schedule duration
   if (config.schedule.duration_hours !== 3) {
-    errors.push(`Duration must be 3 hours, got ${config.schedule.duration_hours}`);
+    errors.push(
+      `Duration must be 3 hours, got ${config.schedule.duration_hours}`
+    );
   }
 
   // Check handover duration if present
   if (config.handover && config.handover.duration_seconds !== 300) {
-    errors.push(`Handover duration must be 300 seconds, got ${config.handover.duration_seconds}`);
+    errors.push(
+      `Handover duration must be 300 seconds, got ${config.handover.duration_seconds}`
+    );
   }
 
   return {
@@ -166,26 +189,29 @@ export function validateShowConfig(config: ShowConfig): { valid: boolean; errors
 /**
  * Deep merge utility to merge nested objects
  */
-function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
+function deepMerge<T extends Record<string, any>>(
+  target: T,
+  source: Partial<T>
+): T {
   const result = { ...target };
-  
+
   for (const key in source) {
     const sourceValue = source[key];
     const targetValue = target[key];
-    
+
     if (sourceValue === undefined) {
       continue;
     }
-    
+
     if (Array.isArray(sourceValue) && Array.isArray(targetValue)) {
       // For arrays, concatenate and deduplicate
       result[key] = [...new Set([...targetValue, ...sourceValue])] as any;
     } else if (
-      typeof sourceValue === 'object' && 
-      sourceValue !== null && 
+      typeof sourceValue === "object" &&
+      sourceValue !== null &&
       !Array.isArray(sourceValue) &&
-      typeof targetValue === 'object' && 
-      targetValue !== null && 
+      typeof targetValue === "object" &&
+      targetValue !== null &&
       !Array.isArray(targetValue)
     ) {
       // For objects, recursively merge
@@ -195,7 +221,7 @@ function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>)
       result[key] = sourceValue as any;
     }
   }
-  
+
   return result;
 }
 
@@ -218,7 +244,7 @@ export async function getShowConfigWithOverrides(
   // Apply seasonal overrides with deep merge
   if (config.season_overrides && config.season_overrides[season]) {
     const override = config.season_overrides[season];
-    
+
     // Add additional topics to primary tags
     if (override.additional_topics) {
       config.topics.primary_tags = [
@@ -226,7 +252,7 @@ export async function getShowConfigWithOverrides(
         ...override.additional_topics,
       ];
     }
-    
+
     // Deep merge other properties (like tone adjustments)
     if (override.tone_adjustment) {
       // Store tone_adjustment for prompt generation without overwriting existing tone

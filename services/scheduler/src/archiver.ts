@@ -1,6 +1,6 @@
 /**
  * Archiving Module
- * 
+ *
  * Records segments into hour-long archive files and maintains
  * an index for time-shifted listening and show episode assembly.
  */
@@ -28,7 +28,10 @@ const archiveIndex: ArchiveIndex[] = [];
 /**
  * Get the archive file path for a given hour
  */
-async function getArchiveFilePath(date: Date, archivePath: string): Promise<string> {
+async function getArchiveFilePath(
+  date: Date,
+  archivePath: string
+): Promise<string> {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   const day = String(date.getUTCDate()).padStart(2, "0");
@@ -55,7 +58,10 @@ export async function recordSegmentToArchive(
   archivePath: string
 ): Promise<void> {
   try {
-    const archiveFile = await getArchiveFilePath(segment.startTime, archivePath);
+    const archiveFile = await getArchiveFilePath(
+      segment.startTime,
+      archivePath
+    );
 
     // Read the segment audio file
     try {
@@ -103,7 +109,10 @@ export async function recordSegmentToArchive(
       `Archived segment ${segment.id} to ${archiveFile} at offset ${offset}`
     );
   } catch (error) {
-    logger.error({ err: error, segmentId: segment.id }, `Error archiving segment ${segment.id}`);
+    logger.error(
+      { err: error, segmentId: segment.id },
+      `Error archiving segment ${segment.id}`
+    );
     throw error;
   }
 }
@@ -133,7 +142,9 @@ export async function assembleShowEpisode(
   }
 
   try {
-    logger.info(`Assembling episode for show ${showId} on ${date.toISOString()}`);
+    logger.info(
+      `Assembling episode for show ${showId} on ${date.toISOString()}`
+    );
 
     // Get show from database
     const show = await prisma.show.findUnique({
@@ -157,7 +168,9 @@ export async function assembleShowEpisode(
     );
 
     if (segments.length === 0) {
-      throw new Error(`No archived segments found for show ${showId} on ${date.toISOString()}`);
+      throw new Error(
+        `No archived segments found for show ${showId} on ${date.toISOString()}`
+      );
     }
 
     // Create output filename
@@ -180,12 +193,12 @@ export async function assembleShowEpisode(
     for (const segment of segments) {
       // Use streaming to read only the segment portion we need
       const archiveFile = await fs.open(segment.filePath, "r");
-      
+
       try {
         // Calculate estimated segment size in bytes
         // MP3 bitrate is typically ~128kbps = 16KB/s
         const estimatedBytes = Math.ceil(segment.duration * 16 * 1024);
-        
+
         // Create a buffer for the segment
         const buffer = Buffer.allocUnsafe(estimatedBytes);
         const { bytesRead } = await archiveFile.read(
@@ -194,7 +207,7 @@ export async function assembleShowEpisode(
           estimatedBytes,
           segment.offset
         );
-        
+
         // Write the actual bytes read to the output stream
         await new Promise<void>((resolve, reject) => {
           writeStream.write(buffer.slice(0, bytesRead), (err) => {
@@ -218,7 +231,10 @@ export async function assembleShowEpisode(
     logger.info(`Episode assembled: ${outputFile}`);
     return outputFile;
   } catch (error) {
-    logger.error({ err: error, showId }, `Error assembling episode for show ${showId}`);
+    logger.error(
+      { err: error, showId },
+      `Error assembling episode for show ${showId}`
+    );
     throw error;
   }
 }

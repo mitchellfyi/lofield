@@ -2,24 +2,23 @@
  * Tests for audio utilities module
  */
 
-import * as fs from "fs";
-import * as path from "path";
-
 // Mock ffprobe before importing the module
 const mockFfprobe = jest.fn();
 const mockSetFfprobePath = jest.fn();
 
-jest.mock("fluent-ffmpeg", () => {
-  return {
-    __esModule: true,
+jest.mock("fluent-ffmpeg", () => ({
+  __esModule: true,
+  default: {
     setFfprobePath: mockSetFfprobePath,
     ffprobe: mockFfprobe,
-  };
-});
+  },
+}));
 
 jest.mock("ffprobe-static", () => ({
   __esModule: true,
-  path: "/mock/path/to/ffprobe",
+  default: {
+    path: "/mock/path/to/ffprobe",
+  },
 }));
 
 // Import after mocks are set up

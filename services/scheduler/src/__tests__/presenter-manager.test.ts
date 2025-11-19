@@ -66,7 +66,7 @@ describe("Presenter Manager", () => {
     it("should get presenters for a specific show", async () => {
       const presenters = await getPresentersForShow("mild_panic_mornings");
       expect(presenters.length).toBe(2);
-      expect(presenters.map(p => p.id).sort()).toEqual(["morgan", "riley"]);
+      expect(presenters.map((p) => p.id).sort()).toEqual(["morgan", "riley"]);
     });
 
     it("should return empty array for non-existent show", async () => {
@@ -134,27 +134,27 @@ describe("Presenter Manager", () => {
         expect(result.presenters.length).toBe(1);
       }
     });
-    
+
     it("should rotate presenters fairly for solo segments", () => {
       const showId = "fair_rotation_test";
       const duo = ["morgan", "riley"];
       const selections: string[] = [];
-      
+
       // Generate multiple solo selections
       for (let i = 0; i < 20; i++) {
         const result = selectPresenters(duo, 0.0, showId); // Always solo
         selections.push(result.presenters[0]);
       }
-      
+
       // Check usage is being tracked
       const usage = getPresenterUsage(showId);
       expect(usage["morgan"]).toBeDefined();
       expect(usage["riley"]).toBeDefined();
-      
+
       // Check that both presenters were selected
       expect(selections).toContain("morgan");
       expect(selections).toContain("riley");
-      
+
       // Check that rotation is reasonably fair (within 20% difference)
       const morganCount = usage["morgan"];
       const rileyCount = usage["riley"];
@@ -166,7 +166,10 @@ describe("Presenter Manager", () => {
 
   describe("getAnchorAndSidekick", () => {
     it("should identify anchor and sidekick from duo", async () => {
-      const { anchor, sidekick } = await getAnchorAndSidekick(["morgan", "riley"]);
+      const { anchor, sidekick } = await getAnchorAndSidekick([
+        "morgan",
+        "riley",
+      ]);
       expect(anchor).not.toBeNull();
       expect(sidekick).not.toBeNull();
       expect(anchor?.role).toBe("anchor");
@@ -215,15 +218,19 @@ describe("Presenter Manager", () => {
       const script = "Hello there. How are you? Great to be here.";
       const result = await splitScriptForDuo(script, ["morgan", "riley"]);
       expect(result.length).toBeGreaterThan(1);
-      expect(result.some(line => line.presenterId === "morgan")).toBe(true);
-      expect(result.some(line => line.presenterId === "riley")).toBe(true);
+      expect(result.some((line) => line.presenterId === "morgan")).toBe(true);
+      expect(result.some((line) => line.presenterId === "riley")).toBe(true);
     });
 
     it("should assign anchor more lines", async () => {
       const script = "Line one. Line two. Line three. Line four. Line five.";
       const result = await splitScriptForDuo(script, ["morgan", "riley"]);
-      const morganLines = result.filter(line => line.presenterId === "morgan").length;
-      const rileyLines = result.filter(line => line.presenterId === "riley").length;
+      const morganLines = result.filter(
+        (line) => line.presenterId === "morgan"
+      ).length;
+      const rileyLines = result.filter(
+        (line) => line.presenterId === "riley"
+      ).length;
       // Anchor (morgan) should have more or equal lines
       expect(morganLines).toBeGreaterThanOrEqual(rileyLines);
     });

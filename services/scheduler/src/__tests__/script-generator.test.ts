@@ -17,7 +17,8 @@ jest.mock("openai", () => {
               {
                 message: {
                   content: JSON.stringify({
-                    transcript: "That was Rainfall on a Tuesday, requested by Sarah in Sheffield.",
+                    transcript:
+                      "That was Rainfall on a Tuesday, requested by Sarah in Sheffield.",
                     estimatedDuration: 15,
                   }),
                 },
@@ -67,10 +68,7 @@ describe("Script Generator", () => {
       typical_intro_length_seconds: 30,
       longer_segment_frequency: "occasional",
       longer_segment_length_seconds: 120,
-      sample_lines: [
-        "That was a track.",
-        "Hope you're making it through.",
-      ],
+      sample_lines: ["That was a track.", "Hope you're making it through."],
     },
   };
 
@@ -170,7 +168,8 @@ describe("Script Generator", () => {
     });
 
     it("should parse labeled script correctly", () => {
-      const script = "Alex: Hello there.\nSam: Hi, how are you?\nAlex: Good thanks.";
+      const script =
+        "Alex: Hello there.\nSam: Hi, how are you?\nAlex: Good thanks.";
       const result = splitScriptForDuo(script, mockPresenters);
 
       expect(result.length).toBe(3);

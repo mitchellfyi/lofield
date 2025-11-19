@@ -1,6 +1,6 @@
 /**
  * Show Scheduler Module
- * 
+ *
  * Handles show selection based on daily schedule, seasonal overrides,
  * and holiday tags.
  */
@@ -67,7 +67,9 @@ export async function getCurrentShow(): Promise<Show | null> {
         const [startHour, startMinute] = schedule.start_time_utc
           .split(":")
           .map(Number);
-        const [endHour, endMinute] = schedule.end_time_utc.split(":").map(Number);
+        const [endHour, endMinute] = schedule.end_time_utc
+          .split(":")
+          .map(Number);
 
         const startTimeMinutes = startHour * 60 + startMinute;
         const endTimeMinutes = endHour * 60 + endMinute;
@@ -144,8 +146,9 @@ export async function getNextShow(currentShow: Show): Promise<Show | null> {
         // Check if this show starts when current show ends
         // Handle midnight wraparound
         const startsAfterCurrent =
-          (nextStartTimeMinutes === endTimeMinutes % (24 * 60)) ||
-          (endTimeMinutes >= 24 * 60 && nextStartTimeMinutes === endTimeMinutes - 24 * 60);
+          nextStartTimeMinutes === endTimeMinutes % (24 * 60) ||
+          (endTimeMinutes >= 24 * 60 &&
+            nextStartTimeMinutes === endTimeMinutes - 24 * 60);
 
         if (startsAfterCurrent) {
           console.log(`Next show: ${show.name}`);
@@ -172,17 +175,21 @@ export function getShowEndTime(show: Show): Date {
   const schedule = config.schedule;
 
   const now = new Date();
-  const [startHour, startMinute] = schedule.start_time_utc.split(":").map(Number);
+  const [startHour, startMinute] = schedule.start_time_utc
+    .split(":")
+    .map(Number);
 
   // Calculate today's show start time
-  const todayStart = new Date(Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate(),
-    startHour,
-    startMinute,
-    0
-  ));
+  const todayStart = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      startHour,
+      startMinute,
+      0
+    )
+  );
 
   // If show already started today, use that; otherwise, it started yesterday
   if (todayStart > now) {
@@ -199,7 +206,10 @@ export function getShowEndTime(show: Show): Date {
 /**
  * Check if we're near a show transition (within specified minutes)
  */
-export function isNearShowTransition(show: Show, minutesThreshold: number = 10): boolean {
+export function isNearShowTransition(
+  show: Show,
+  minutesThreshold: number = 10
+): boolean {
   const endTime = getShowEndTime(show);
   const now = new Date();
   const minutesUntilEnd = (endTime.getTime() - now.getTime()) / (1000 * 60);
@@ -262,7 +272,10 @@ export function getSeasonalContextWithOverrides(
   let toneAdjustment: string | undefined;
 
   // Apply seasonal overrides
-  if (showConfig.season_overrides && showConfig.season_overrides[baseContext.season]) {
+  if (
+    showConfig.season_overrides &&
+    showConfig.season_overrides[baseContext.season]
+  ) {
     const override = showConfig.season_overrides[baseContext.season];
     toneAdjustment = override.tone_adjustment;
     if (override.additional_topics) {
@@ -271,16 +284,23 @@ export function getSeasonalContextWithOverrides(
   }
 
   // Apply holiday overrides
-  if (baseContext.isHoliday && baseContext.holidayName && showConfig.holiday_overrides) {
-    for (const [key, override] of Object.entries(showConfig.holiday_overrides)) {
+  if (
+    baseContext.isHoliday &&
+    baseContext.holidayName &&
+    showConfig.holiday_overrides
+  ) {
+    for (const [key, override] of Object.entries(
+      showConfig.holiday_overrides
+    )) {
       // Check if this holiday matches (case-insensitive partial match)
       if (key.toLowerCase().includes(baseContext.holidayName.toLowerCase())) {
         // Check if current date is in the holiday date range
-        const currentDate = date.toISOString().split('T')[0]; // YYYY-MM-DD
+        const currentDate = date.toISOString().split("T")[0]; // YYYY-MM-DD
         if (override.dates.includes(currentDate)) {
           // Override tone adjustment with holiday-specific one
           if (override.tone_adjustment) {
-            toneAdjustment = `${toneAdjustment || ''} ${override.tone_adjustment}`.trim();
+            toneAdjustment =
+              `${toneAdjustment || ""} ${override.tone_adjustment}`.trim();
           }
         }
         break;

@@ -2,7 +2,11 @@
  * Tests for Show Scheduler Module
  */
 
-import { getSeasonalContext, isNearShowTransition, getShowEndTime } from "../show-scheduler";
+import {
+  getSeasonalContext,
+  isNearShowTransition,
+  getShowEndTime,
+} from "../show-scheduler";
 import type { Show } from "../types";
 
 describe("Show Scheduler", () => {

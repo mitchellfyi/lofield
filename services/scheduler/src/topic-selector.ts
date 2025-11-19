@@ -1,34 +1,43 @@
 /**
  * Topic Selector Module
- * 
+ *
  * Handles topic and mood selection for content generation,
  * incorporating seasonal and holiday context.
  */
 
-import type { ShowConfig, SeasonalContext, TopicSelectionOptions } from "./types";
+import type {
+  ShowConfig,
+  SeasonalContext,
+  TopicSelectionOptions,
+} from "./types";
 
 /**
  * Select topics for content generation based on show config and seasonal context
  */
 export function selectTopics(options: TopicSelectionOptions): string[] {
-  const { showConfig, seasonalContext, excludeTags = [], maxTags = 5 } = options;
-  
+  const {
+    showConfig,
+    seasonalContext,
+    excludeTags = [],
+    maxTags = 5,
+  } = options;
+
   // Start with primary tags
   let availableTags = [...showConfig.topics.primary_tags];
-  
+
   // Add seasonal tags if available
   availableTags = [...availableTags, ...seasonalContext.additionalTags];
-  
+
   // Remove banned tags
   const bannedTags = showConfig.topics.banned_tags || [];
-  availableTags = availableTags.filter(tag => !bannedTags.includes(tag));
-  
+  availableTags = availableTags.filter((tag) => !bannedTags.includes(tag));
+
   // Remove excluded tags
-  availableTags = availableTags.filter(tag => !excludeTags.includes(tag));
-  
+  availableTags = availableTags.filter((tag) => !excludeTags.includes(tag));
+
   // Remove duplicates
   availableTags = [...new Set(availableTags)];
-  
+
   // Shuffle and select up to maxTags
   const shuffled = shuffleArray(availableTags);
   return shuffled.slice(0, maxTags);
@@ -37,20 +46,23 @@ export function selectTopics(options: TopicSelectionOptions): string[] {
 /**
  * Get mood keywords for music generation
  */
-export function getMoodKeywords(showConfig: ShowConfig, seasonalContext: SeasonalContext): string[] {
+export function getMoodKeywords(
+  showConfig: ShowConfig,
+  seasonalContext: SeasonalContext
+): string[] {
   const keywords = [...showConfig.tone.keywords];
-  
+
   // Add seasonal context if there's a tone adjustment
   if (seasonalContext.toneAdjustment) {
     // Extract keywords from tone adjustment (simple approach)
     const adjustmentWords = seasonalContext.toneAdjustment
       .toLowerCase()
       .split(/\s+/)
-      .filter(word => word.length > 4); // Only longer words
-    
+      .filter((word) => word.length > 4); // Only longer words
+
     keywords.push(...adjustmentWords.slice(0, 2));
   }
-  
+
   return keywords;
 }
 
@@ -58,15 +70,18 @@ export function getMoodKeywords(showConfig: ShowConfig, seasonalContext: Seasona
  * Select a sample line from commentary style examples
  */
 export function selectSampleLine(showConfig: ShowConfig): string | null {
-  if (!showConfig.commentary_style || !showConfig.commentary_style.sample_lines) {
+  if (
+    !showConfig.commentary_style ||
+    !showConfig.commentary_style.sample_lines
+  ) {
     return null;
   }
-  
+
   const lines = showConfig.commentary_style.sample_lines;
   if (lines.length === 0) {
     return null;
   }
-  
+
   const index = Math.floor(Math.random() * lines.length);
   return lines[index];
 }
@@ -78,12 +93,12 @@ export function selectCheckIn(showConfig: ShowConfig): string | null {
   if (!showConfig.commentary_style || !showConfig.commentary_style.check_ins) {
     return null;
   }
-  
+
   const checkIns = showConfig.commentary_style.check_ins;
   if (checkIns.length === 0) {
     return null;
   }
-  
+
   const index = Math.floor(Math.random() * checkIns.length);
   return checkIns[index];
 }
@@ -98,7 +113,7 @@ export function shouldGenerateLongerSegment(frequency: string): boolean {
     regular: 0.4,
     frequent: 0.6,
   };
-  
+
   const probability = frequencyMap[frequency.toLowerCase()] || 0.25;
   return Math.random() < probability;
 }
@@ -106,15 +121,18 @@ export function shouldGenerateLongerSegment(frequency: string): boolean {
 /**
  * Get segment duration based on commentary style
  */
-export function getSegmentDuration(showConfig: ShowConfig, isLonger: boolean = false): number {
+export function getSegmentDuration(
+  showConfig: ShowConfig,
+  isLonger: boolean = false
+): number {
   if (!showConfig.commentary_style) {
     return 30; // Default 30 seconds
   }
-  
+
   if (isLonger) {
     return showConfig.commentary_style.longer_segment_length_seconds;
   }
-  
+
   return showConfig.commentary_style.typical_intro_length_seconds;
 }
 
@@ -172,7 +190,7 @@ export function buildPromptContext(
     seasonalContext,
     maxTags: 3,
   });
-  
+
   const context: {
     showName: string;
     showMood: string;
@@ -188,15 +206,15 @@ export function buildPromptContext(
     toneKeywords: showConfig.tone.keywords,
     topics,
   };
-  
+
   if (includeExamples) {
     context.sampleLine = selectSampleLine(showConfig) || undefined;
   }
-  
+
   if (seasonalContext.toneAdjustment) {
     context.seasonalNote = seasonalContext.toneAdjustment;
   }
-  
+
   return context;
 }
 
@@ -207,14 +225,14 @@ export function buildPromptContext(
 export class TopicDiversityTracker {
   private recentTopics: Map<string, number> = new Map();
   private maxHistory: number = 20;
-  
+
   /**
    * Record that a topic was used
    */
   recordTopic(topic: string): void {
     const count = this.recentTopics.get(topic) || 0;
     this.recentTopics.set(topic, count + 1);
-    
+
     // Trim history if too large
     if (this.recentTopics.size > this.maxHistory) {
       const entries = Array.from(this.recentTopics.entries());
@@ -222,7 +240,7 @@ export class TopicDiversityTracker {
       this.recentTopics.delete(firstKey);
     }
   }
-  
+
   /**
    * Get weight for a topic (lower for recently used topics)
    */
@@ -230,23 +248,20 @@ export class TopicDiversityTracker {
     const count = this.recentTopics.get(topic) || 0;
     return 1.0 / (1.0 + count * 0.5);
   }
-  
+
   /**
    * Select topics with diversity weighting
    */
-  selectWeightedTopics(
-    availableTopics: string[],
-    count: number
-  ): string[] {
+  selectWeightedTopics(availableTopics: string[], count: number): string[] {
     // Create weighted list
-    const weighted = availableTopics.map(topic => ({
+    const weighted = availableTopics.map((topic) => ({
       topic,
       weight: this.getTopicWeight(topic),
     }));
-    
+
     // Sort by weight (higher weight = less recently used)
     weighted.sort((a, b) => b.weight - a.weight);
-    
+
     // Take top weighted topics with some randomization
     const selected: string[] = [];
     for (let i = 0; i < Math.min(count, weighted.length); i++) {
@@ -256,10 +271,10 @@ export class TopicDiversityTracker {
       selected.push(chosen.topic);
       this.recordTopic(chosen.topic);
     }
-    
+
     return selected;
   }
-  
+
   /**
    * Clear history
    */

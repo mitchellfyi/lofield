@@ -1,6 +1,6 @@
 /**
  * Main Scheduler Service
- * 
+ *
  * Orchestrates all scheduler components:
  * - Show scheduling
  * - Queue management
@@ -195,7 +195,9 @@ export class SchedulerService {
         },
       });
 
-      logger.info(`Handover segment scheduled at ${handoverStart.toISOString()}`);
+      logger.info(
+        `Handover segment scheduled at ${handoverStart.toISOString()}`
+      );
     } catch (error) {
       logger.error({ err: error }, "Error generating handover");
     }
@@ -292,7 +294,9 @@ export class SchedulerService {
             });
 
             // Generate commentary if we still need talk
-            let commentaryResult: Awaited<ReturnType<typeof generateCommentary>> | null = null;
+            let commentaryResult: Awaited<
+              ReturnType<typeof generateCommentary>
+            > | null = null;
             if (talkMinutesGenerated < talkMinutesNeeded) {
               commentaryResult = await generateCommentary(
                 request,
@@ -309,7 +313,8 @@ export class SchedulerService {
 
             // Schedule commentary segment first (if we have it)
             if (commentaryResult && commentaryResult.filePath) {
-              const commentaryDuration = commentaryResult.metadata?.duration || 30;
+              const commentaryDuration =
+                commentaryResult.metadata?.duration || 30;
               const commentaryEnd = new Date(
                 nextSlot.getTime() + commentaryDuration * 1000
               );
@@ -349,27 +354,34 @@ export class SchedulerService {
             await markRequestAsUsed(request.id);
 
             // Publish request played notification
-            publishRequestPlayed(request.id, musicResult.metadata?.title || "Track");
+            publishRequestPlayed(
+              request.id,
+              musicResult.metadata?.title || "Track"
+            );
 
             logger.debug(
               `Generated content for "${request.rawText}" - Music: ${musicMinutesGenerated.toFixed(1)}/${musicMinutesNeeded.toFixed(1)} min, Talk: ${talkMinutesGenerated.toFixed(1)}/${talkMinutesNeeded.toFixed(1)} min`
             );
           }
         } catch (error) {
-          logger.error({ err: error, requestId: request.id }, `Error processing request ${request.id}`);
+          logger.error(
+            { err: error, requestId: request.id },
+            `Error processing request ${request.id}`
+          );
           continue;
         }
       }
 
       // Fill remaining talk time with idents if needed
       while (talkMinutesGenerated < talkMinutesNeeded) {
-        const identResult = await generateIdent(show, this.config.audioStoragePath);
+        const identResult = await generateIdent(
+          show,
+          this.config.audioStoragePath
+        );
 
         if (identResult.success && identResult.filePath) {
           const identDuration = identResult.metadata?.duration || 10;
-          const identEnd = new Date(
-            nextSlot.getTime() + identDuration * 1000
-          );
+          const identEnd = new Date(nextSlot.getTime() + identDuration * 1000);
 
           await createSegment({
             showId: show.id,

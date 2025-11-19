@@ -63,7 +63,7 @@ describe("Show Manager", () => {
       if (!config) {
         throw new Error("Config not found");
       }
-      
+
       const result = validateShowConfig(config);
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
@@ -78,8 +78,8 @@ describe("Show Manager", () => {
       const invalidConfig = {
         ...config,
         ratios: {
-          music_fraction: 0.70, // Exceeds 0.60 max
-          talk_fraction: 0.30,
+          music_fraction: 0.7, // Exceeds 0.60 max
+          talk_fraction: 0.3,
         },
       };
 
@@ -98,8 +98,8 @@ describe("Show Manager", () => {
       const invalidConfig = {
         ...config,
         ratios: {
-          music_fraction: 0.70,
-          talk_fraction: 0.30, // Below 0.40 min
+          music_fraction: 0.7,
+          talk_fraction: 0.3, // Below 0.40 min
         },
       };
 
@@ -124,7 +124,7 @@ describe("Show Manager", () => {
 
       const result = validateShowConfig(invalidConfig);
       expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.includes("Duration"))).toBe(true);
+      expect(result.errors.some((e) => e.includes("Duration"))).toBe(true);
     });
   });
 
@@ -134,13 +134,14 @@ describe("Show Manager", () => {
         "mild_panic_mornings",
         "winter"
       );
-      
+
       expect(config).not.toBeNull();
       if (!config) return;
 
       // Check if winter topics were added
       const hasWinterTopics = config.topics.primary_tags.some(
-        tag => tag.includes("winter") || tag.includes("dark") || tag.includes("cold")
+        (tag) =>
+          tag.includes("winter") || tag.includes("dark") || tag.includes("cold")
       );
       expect(hasWinterTopics).toBe(true);
     });
@@ -150,7 +151,7 @@ describe("Show Manager", () => {
         "mild_panic_mornings",
         "spring"
       );
-      
+
       expect(config).not.toBeNull();
     });
 
@@ -160,16 +161,16 @@ describe("Show Manager", () => {
         "winter",
         "Christmas"
       );
-      
+
       expect(config).not.toBeNull();
     });
-    
+
     it("should deep merge tone adjustments", async () => {
       const config = await getShowConfigWithOverrides(
         "mild_panic_mornings",
         "winter"
       );
-      
+
       expect(config).not.toBeNull();
       if (!config) return;
 

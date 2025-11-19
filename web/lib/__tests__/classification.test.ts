@@ -1,4 +1,27 @@
-import { classifyRequest } from "../classification";
+import {
+  classifyRequest,
+  type ClassificationResult,
+  type MusicMetadata,
+  type TalkMetadata,
+} from "../classification";
+
+function getMusicMetadata(result: ClassificationResult): MusicMetadata {
+  if (result.type !== "music_prompt") {
+    throw new Error(
+      `Expected music_prompt classification, received ${result.type}`
+    );
+  }
+  return result.metadata as MusicMetadata;
+}
+
+function getTalkMetadata(result: ClassificationResult): TalkMetadata {
+  if (result.type !== "talk_topic") {
+    throw new Error(
+      `Expected talk_topic classification, received ${result.type}`
+    );
+  }
+  return result.metadata as TalkMetadata;
+}
 
 describe("classifyRequest - Fallback Mode", () => {
   beforeEach(() => {
@@ -33,7 +56,7 @@ describe("classifyRequest - Fallback Mode", () => {
         "music"
       );
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getMusicMetadata(result);
       expect(metadata.tempo).toBeDefined();
       expect(metadata.energy).toBeDefined();
       expect(metadata.mood).toBeInstanceOf(Array);
@@ -44,7 +67,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should handle music keywords", async () => {
       const result = await classifyRequest("Chill beats for coding", "music");
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getMusicMetadata(result);
       expect(result.type).toBe("music_prompt");
       expect(metadata.tags.length).toBeGreaterThan(0);
     });
@@ -70,7 +93,7 @@ describe("classifyRequest - Fallback Mode", () => {
         "talk"
       );
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getTalkMetadata(result);
       expect(metadata.tone).toBeDefined();
       expect(metadata.suggestedDuration).toBeGreaterThan(0);
       expect(metadata.suggestedDuration).toBeLessThanOrEqual(180);
@@ -83,7 +106,7 @@ describe("classifyRequest - Fallback Mode", () => {
         "talk"
       );
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getTalkMetadata(result);
       expect(result.type).toBe("talk_topic");
       expect(metadata.tags.length).toBeGreaterThan(0);
     });
@@ -121,7 +144,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should extract morning tags", async () => {
       const result = await classifyRequest("Morning coffee music", "music");
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getMusicMetadata(result);
       expect(metadata.tags).toContain("morning_routine");
     });
 
@@ -131,14 +154,14 @@ describe("classifyRequest - Fallback Mode", () => {
         "music"
       );
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getMusicMetadata(result);
       expect(metadata.tags).toContain("coffee");
     });
 
     it("should extract coding tags", async () => {
       const result = await classifyRequest("Music for coding session", "music");
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getMusicMetadata(result);
       expect(metadata.tags).toContain("coding_session");
     });
 
@@ -148,21 +171,21 @@ describe("classifyRequest - Fallback Mode", () => {
         "music"
       );
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getMusicMetadata(result);
       expect(metadata.tags).toContain("meetings");
     });
 
     it("should extract work tags", async () => {
       const result = await classifyRequest("Music for work from home", "music");
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getMusicMetadata(result);
       expect(metadata.tags).toContain("remote_work");
     });
 
     it("should extract rain tags", async () => {
       const result = await classifyRequest("Rainy day music", "music");
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getMusicMetadata(result);
       expect(metadata.tags).toContain("rainy_day");
     });
 
@@ -172,21 +195,21 @@ describe("classifyRequest - Fallback Mode", () => {
         "music"
       );
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getMusicMetadata(result);
       expect(metadata.tags).toContain("focus_time");
     });
 
     it("should provide default tags when no keywords match", async () => {
       const result = await classifyRequest("Some music please", "music");
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getMusicMetadata(result);
       expect(metadata.tags).toContain("lofi_vibes");
     });
 
     it("should provide default tags for talk when no keywords match", async () => {
       const result = await classifyRequest("Something to discuss", "talk");
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getTalkMetadata(result);
       expect(metadata.tags).toContain("remote_work");
     });
   });
@@ -195,7 +218,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should return music metadata with correct structure", async () => {
       const result = await classifyRequest("Chill music", "music");
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getMusicMetadata(result);
       expect(metadata.mood).toBeInstanceOf(Array);
       expect(["slow", "medium", "fast"]).toContain(metadata.tempo);
       expect(["low", "medium", "high"]).toContain(metadata.energy);
@@ -206,7 +229,7 @@ describe("classifyRequest - Fallback Mode", () => {
     it("should return talk metadata with correct structure", async () => {
       const result = await classifyRequest("Let's talk", "talk");
 
-      const metadata = result.metadata as Record<string, unknown>;
+      const metadata = getTalkMetadata(result);
       expect(typeof metadata.topic).toBe("string");
       expect(metadata.tone).toBeDefined();
       expect(metadata.tags).toBeInstanceOf(Array);

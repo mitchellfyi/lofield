@@ -1,6 +1,6 @@
 /**
  * Text-to-Speech Adapter for Scheduler Service
- * 
+ *
  * Integrates with OpenAI TTS or ElevenLabs to convert presenter scripts to audio.
  * Supports voice assignment based on presenter configuration.
  */

@@ -74,9 +74,9 @@ describe("Topic Selector", () => {
         seasonalContext: { ...mockSeasonalContext, additionalTags: [] },
         maxTags: 3,
       });
-      
+
       expect(topics.length).toBeLessThanOrEqual(3);
-      topics.forEach(tag => {
+      topics.forEach((tag) => {
         expect(mockShowConfig.topics.primary_tags).toContain(tag);
       });
     });
@@ -87,8 +87,8 @@ describe("Topic Selector", () => {
         seasonalContext: mockSeasonalContext,
         maxTags: 10,
       });
-      
-      const hasSeasonalTag = topics.some(tag => 
+
+      const hasSeasonalTag = topics.some((tag) =>
         mockSeasonalContext.additionalTags.includes(tag)
       );
       expect(hasSeasonalTag).toBe(true);
@@ -100,8 +100,8 @@ describe("Topic Selector", () => {
         seasonalContext: mockSeasonalContext,
         maxTags: 10,
       });
-      
-      topics.forEach(tag => {
+
+      topics.forEach((tag) => {
         expect(mockShowConfig.topics.banned_tags || []).not.toContain(tag);
       });
     });
@@ -114,8 +114,8 @@ describe("Topic Selector", () => {
         excludeTags,
         maxTags: 10,
       });
-      
-      topics.forEach(tag => {
+
+      topics.forEach((tag) => {
         expect(excludeTags).not.toContain(tag);
       });
     });
@@ -126,7 +126,7 @@ describe("Topic Selector", () => {
         seasonalContext: mockSeasonalContext,
         maxTags: 2,
       });
-      
+
       expect(topics.length).toBeLessThanOrEqual(2);
     });
   });
@@ -135,7 +135,7 @@ describe("Topic Selector", () => {
     it("should return tone keywords", () => {
       const keywords = getMoodKeywords(mockShowConfig, mockSeasonalContext);
       expect(keywords.length).toBeGreaterThan(0);
-      mockShowConfig.tone.keywords.forEach(keyword => {
+      mockShowConfig.tone.keywords.forEach((keyword) => {
         expect(keywords).toContain(keyword);
       });
     });
@@ -145,9 +145,11 @@ describe("Topic Selector", () => {
         ...mockSeasonalContext,
         toneAdjustment: "Reference cold weather and dark mornings",
       };
-      
+
       const keywords = getMoodKeywords(mockShowConfig, contextWithAdjustment);
-      expect(keywords.length).toBeGreaterThan(mockShowConfig.tone.keywords.length);
+      expect(keywords.length).toBeGreaterThan(
+        mockShowConfig.tone.keywords.length
+      );
     });
   });
 
@@ -188,15 +190,19 @@ describe("Topic Selector", () => {
   describe("shouldGenerateLongerSegment", () => {
     it("should always return false for 'rare'", () => {
       // Run multiple times to check probability
-      const results = Array(10).fill(0).map(() => shouldGenerateLongerSegment("rare"));
-      const trueCount = results.filter(r => r).length;
+      const results = Array(10)
+        .fill(0)
+        .map(() => shouldGenerateLongerSegment("rare"));
+      const trueCount = results.filter((r) => r).length;
       expect(trueCount).toBeLessThan(5); // Should be mostly false
     });
 
     it("should always return true for very high frequency", () => {
       // With 'frequent' (0.6 probability), we expect mostly true
-      const results = Array(20).fill(0).map(() => shouldGenerateLongerSegment("frequent"));
-      const trueCount = results.filter(r => r).length;
+      const results = Array(20)
+        .fill(0)
+        .map(() => shouldGenerateLongerSegment("frequent"));
+      const trueCount = results.filter((r) => r).length;
       expect(trueCount).toBeGreaterThan(5); // Should be mostly true
     });
   });
@@ -257,8 +263,12 @@ describe("Topic Selector", () => {
 
   describe("buildPromptContext", () => {
     it("should build complete prompt context", () => {
-      const context = buildPromptContext(mockShowConfig, mockSeasonalContext, true);
-      
+      const context = buildPromptContext(
+        mockShowConfig,
+        mockSeasonalContext,
+        true
+      );
+
       expect(context.showName).toBe("Test Show");
       expect(context.showMood).toBe("Calm and focused");
       expect(context.energyLevel).toBe("moderate");
@@ -272,13 +282,21 @@ describe("Topic Selector", () => {
         ...mockSeasonalContext,
         toneAdjustment: "Winter vibes",
       };
-      
-      const context = buildPromptContext(mockShowConfig, contextWithAdjustment, true);
+
+      const context = buildPromptContext(
+        mockShowConfig,
+        contextWithAdjustment,
+        true
+      );
       expect(context.seasonalNote).toBe("Winter vibes");
     });
 
     it("should exclude examples when requested", () => {
-      const context = buildPromptContext(mockShowConfig, mockSeasonalContext, false);
+      const context = buildPromptContext(
+        mockShowConfig,
+        mockSeasonalContext,
+        false
+      );
       expect(context.sampleLine).toBeUndefined();
     });
   });
@@ -294,23 +312,23 @@ describe("Topic Selector", () => {
       tracker.recordTopic("focus_time");
       const weight1 = tracker.getTopicWeight("focus_time");
       const weight2 = tracker.getTopicWeight("deep_work");
-      
+
       expect(weight1).toBeLessThan(weight2);
     });
 
     it("should select weighted topics", () => {
       const topics = ["topic1", "topic2", "topic3", "topic4"];
-      
+
       // Record some topics to create weight differences
       tracker.recordTopic("topic1");
       tracker.recordTopic("topic1");
-      
+
       const selected = tracker.selectWeightedTopics(topics, 2);
       expect(selected.length).toBe(2);
-      
+
       // topic1 should be less likely to be selected again
       // but we can't guarantee in a single test, so just check it returns valid topics
-      selected.forEach(topic => {
+      selected.forEach((topic) => {
         expect(topics).toContain(topic);
       });
     });

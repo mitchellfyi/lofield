@@ -1,6 +1,6 @@
 /**
  * Script Generation Adapter for Scheduler Service
- * 
+ *
  * Integrates with OpenAI GPT-4 to generate presenter scripts based on
  * show configuration, seasonal context, and presenter personas.
  */
@@ -282,7 +282,9 @@ export async function generateScript(params: {
     userPrompt = `Generate a ${segmentType} script for ${showConfig.name}.`;
   }
 
-  logger.debug(`  [AI] Generating ${segmentType} script for ${showConfig.name}`);
+  logger.debug(
+    `  [AI] Generating ${segmentType} script for ${showConfig.name}`
+  );
 
   try {
     const openai = getOpenAIClient();

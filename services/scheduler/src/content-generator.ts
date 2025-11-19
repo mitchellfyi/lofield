@@ -1,6 +1,6 @@
 /**
  * Content Generator Module
- * 
+ *
  * Integrates AI modules (music generation, script generation, TTS)
  * to create audio segments for the broadcast queue.
  */
@@ -11,13 +11,17 @@ import * as crypto from "crypto";
 import logger from "./logger";
 import type { Show, ShowConfig, Request, Presenter } from "./types";
 import { getShowConfig } from "./show-manager";
-import { selectPresenters, getPresenterVoiceId, getPresenterDetails } from "./presenter-manager";
-import { 
-  selectTopics, 
-  getMoodKeywords, 
+import {
+  selectPresenters,
+  getPresenterVoiceId,
+  getPresenterDetails,
+} from "./presenter-manager";
+import {
+  selectTopics,
+  getMoodKeywords,
   buildPromptContext,
   getSegmentDuration,
-  shouldGenerateLongerSegment
+  shouldGenerateLongerSegment,
 } from "./topic-selector";
 import { getSeasonalContextWithOverrides } from "./show-scheduler";
 import { generateScript, splitScriptForDuo } from "./ai/script-generator";
@@ -68,10 +72,10 @@ export async function generateMusicTrack(
 
     const seasonalContext = getSeasonalContextWithOverrides(showConfig);
     const moodKeywords = getMoodKeywords(showConfig, seasonalContext);
-    
+
     logger.debug(`  [AI] Generating music for request: "${request.rawText}"`);
     logger.debug(`  [AI] Mood keywords: ${moodKeywords.join(", ")}`);
-    
+
     // In a real implementation, this would call the music generation AI
     // const result = await generateMusic({
     //   prompt: request.normalized || request.rawText,
@@ -138,19 +142,27 @@ export async function generateCommentary(
     );
 
     // Determine segment duration
-    const isLonger = showConfig.commentary_style 
-      ? shouldGenerateLongerSegment(showConfig.commentary_style.longer_segment_frequency)
+    const isLonger = showConfig.commentary_style
+      ? shouldGenerateLongerSegment(
+          showConfig.commentary_style.longer_segment_frequency
+        )
       : false;
     const targetDuration = getSegmentDuration(showConfig, isLonger);
 
-    logger.debug(`  [AI] Generating ${isDuo ? 'duo' : 'solo'} ${segmentType} commentary for show: ${show.name}`);
-    logger.debug(`  [AI] Presenters: ${presenters.join(", ")}, target duration: ${targetDuration}s`);
+    logger.debug(
+      `  [AI] Generating ${isDuo ? "duo" : "solo"} ${segmentType} commentary for show: ${show.name}`
+    );
+    logger.debug(
+      `  [AI] Presenters: ${presenters.join(", ")}, target duration: ${targetDuration}s`
+    );
 
     // Get full presenter details for script generation
     const presenterDetails = await Promise.all(
       presenters.map((id) => getPresenterDetails(id))
     );
-    const validPresenters = presenterDetails.filter((p): p is Presenter => p !== null);
+    const validPresenters = presenterDetails.filter(
+      (p): p is Presenter => p !== null
+    );
 
     if (validPresenters.length === 0) {
       throw new Error("No valid presenters found");
@@ -163,7 +175,10 @@ export async function generateCommentary(
       presenters: validPresenters,
       trackTitle: segmentType === "track_intro" ? trackTitle : undefined,
       request: request,
-      topic: segmentType === "segment" ? selectTopics({ showConfig, seasonalContext })[0] : undefined,
+      topic:
+        segmentType === "segment"
+          ? selectTopics({ showConfig, seasonalContext })[0]
+          : undefined,
       seasonalContext: {
         season: seasonalContext.season,
         holidayTags: seasonalContext.additionalTags,
@@ -189,7 +204,9 @@ export async function generateCommentary(
     for (const segment of audioSegments) {
       const voiceId = await getPresenterVoiceId(segment.presenterId);
       if (!voiceId) {
-        logger.warn(`  [WARN] Voice ID not found for presenter ${segment.presenterId}`);
+        logger.warn(
+          `  [WARN] Voice ID not found for presenter ${segment.presenterId}`
+        );
         continue;
       }
 
@@ -212,14 +229,16 @@ export async function generateCommentary(
       // Mix all audio files into a single file
       const mixedFilename = `commentary_mixed_${crypto.randomBytes(8).toString("hex")}.mp3`;
       finalFilePath = path.join(ttsStoragePath, mixedFilename);
-      
+
       finalDuration = await concatenateAudioFiles(
         audioFiles.map((f) => f.filePath),
         finalFilePath,
         0.3 // 0.3 second gap between presenters
       );
-      
-      logger.debug(`  [AI] Mixed ${audioFiles.length} audio segments into ${mixedFilename}`);
+
+      logger.debug(
+        `  [AI] Mixed ${audioFiles.length} audio segments into ${mixedFilename}`
+      );
     } else if (audioFiles.length === 1) {
       finalFilePath = audioFiles[0].filePath;
       finalDuration = totalDuration;
@@ -254,7 +273,7 @@ export async function generateHandoverSegment(
   try {
     const currentConfig = await getShowConfig(currentShow.id);
     const nextConfig = await getShowConfig(nextShow.id);
-    
+
     if (!currentConfig || !nextConfig) {
       throw new Error("Show config not found for handover generation");
     }
@@ -273,7 +292,7 @@ export async function generateHandoverSegment(
 
     // Get seasonal context for handover
     const seasonalContext = getSeasonalContextWithOverrides(currentConfig);
-    
+
     // Build handover themes
     const handoverThemes = currentConfig.handover?.typical_themes || [];
 
@@ -307,7 +326,11 @@ export async function generateHandoverSegment(
 
     // Step 2: Split script among all presenters
     // For handovers, we want a conversation between all four
-    const scriptSegments = splitHandoverScript(script, outgoingPresenters, incomingPresenters);
+    const scriptSegments = splitHandoverScript(
+      script,
+      outgoingPresenters,
+      incomingPresenters
+    );
 
     // Step 3: Generate TTS for each presenter segment
     const ttsStoragePath = path.join(audioStoragePath, "handovers");
@@ -317,7 +340,9 @@ export async function generateHandoverSegment(
     for (const segment of scriptSegments) {
       const voiceId = await getPresenterVoiceId(segment.presenterId);
       if (!voiceId) {
-        logger.warn(`  [WARN] Voice ID not found for presenter ${segment.presenterId}`);
+        logger.warn(
+          `  [WARN] Voice ID not found for presenter ${segment.presenterId}`
+        );
         continue;
       }
 
@@ -335,11 +360,17 @@ export async function generateHandoverSegment(
     // Step 4: Mix/sequence all audio segments
     const mixedFilename = `handover_${crypto.randomBytes(8).toString("hex")}.mp3`;
     const filePath = path.join(ttsStoragePath, mixedFilename);
-    
+
     // Mix all presenter audio files
-    const finalDuration = await concatenateAudioFiles(audioFiles, filePath, 0.3);
-    
-    logger.debug(`  [AI] Mixed ${audioFiles.length} handover segments into ${mixedFilename}`);
+    const finalDuration = await concatenateAudioFiles(
+      audioFiles,
+      filePath,
+      0.3
+    );
+
+    logger.debug(
+      `  [AI] Mixed ${audioFiles.length} handover segments into ${mixedFilename}`
+    );
 
     return {
       success: true,
@@ -369,7 +400,7 @@ function generateLofieldHandoverScript(
 ): string {
   // Generate dry, understated handover in Lofield style
   // This is a stub - in production, LLM would generate this
-  
+
   const lines = [
     `And that's it for ${currentShowName}.`,
     `Hope you made it through.`,
@@ -377,13 +408,13 @@ function generateLofieldHandoverScript(
     `Same frequency, different energy level.`,
     `We'll be here, you'll be there, time will continue to pass.`,
   ];
-  
+
   // Add theme-specific line if available
   if (themes.length > 0) {
     const theme = themes[Math.floor(Math.random() * themes.length)];
     lines.push(`${theme}.`);
   }
-  
+
   return lines.join(" ");
 }
 
@@ -397,14 +428,11 @@ function splitHandoverScript(
 ): { presenterId: string; text: string }[] {
   const sentences = script.split(/(?<=[.!?])\s+/);
   const lines: { presenterId: string; text: string }[] = [];
-  
+
   // Distribute sentences alternating between outgoing and incoming
   // Pattern: outgoing anchor, outgoing sidekick, incoming anchor, incoming sidekick
-  const presenterOrder = [
-    ...outgoingPresenters,
-    ...incomingPresenters,
-  ];
-  
+  const presenterOrder = [...outgoingPresenters, ...incomingPresenters];
+
   for (let i = 0; i < sentences.length; i++) {
     const presenterIndex = i % presenterOrder.length;
     lines.push({
@@ -412,7 +440,7 @@ function splitHandoverScript(
       text: sentences[i],
     });
   }
-  
+
   return lines;
 }
 
@@ -441,7 +469,9 @@ export async function generateIdent(
     const presenterDetails = await Promise.all(
       presenters.map((id) => getPresenterDetails(id))
     );
-    const validPresenters = presenterDetails.filter((p): p is Presenter => p !== null);
+    const validPresenters = presenterDetails.filter(
+      (p): p is Presenter => p !== null
+    );
 
     if (validPresenters.length === 0) {
       throw new Error("No valid presenters found");
@@ -458,11 +488,17 @@ export async function generateIdent(
     // Generate TTS for the ident
     const voiceId = await getPresenterVoiceId(validPresenters[0].id);
     if (!voiceId) {
-      throw new Error(`Voice ID not found for presenter ${validPresenters[0].id}`);
+      throw new Error(
+        `Voice ID not found for presenter ${validPresenters[0].id}`
+      );
     }
 
     const ttsStoragePath = path.join(audioStoragePath, "idents");
-    const { filePath, duration } = await generateTTS(script, voiceId, ttsStoragePath);
+    const { filePath, duration } = await generateTTS(
+      script,
+      voiceId,
+      ttsStoragePath
+    );
 
     return {
       success: true,

@@ -98,7 +98,7 @@ describe("Queue Builder", () => {
     it("should calculate stats for mixed queue", () => {
       const segments = [
         createMockSegment("music", 180), // 3 minutes
-        createMockSegment("talk", 60),   // 1 minute
+        createMockSegment("talk", 60), // 1 minute
         createMockSegment("music", 180), // 3 minutes
       ];
 
@@ -106,14 +106,12 @@ describe("Queue Builder", () => {
       expect(stats.totalDurationMinutes).toBeCloseTo(7, 1);
       expect(stats.musicDurationMinutes).toBeCloseTo(6, 1);
       expect(stats.talkDurationMinutes).toBeCloseTo(1, 1);
-      expect(stats.musicFraction).toBeCloseTo(6/7, 2);
-      expect(stats.talkFraction).toBeCloseTo(1/7, 2);
+      expect(stats.musicFraction).toBeCloseTo(6 / 7, 2);
+      expect(stats.talkFraction).toBeCloseTo(1 / 7, 2);
     });
 
     it("should count idents as talk", () => {
-      const segments = [
-        createMockSegment("ident", 10),
-      ];
+      const segments = [createMockSegment("ident", 10)];
 
       const stats = calculateQueueStats(segments);
       expect(stats.talkDurationMinutes).toBeGreaterThan(0);
@@ -135,7 +133,7 @@ describe("Queue Builder", () => {
     it("should validate correct ratios", async () => {
       const segments = [
         createMockSegment("music", 360), // 6 minutes (60%)
-        createMockSegment("talk", 240),  // 4 minutes (40%)
+        createMockSegment("talk", 240), // 4 minutes (40%)
       ];
 
       const result = await validateQueueRatios(segments, mockShow);
@@ -145,7 +143,7 @@ describe("Queue Builder", () => {
     it("should detect excessive music", async () => {
       const segments = [
         createMockSegment("music", 420), // 7 minutes (70%)
-        createMockSegment("talk", 180),  // 3 minutes (30%)
+        createMockSegment("talk", 180), // 3 minutes (30%)
       ];
 
       const result = await validateQueueRatios(segments, mockShow);
@@ -156,7 +154,7 @@ describe("Queue Builder", () => {
     it("should detect insufficient talk", async () => {
       const segments = [
         createMockSegment("music", 540), // 9 minutes (90%)
-        createMockSegment("talk", 60),   // 1 minute (10%)
+        createMockSegment("talk", 60), // 1 minute (10%)
       ];
 
       const result = await validateQueueRatios(segments, mockShow);
@@ -168,7 +166,7 @@ describe("Queue Builder", () => {
     it("should allow small deviation from target", async () => {
       const segments = [
         createMockSegment("music", 380), // 6.33 minutes (63.3%)
-        createMockSegment("talk", 220),  // 3.67 minutes (36.7%)
+        createMockSegment("talk", 220), // 3.67 minutes (36.7%)
       ];
 
       // Should pass because deviation is within tolerance (0.05)
@@ -199,7 +197,7 @@ describe("Queue Builder", () => {
     it("should suggest balanced when ratios are good", async () => {
       const segments = [
         createMockSegment("music", 360), // 60%
-        createMockSegment("talk", 240),  // 40%
+        createMockSegment("talk", 240), // 40%
       ];
 
       const nextType = await determineNextSegmentType(segments, mockShow);
@@ -219,7 +217,7 @@ describe("Queue Builder", () => {
     it("should calculate remaining needs", async () => {
       const segments = [
         createMockSegment("music", 180), // 3 minutes
-        createMockSegment("talk", 60),   // 1 minute
+        createMockSegment("talk", 60), // 1 minute
       ];
 
       const needs = await calculateSegmentNeeds(segments, mockShow, 10); // 10 minutes target
@@ -251,9 +249,7 @@ describe("Queue Builder", () => {
 
   describe("canAddTalkSegment", () => {
     it("should allow talk when no previous talk", async () => {
-      const segments = [
-        createMockSegment("music", 180),
-      ];
+      const segments = [createMockSegment("music", 180)];
 
       const canAdd = await canAddTalkSegment(segments, mockShow);
       expect(canAdd).toBe(true);
@@ -286,7 +282,7 @@ describe("Queue Builder", () => {
     it("should format queue stats as string", () => {
       const segments = [
         createMockSegment("music", 360), // 6 minutes
-        createMockSegment("talk", 240),  // 4 minutes
+        createMockSegment("talk", 240), // 4 minutes
         createMockSegment("ident", 10),
       ];
 

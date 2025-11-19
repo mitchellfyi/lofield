@@ -1,6 +1,6 @@
 /**
  * Queue Builder Module
- * 
+ *
  * Handles building segment queues with proper talk/music ratio enforcement.
  */
 
@@ -28,7 +28,7 @@ export function calculateQueueStats(segments: QueuedSegment[]): QueueStats {
   let totalDuration = 0;
   let musicDuration = 0;
   let talkDuration = 0;
-  
+
   const counts = {
     music: 0,
     talk: 0,
@@ -37,7 +37,8 @@ export function calculateQueueStats(segments: QueuedSegment[]): QueueStats {
   };
 
   for (const segment of segments) {
-    const duration = (segment.endTime.getTime() - segment.startTime.getTime()) / 1000;
+    const duration =
+      (segment.endTime.getTime() - segment.startTime.getTime()) / 1000;
     totalDuration += duration;
 
     if (segment.type === "music") {
@@ -129,12 +130,12 @@ export async function determineNextSegmentType(
   const targetTalkFraction = showConfig.ratios.talk_fraction;
 
   // If we're significantly below music target, generate music
-  if (stats.musicFraction < targetMusicFraction - 0.10) {
+  if (stats.musicFraction < targetMusicFraction - 0.1) {
     return "music";
   }
 
   // If we're significantly below talk target, generate talk
-  if (stats.talkFraction < targetTalkFraction - 0.10) {
+  if (stats.talkFraction < targetTalkFraction - 0.1) {
     return "talk";
   }
 
@@ -179,7 +180,8 @@ export async function calculateSegmentNeeds(
   const stats = calculateQueueStats(currentQueue);
   const currentDurationSeconds = stats.totalDurationMinutes * 60;
   const targetDurationSeconds = targetDurationMinutes * 60;
-  const remainingDurationSeconds = targetDurationSeconds - currentDurationSeconds;
+  const remainingDurationSeconds =
+    targetDurationSeconds - currentDurationSeconds;
 
   if (remainingDurationSeconds <= 0) {
     return {
@@ -190,11 +192,15 @@ export async function calculateSegmentNeeds(
   }
 
   // Calculate target music and talk seconds for the remaining duration
-  const targetMusicSeconds = remainingDurationSeconds * showConfig.ratios.music_fraction;
-  const targetTalkSeconds = remainingDurationSeconds * showConfig.ratios.talk_fraction;
+  const targetMusicSeconds =
+    remainingDurationSeconds * showConfig.ratios.music_fraction;
+  const targetTalkSeconds =
+    remainingDurationSeconds * showConfig.ratios.talk_fraction;
 
   // Calculate how many segments we need
-  const musicSegmentsNeeded = Math.ceil(targetMusicSeconds / averageMusicDuration);
+  const musicSegmentsNeeded = Math.ceil(
+    targetMusicSeconds / averageMusicDuration
+  );
   const talkSegmentsNeeded = Math.ceil(targetTalkSeconds / averageTalkDuration);
 
   return {
@@ -223,7 +229,7 @@ export async function canAddTalkSegment(
   show: Show
 ): Promise<boolean> {
   const minGap = await getMinGapBetweenLinks(show);
-  
+
   // Find the last talk segment
   let lastTalkEndTime: Date | null = null;
   for (let i = currentQueue.length - 1; i >= 0; i--) {
@@ -240,7 +246,7 @@ export async function canAddTalkSegment(
   // Check if enough time has passed
   const now = new Date();
   const timeSinceLastTalk = (now.getTime() - lastTalkEndTime.getTime()) / 1000;
-  
+
   return timeSinceLastTalk >= minGap;
 }
 

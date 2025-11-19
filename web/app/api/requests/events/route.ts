@@ -1,7 +1,13 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { requestEventEmitter } from "@/lib/request-events";
-import type { Request } from "@prisma/client";
+
+type PendingRequest = Awaited<
+  ReturnType<typeof prisma.request.findMany>
+>[number];
 
 // Server-Sent Events endpoint for real-time request updates
 // Clients subscribe to get notifications when:
@@ -43,7 +49,7 @@ export async function GET(request: NextRequest) {
 
             sendEvent(
               {
-                requests: requests.map((req: Request) => ({
+                requests: requests.map((req: PendingRequest) => ({
                   id: req.id,
                   type: req.type,
                   text: req.rawText,

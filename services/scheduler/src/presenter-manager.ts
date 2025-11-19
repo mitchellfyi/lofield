@@ -1,6 +1,6 @@
 /**
  * Presenter Manager Module
- * 
+ *
  * Handles loading presenter configurations, managing voice assignments,
  * and determining duo vs solo presentation logic.
  */
@@ -48,11 +48,17 @@ async function getConfigBasePath(): Promise<string> {
 /**
  * Load presenters configuration from config/presenters.json
  */
-export async function loadPresentersConfig(forceReload: boolean = false): Promise<PresentersConfig> {
+export async function loadPresentersConfig(
+  forceReload: boolean = false
+): Promise<PresentersConfig> {
   const now = Date.now();
-  
+
   // Return cached config if recent (unless force reload)
-  if (!forceReload && presentersConfigCache && (now - presenterLoadTime) < 60000) {
+  if (
+    !forceReload &&
+    presentersConfigCache &&
+    now - presenterLoadTime < 60000
+  ) {
     return presentersConfigCache;
   }
 
@@ -69,10 +75,10 @@ export async function loadPresentersConfig(forceReload: boolean = false): Promis
   try {
     const content = await fs.readFile(presentersPath, "utf-8");
     const config: PresentersConfig = JSON.parse(content);
-    
+
     presentersConfigCache = config;
     presenterLoadTime = now;
-    
+
     console.log(`Loaded ${config.presenters.length} presenter configurations`);
     return config;
   } catch (error) {
@@ -84,15 +90,19 @@ export async function loadPresentersConfig(forceReload: boolean = false): Promis
 /**
  * Get a specific presenter by ID
  */
-export async function getPresenter(presenterId: string): Promise<Presenter | null> {
+export async function getPresenter(
+  presenterId: string
+): Promise<Presenter | null> {
   const config = await loadPresentersConfig();
-  return config.presenters.find(p => p.id === presenterId) || null;
+  return config.presenters.find((p) => p.id === presenterId) || null;
 }
 
 /**
  * Alias for getPresenter - returns full presenter details
  */
-export async function getPresenterDetails(presenterId: string): Promise<Presenter | null> {
+export async function getPresenterDetails(
+  presenterId: string
+): Promise<Presenter | null> {
   return getPresenter(presenterId);
 }
 
@@ -107,9 +117,11 @@ export async function getAllPresenters(): Promise<Presenter[]> {
 /**
  * Get presenters for a specific show
  */
-export async function getPresentersForShow(showId: string): Promise<Presenter[]> {
+export async function getPresentersForShow(
+  showId: string
+): Promise<Presenter[]> {
   const config = await loadPresentersConfig();
-  return config.presenters.filter(p => p.shows.includes(showId));
+  return config.presenters.filter((p) => p.shows.includes(showId));
 }
 
 /**
@@ -118,18 +130,20 @@ export async function getPresentersForShow(showId: string): Promise<Presenter[]>
 export async function getPresenterVoiceMap(): Promise<Record<string, string>> {
   const config = await loadPresentersConfig();
   const voiceMap: Record<string, string> = {};
-  
+
   for (const presenter of config.presenters) {
     voiceMap[presenter.id] = presenter.voice_id;
   }
-  
+
   return voiceMap;
 }
 
 /**
  * Get voice ID for a specific presenter
  */
-export async function getPresenterVoiceId(presenterId: string): Promise<string | null> {
+export async function getPresenterVoiceId(
+  presenterId: string
+): Promise<string | null> {
   const presenter = await getPresenter(presenterId);
   return presenter ? presenter.voice_id : null;
 }
@@ -151,7 +165,7 @@ export function selectPresenters(
   showId?: string
 ): { presenters: string[]; isDuo: boolean } {
   const isDuo = shouldBeDuo(duoProbability);
-  
+
   if (isDuo) {
     return {
       presenters: primaryDuo,
@@ -164,14 +178,14 @@ export function selectPresenters(
       if (!presenterUsageTracking[showId]) {
         presenterUsageTracking[showId] = {};
       }
-      
+
       const usage = presenterUsageTracking[showId];
       const [presenter1, presenter2] = primaryDuo;
-      
+
       // Initialize counts if needed
       if (usage[presenter1] === undefined) usage[presenter1] = 0;
       if (usage[presenter2] === undefined) usage[presenter2] = 0;
-      
+
       // Select the presenter with fewer solo segments
       let selectedPresenter: string;
       if (usage[presenter1] < usage[presenter2]) {
@@ -180,19 +194,21 @@ export function selectPresenters(
         selectedPresenter = presenter2;
       } else {
         // If equal, randomly pick one
-        selectedPresenter = primaryDuo[Math.floor(Math.random() * primaryDuo.length)];
+        selectedPresenter =
+          primaryDuo[Math.floor(Math.random() * primaryDuo.length)];
       }
-      
+
       // Increment usage count
       usage[selectedPresenter]++;
-      
+
       return {
         presenters: [selectedPresenter],
         isDuo: false,
       };
     } else {
       // Fallback to random selection if no showId provided
-      const selectedPresenter = primaryDuo[Math.floor(Math.random() * primaryDuo.length)];
+      const selectedPresenter =
+        primaryDuo[Math.floor(Math.random() * primaryDuo.length)];
       return {
         presenters: [selectedPresenter],
         isDuo: false,
@@ -209,34 +225,36 @@ export async function getAnchorAndSidekick(presenterIds: string[]): Promise<{
   sidekick: Presenter | null;
 }> {
   const presenters = await Promise.all(
-    presenterIds.map(id => getPresenter(id))
+    presenterIds.map((id) => getPresenter(id))
   );
-  const validPresenters = presenters.filter(p => p !== null) as Presenter[];
-  
-  const anchor = validPresenters.find(p => p.role === "anchor") || null;
-  const sidekick = validPresenters.find(p => p.role === "sidekick") || null;
-  
+  const validPresenters = presenters.filter((p) => p !== null) as Presenter[];
+
+  const anchor = validPresenters.find((p) => p.role === "anchor") || null;
+  const sidekick = validPresenters.find((p) => p.role === "sidekick") || null;
+
   return { anchor, sidekick };
 }
 
 /**
  * Format presenter names for display
  */
-export async function formatPresenterNames(presenterIds: string[]): Promise<string> {
+export async function formatPresenterNames(
+  presenterIds: string[]
+): Promise<string> {
   const presenters = await Promise.all(
-    presenterIds.map(id => getPresenter(id))
+    presenterIds.map((id) => getPresenter(id))
   );
-  const validPresenters = presenters.filter(p => p !== null) as Presenter[];
-  
+  const validPresenters = presenters.filter((p) => p !== null) as Presenter[];
+
   if (validPresenters.length === 0) {
     return "Unknown";
   }
-  
+
   if (validPresenters.length === 1) {
     return validPresenters[0].name;
   }
-  
-  return validPresenters.map(p => p.name).join(" & ");
+
+  return validPresenters.map((p) => p.name).join(" & ");
 }
 
 /**
@@ -253,11 +271,11 @@ export async function splitScriptForDuo(
   }
 
   const { anchor, sidekick } = await getAnchorAndSidekick(presenterIds);
-  
+
   // Split by sentences (simple approach)
   const sentences = script.split(/(?<=[.!?])\s+/);
   const lines: { presenterId: string; text: string }[] = [];
-  
+
   // Alternate between presenters, anchor gets more lines
   for (let i = 0; i < sentences.length; i++) {
     const presenter = (i === 0 || i % 3 !== 2) && anchor ? anchor : sidekick;
@@ -268,7 +286,7 @@ export async function splitScriptForDuo(
       });
     }
   }
-  
+
   return lines;
 }
 

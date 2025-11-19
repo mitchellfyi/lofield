@@ -1,6 +1,6 @@
 /**
  * Queue Management Module
- * 
+ *
  * Manages the queue of upcoming segments with metadata tracking,
  * monitors queue depth, and triggers content generation when needed.
  */
@@ -40,18 +40,19 @@ export async function getQueuedSegments(
     },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return segments.map((seg: any): QueuedSegment => ({
-    id: seg.id,
-    showId: seg.showId,
-    type: seg.type as "music" | "talk" | "ident" | "handover",
-    filePath: seg.filePath,
-    startTime: seg.startTime,
-    endTime: seg.endTime,
-    requestId: seg.requestId ?? undefined,
-    trackId: seg.trackId ?? undefined,
-    metadata: seg.metadata ? JSON.parse(seg.metadata) : undefined,
-  }));
+  return segments.map(
+    (seg: any): QueuedSegment => ({
+      id: seg.id,
+      showId: seg.showId,
+      type: seg.type as "music" | "talk" | "ident" | "handover",
+      filePath: seg.filePath,
+      startTime: seg.startTime,
+      endTime: seg.endTime,
+      requestId: seg.requestId ?? undefined,
+      trackId: seg.trackId ?? undefined,
+      metadata: seg.metadata ? JSON.parse(seg.metadata) : undefined,
+    })
+  );
 }
 
 /**
@@ -68,9 +69,7 @@ export function calculateQueuedMinutes(segments: QueuedSegment[]): number {
 /**
  * Check if queue needs replenishment
  */
-export async function needsReplenishment(
-  config: SchedulerConfig
-): Promise<{
+export async function needsReplenishment(config: SchedulerConfig): Promise<{
   needed: boolean;
   currentMinutes: number;
   targetMinutes: number;

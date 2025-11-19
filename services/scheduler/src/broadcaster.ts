@@ -1,6 +1,6 @@
 /**
  * Real-time Updates Module
- * 
+ *
  * Publishes "now playing" metadata, upcoming segments, and request info
  * for live display and voting on the frontend.
  */
@@ -24,15 +24,15 @@ export enum BroadcastEvent {
  */
 export function publishNowPlaying(metadata: NowPlayingMetadata): void {
   broadcastEmitter.emit(BroadcastEvent.NOW_PLAYING, metadata);
-  console.log(`[BROADCAST] Now playing: ${metadata.showName} - ${metadata.type}`);
+  console.log(
+    `[BROADCAST] Now playing: ${metadata.showName} - ${metadata.type}`
+  );
 }
 
 /**
  * Publish queue update
  */
-export function publishQueueUpdate(
-  upcomingSegments: QueuedSegment[]
-): void {
+export function publishQueueUpdate(upcomingSegments: QueuedSegment[]): void {
   const summary = upcomingSegments.slice(0, 5).map((seg) => ({
     id: seg.id,
     type: seg.type,
@@ -42,7 +42,9 @@ export function publishQueueUpdate(
   }));
 
   broadcastEmitter.emit(BroadcastEvent.QUEUE_UPDATE, summary);
-  console.log(`[BROADCAST] Queue updated with ${upcomingSegments.length} segments`);
+  console.log(
+    `[BROADCAST] Queue updated with ${upcomingSegments.length} segments`
+  );
 }
 
 /**
@@ -74,7 +76,9 @@ export function publishShowChange(
     newShowName,
     changedAt: new Date().toISOString(),
   });
-  console.log(`[BROADCAST] Show changed from ${previousShowId} to ${newShowName}`);
+  console.log(
+    `[BROADCAST] Show changed from ${previousShowId} to ${newShowName}`
+  );
 }
 
 /**
@@ -123,10 +127,7 @@ export function formatSegmentForBroadcast(segment: QueuedSegment): object {
 /**
  * Create SSE message format
  */
-export function createSSEMessage(
-  event: BroadcastEvent,
-  data: unknown
-): string {
+export function createSSEMessage(event: BroadcastEvent, data: unknown): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 

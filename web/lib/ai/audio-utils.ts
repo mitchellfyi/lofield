@@ -5,8 +5,8 @@
  * Uses ffprobe to extract accurate metadata from audio files.
  */
 
-import * as ffmpeg from "fluent-ffmpeg";
-import * as ffprobeStatic from "ffprobe-static";
+import ffmpeg, { type FfprobeData, type FfprobeStream } from "fluent-ffmpeg";
+import ffprobeStatic from "ffprobe-static";
 
 // Configure fluent-ffmpeg to use the static ffprobe binary
 ffmpeg.setFfprobePath(ffprobeStatic.path);
@@ -34,10 +34,14 @@ export async function getAudioMetadata(
   filePath: string
 ): Promise<AudioMetadata> {
   return new Promise((resolve, reject) => {
-    ffmpeg.ffprobe(filePath, (err, metadata) => {
-      if (err) {
+    ffmpeg.ffprobe(filePath, (err: Error | null, metadata: FfprobeData) => {
+      if (err || !metadata) {
         reject(
-          new Error(`Failed to probe audio file: ${err.message}`)
+          new Error(
+            `Failed to probe audio file: ${
+              err?.message ?? "Unknown ffprobe error"
+            }`
+          )
         );
         return;
       }
@@ -51,7 +55,7 @@ export async function getAudioMetadata(
 
       // Find the audio stream
       const audioStream = metadata.streams?.find(
-        (stream) => stream.codec_type === "audio"
+        (stream): stream is FfprobeStream => stream.codec_type === "audio"
       );
 
       if (!audioStream) {

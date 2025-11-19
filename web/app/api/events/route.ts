@@ -3,6 +3,9 @@ import { prisma } from "@/lib/db";
 
 // This endpoint provides Server-Sent Events for real-time updates
 // Clients can subscribe to get notified when the now-playing data changes
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   const encoder = new TextEncoder();
 

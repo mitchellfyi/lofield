@@ -5,10 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requestEventEmitter } from "@/lib/request-events";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
-import {
-  handleCorsPreflightRequest,
-  addCorsHeaders,
-} from "@/lib/cors";
+import { handleCorsPreflightRequest, addCorsHeaders } from "@/lib/cors";
 
 // Handle CORS preflight requests
 export async function OPTIONS(request: NextRequest) {

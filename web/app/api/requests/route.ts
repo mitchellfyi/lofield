@@ -8,10 +8,7 @@ import { moderateRequest } from "@/lib/moderation";
 import { classifyRequest } from "@/lib/classification";
 import { requestEventEmitter } from "@/lib/request-events";
 import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
-import {
-  handleCorsPreflightRequest,
-  addCorsHeaders,
-} from "@/lib/cors";
+import { handleCorsPreflightRequest, addCorsHeaders } from "@/lib/cors";
 
 // Handle CORS preflight requests
 export async function OPTIONS(request: NextRequest) {

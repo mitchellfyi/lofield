@@ -96,7 +96,10 @@ describe("Rate Limiting and CORS Integration", () => {
         "Content-Type": "application/json",
         "x-forwarded-for": ip,
       },
-      body: JSON.stringify({ type: "music", text: "Test request 1 for endpoint isolation" }),
+      body: JSON.stringify({
+        type: "music",
+        text: "Test request 1 for endpoint isolation",
+      }),
     });
 
     const req2 = new NextRequest("http://localhost:3000/api/requests", {
@@ -105,7 +108,10 @@ describe("Rate Limiting and CORS Integration", () => {
         "Content-Type": "application/json",
         "x-forwarded-for": ip,
       },
-      body: JSON.stringify({ type: "music", text: "Test request 2 for endpoint isolation" }),
+      body: JSON.stringify({
+        type: "music",
+        text: "Test request 2 for endpoint isolation",
+      }),
     });
 
     await POST(req1);
@@ -118,7 +124,10 @@ describe("Rate Limiting and CORS Integration", () => {
         "Content-Type": "application/json",
         "x-forwarded-for": ip,
       },
-      body: JSON.stringify({ type: "music", text: "Test request 3 for endpoint isolation" }),
+      body: JSON.stringify({
+        type: "music",
+        text: "Test request 3 for endpoint isolation",
+      }),
     });
 
     const response3 = await POST(req3);

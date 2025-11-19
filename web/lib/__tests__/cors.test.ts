@@ -46,9 +46,7 @@ describe("CORS", () => {
       expect(headers["Access-Control-Allow-Credentials"]).toBe("true");
       expect(headers["Access-Control-Allow-Methods"]).toContain("GET");
       expect(headers["Access-Control-Allow-Methods"]).toContain("POST");
-      expect(headers["Access-Control-Allow-Headers"]).toContain(
-        "Content-Type"
-      );
+      expect(headers["Access-Control-Allow-Headers"]).toContain("Content-Type");
       expect(headers["Access-Control-Max-Age"]).toBe("86400");
     });
 

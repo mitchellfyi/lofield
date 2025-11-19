@@ -5,6 +5,7 @@ This guide provides instructions for manually verifying that rate limiting and C
 ## Prerequisites
 
 1. Start the development server:
+
    ```bash
    cd web
    npm run dev
@@ -36,6 +37,7 @@ done
 ```
 
 **Expected behavior:**
+
 - First 3 requests: Status 201 or 403 (depending on moderation)
 - Requests 4-5: Status 429 with "Too many requests" error
 - Response headers include:
@@ -59,6 +61,7 @@ done
 ```
 
 **Expected behavior:**
+
 - First 3 requests: Status 200 (success) or 404 (not found)
 - Requests 4-5: Status 429 with rate limit error
 
@@ -82,6 +85,7 @@ curl -X POST http://localhost:3000/api/requests/clh1234567890abcdefgh/vote \
 ```
 
 **Expected behavior:**
+
 - Vote request succeeds (status 200 or 404) even though /api/requests is rate limited
 
 ## Testing CORS
@@ -97,6 +101,7 @@ curl -X POST http://localhost:3000/api/requests \
 ```
 
 **Expected output:**
+
 ```
 < Access-Control-Allow-Origin: http://localhost:3000
 < Access-Control-Allow-Credentials: true
@@ -113,6 +118,7 @@ curl -X OPTIONS http://localhost:3000/api/requests \
 ```
 
 **Expected output:**
+
 ```
 < HTTP/1.1 204 No Content
 < Access-Control-Allow-Origin: http://localhost:3000
@@ -124,6 +130,7 @@ curl -X OPTIONS http://localhost:3000/api/requests \
 ### Test 3: Verify disallowed origins are blocked (in preflight)
 
 First, set a specific allowed origin:
+
 ```bash
 export ALLOWED_ORIGINS=https://lofield.fm
 
@@ -131,6 +138,7 @@ export ALLOWED_ORIGINS=https://lofield.fm
 ```
 
 Then test with a disallowed origin:
+
 ```bash
 curl -X OPTIONS http://localhost:3000/api/requests \
   -H "Origin: https://evil.com" \
@@ -139,6 +147,7 @@ curl -X OPTIONS http://localhost:3000/api/requests \
 ```
 
 **Expected output:**
+
 ```
 Status: 403
 (No Access-Control headers)
@@ -156,6 +165,7 @@ curl -X POST http://localhost:3000/api/requests \
 ```
 
 **Expected headers:**
+
 ```
 X-RateLimit-Limit: 5
 X-RateLimit-Remaining: 4
@@ -165,6 +175,7 @@ X-RateLimit-Reset: 2024-11-18T18:30:00.000Z
 ## Environment Configuration
 
 ### Development (Lenient)
+
 ```bash
 export RATE_LIMIT_WINDOW_MS=60000  # 1 minute
 export RATE_LIMIT_MAX=100          # 100 requests
@@ -172,6 +183,7 @@ export ALLOWED_ORIGINS=http://localhost:3000
 ```
 
 ### Production (Strict)
+
 ```bash
 export RATE_LIMIT_WINDOW_MS=60000  # 1 minute
 export RATE_LIMIT_MAX=5            # 5 requests
@@ -181,16 +193,19 @@ export ALLOWED_ORIGINS=https://lofield.fm,https://www.lofield.fm
 ## Troubleshooting
 
 ### Rate limiting not working
+
 - Check that environment variables are set correctly
 - Verify the IP address is being detected (check `x-forwarded-for` header)
 - Remember that rate limits are per-IP per-endpoint
 
 ### CORS headers not appearing
+
 - Check that the `ALLOWED_ORIGINS` environment variable is set
 - Verify the `Origin` header is being sent in the request
 - Check server logs for any errors
 
 ### 429 errors happening too quickly
+
 - Increase `RATE_LIMIT_MAX` for development
 - Clear your browser cache or use a different IP address
 - Wait for the rate limit window to expire (default: 1 minute)
@@ -198,6 +213,7 @@ export ALLOWED_ORIGINS=https://lofield.fm,https://www.lofield.fm
 ## Summary
 
 The rate limiting and CORS implementation provides:
+
 - ✅ Protection against API abuse (5 requests/min default)
 - ✅ Configurable limits per environment
 - ✅ Per-IP, per-endpoint tracking

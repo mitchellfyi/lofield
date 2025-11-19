@@ -59,7 +59,7 @@ env env-sync:
 	done
 
 lint:
-	npm run lint
+	npm run lint:fix
 
 format:
 	npm run format

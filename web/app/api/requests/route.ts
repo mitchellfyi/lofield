@@ -7,6 +7,20 @@ import type { CreateRequestData } from "@/lib/types";
 import { moderateRequest } from "@/lib/moderation";
 import { classifyRequest } from "@/lib/classification";
 import { requestEventEmitter } from "@/lib/request-events";
+import { rateLimit, getRateLimitHeaders } from "@/lib/rate-limit";
+import {
+  handleCorsPreflightRequest,
+  addCorsHeaders,
+} from "@/lib/cors";
+
+// Handle CORS preflight requests
+export async function OPTIONS(request: NextRequest) {
+  const preflightResponse = handleCorsPreflightRequest(request);
+  if (preflightResponse) {
+    return preflightResponse;
+  }
+  return new NextResponse(null, { status: 204 });
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -120,7 +134,7 @@ export async function GET(request: NextRequest) {
     // Calculate pagination metadata
     const totalPages = Math.ceil(total / limit);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       data: requests,
       pagination: {
         total,
@@ -131,25 +145,39 @@ export async function GET(request: NextRequest) {
         hasPrevPage: page > 1,
       },
     });
+
+    // Add CORS headers
+    return addCorsHeaders(response, request);
   } catch (error) {
     console.error("Error fetching requests:", error);
 
+    let response: NextResponse;
+
     // Check for database connection errors
     if (error instanceof Error && error.message.includes("connect")) {
-      return NextResponse.json(
+      response = NextResponse.json(
         { error: "Database connection failed" },
         { status: 503 }
       );
+    } else {
+      response = NextResponse.json(
+        { error: "Failed to fetch requests" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json(
-      { error: "Failed to fetch requests" },
-      { status: 500 }
-    );
+    // Add CORS headers to error responses
+    return addCorsHeaders(response, request);
   }
 }
 
 export async function POST(request: NextRequest) {
+  // Apply rate limiting
+  const rateLimitResponse = rateLimit(request);
+  if (rateLimitResponse) {
+    return addCorsHeaders(rateLimitResponse, request);
+  }
+
   try {
     let body: CreateRequestData;
 
@@ -157,46 +185,52 @@ export async function POST(request: NextRequest) {
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Invalid JSON in request body" },
         { status: 400 }
       );
+      return addCorsHeaders(response, request);
     }
 
     // Validate request
     if (!body.type || !body.text) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Missing required fields: type and text" },
         { status: 400 }
       );
+      return addCorsHeaders(response, request);
     }
 
     if (typeof body.text !== "string" || typeof body.type !== "string") {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Fields 'type' and 'text' must be strings" },
         { status: 400 }
       );
+      return addCorsHeaders(response, request);
     }
 
     if (body.text.length < 10) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Text must be at least 10 characters" },
         { status: 400 }
       );
+      return addCorsHeaders(response, request);
     }
 
     if (body.text.length > 500) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Text must not exceed 500 characters" },
         { status: 400 }
       );
+      return addCorsHeaders(response, request);
     }
 
     if (!["music", "talk"].includes(body.type)) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Type must be either 'music' or 'talk'" },
         { status: 400 }
       );
+      return addCorsHeaders(response, request);
     }
 
     // Step 1: Moderate the request
@@ -205,10 +239,11 @@ export async function POST(request: NextRequest) {
       moderationResult = await moderateRequest(body.text);
     } catch (moderationError) {
       console.error("Moderation service error:", moderationError);
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Moderation service temporarily unavailable" },
         { status: 503 }
       );
+      return addCorsHeaders(response, request);
     }
 
     if (moderationResult.verdict === "rejected") {
@@ -224,7 +259,7 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        return NextResponse.json(
+        const response = NextResponse.json(
           {
             error: "Request rejected by moderation",
             reasons: moderationResult.reasons,
@@ -232,16 +267,18 @@ export async function POST(request: NextRequest) {
           },
           { status: 403 }
         );
+        return addCorsHeaders(response, request);
       } catch (dbError) {
         console.error("Database error while saving rejected request:", dbError);
         // Still return moderation rejection even if we couldn't save it
-        return NextResponse.json(
+        const response = NextResponse.json(
           {
             error: "Request rejected by moderation",
             reasons: moderationResult.reasons,
           },
           { status: 403 }
         );
+        return addCorsHeaders(response, request);
       }
     }
 
@@ -251,10 +288,11 @@ export async function POST(request: NextRequest) {
       classification = await classifyRequest(body.text, body.type);
     } catch (classificationError) {
       console.error("Classification service error:", classificationError);
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Classification service temporarily unavailable" },
         { status: 503 }
       );
+      return addCorsHeaders(response, request);
     }
 
     // Store normalized metadata as JSON string
@@ -290,7 +328,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         ...newRequest,
         moderation: {
@@ -299,22 +337,33 @@ export async function POST(request: NextRequest) {
         },
         classification: normalizedData,
       },
-      { status: 201 }
+      {
+        status: 201,
+        headers: getRateLimitHeaders(request),
+      }
     );
+
+    // Add CORS headers
+    return addCorsHeaders(response, request);
   } catch (error) {
     console.error("Error creating request:", error);
 
+    let response: NextResponse;
+
     // Check for database connection errors
     if (error instanceof Error && error.message.includes("connect")) {
-      return NextResponse.json(
+      response = NextResponse.json(
         { error: "Database connection failed" },
         { status: 503 }
       );
+    } else {
+      response = NextResponse.json(
+        { error: "Failed to create request" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json(
-      { error: "Failed to create request" },
-      { status: 500 }
-    );
+    // Add CORS headers to error responses
+    return addCorsHeaders(response, request);
   }
 }

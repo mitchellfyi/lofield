@@ -36,7 +36,7 @@
     "test:ci:scheduler": "npm run test:ci --prefix services/scheduler",
     "test:ci:playout": "npm run test:ci --prefix services/playout",
     "prisma:generate:web": "cd web && DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/lofield_fm} npx prisma generate",
-    "build:web": "npm run build --prefix web",
+    "build:web": "DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/lofield_fm} npm run build --prefix web",
     "config:validate": "python3 scripts/validate_config.py",
     "ci:quick": "./scripts/quick-ci.sh"
   },

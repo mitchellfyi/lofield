@@ -1,0 +1,47 @@
+{
+  "name": "lofield",
+  "private": true,
+  "description": "Automation scripts and shared tooling for the Lofield FM monorepo",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "prepare": "husky install",
+    "lint": "npm run lint:web && npm run lint:scheduler && npm run lint:playout",
+    "lint:web": "npm run lint --prefix web",
+    "lint:scheduler": "npm run lint --prefix services/scheduler",
+    "lint:playout": "npm run lint --prefix services/playout",
+    "lint:fix": "npm run lint:fix:web && npm run lint:fix:scheduler && npm run lint:fix:playout",
+    "lint:fix:web": "npm run lint:fix --prefix web",
+    "lint:fix:scheduler": "npm run lint:fix --prefix services/scheduler",
+    "lint:fix:playout": "npm run lint:fix --prefix services/playout",
+    "format": "npm run format:web && npm run format:scheduler && npm run format:playout",
+    "format:web": "npm run format --prefix web",
+    "format:scheduler": "npm run format --prefix services/scheduler",
+    "format:playout": "npm run format --prefix services/playout",
+    "format:check": "npm run format:check:web && npm run format:check:scheduler && npm run format:check:playout",
+    "format:check:web": "npm run format:check --prefix web",
+    "format:check:scheduler": "npm run format:check --prefix services/scheduler",
+    "format:check:playout": "npm run format:check --prefix services/playout",
+    "typecheck": "npm run typecheck:web && npm run typecheck:scheduler && npm run typecheck:playout",
+    "typecheck:web": "npm run typecheck --prefix web",
+    "typecheck:scheduler": "npm run typecheck --prefix services/scheduler",
+    "typecheck:playout": "npm run typecheck --prefix services/playout",
+    "test": "npm run test:web && npm run test:scheduler && npm run test:playout",
+    "test:web": "npm run test --prefix web",
+    "test:scheduler": "npm run test --prefix services/scheduler",
+    "test:playout": "npm run test --prefix services/playout",
+    "test:ci": "npm run test:ci:web && npm run test:ci:scheduler && npm run test:ci:playout",
+    "test:ci:web": "npm run test:ci --prefix web",
+    "test:ci:scheduler": "npm run test:ci --prefix services/scheduler",
+    "test:ci:playout": "npm run test:ci --prefix services/playout",
+    "prisma:generate:web": "cd web && DATABASE_URL=${DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/lofield_fm} npx prisma generate",
+    "build:web": "npm run build --prefix web",
+    "config:validate": "python3 scripts/validate_config.py",
+    "ci:quick": "./scripts/quick-ci.sh"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
+

@@ -214,7 +214,7 @@ Opens at `http://localhost:5555`
 
 **Connect to PostgreSQL:**
 ```bash
-docker-compose exec postgres psql -U lofield -d lofield_fm
+docker compose exec postgres psql -U lofield -d lofield_fm
 ```
 
 **List all tables:**
@@ -377,17 +377,17 @@ Expected: HTTP 201 (no length limit currently, which is acceptable)
 
 **Check PostgreSQL is running:**
 ```bash
-docker-compose ps postgres
+docker compose ps postgres
 ```
 
 **View logs:**
 ```bash
-docker-compose logs postgres
+docker compose logs postgres
 ```
 
 **Restart PostgreSQL:**
 ```bash
-docker-compose restart postgres
+docker compose restart postgres
 ```
 
 ### API Returns 500 Errors

@@ -2,7 +2,7 @@
  * Logger utility for playout service
  */
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 interface LogEntry {
   timestamp: string;
@@ -15,12 +15,12 @@ class Logger {
   private logLevel: LogLevel;
 
   constructor() {
-    const level = process.env.LOG_LEVEL || 'info';
+    const level = process.env.LOG_LEVEL || "info";
     this.logLevel = level as LogLevel;
   }
 
   private shouldLog(level: LogLevel): boolean {
-    const levels: LogLevel[] = ['debug', 'info', 'warn', 'error'];
+    const levels: LogLevel[] = ["debug", "info", "warn", "error"];
     return levels.indexOf(level) >= levels.indexOf(this.logLevel);
   }
 
@@ -39,9 +39,9 @@ class Logger {
 
     const output = JSON.stringify(entry);
 
-    if (level === 'error') {
+    if (level === "error") {
       console.error(output);
-    } else if (level === 'warn') {
+    } else if (level === "warn") {
       console.warn(output);
     } else {
       console.log(output);
@@ -49,19 +49,19 @@ class Logger {
   }
 
   debug(message: string, data?: unknown): void {
-    this.log('debug', message, data);
+    this.log("debug", message, data);
   }
 
   info(message: string, data?: unknown): void {
-    this.log('info', message, data);
+    this.log("info", message, data);
   }
 
   warn(message: string, data?: unknown): void {
-    this.log('warn', message, data);
+    this.log("warn", message, data);
   }
 
   error(message: string, data?: unknown): void {
-    this.log('error', message, data);
+    this.log("error", message, data);
   }
 }
 

@@ -53,68 +53,63 @@ The Docker setup provides:
 
 ## Quick Start
 
-### 1. Environment Setup
+### 1. Environment setup
 
-Copy the example environment file and configure it:
+Preferred (Makefile):
+
+```bash
+make setup
+```
+
+`make setup` copies `.env.docker → .env` (if needed) and syncs the root `.env` file into `web/.env`, `web/.env.local`, `services/scheduler/.env`, and `services/playout/.env`. Edit `.env` once and set the required values:
+
+- `POSTGRES_PASSWORD`
+- `ICECAST_SOURCE_PASSWORD`
+- `ICECAST_ADMIN_PASSWORD`
+- `ICECAST_RELAY_PASSWORD`
+- `OPENAI_API_KEY`
+- `REPLICATE_API_TOKEN`
+
+Need to re-sync after editing `.env`? Run `make env-sync`.
+
+Manual alternative:
 
 ```bash
 cp .env.docker .env
+# edit .env with the values above
+# then run:
+make env-sync
 ```
 
-Edit `.env` and set the required values:
+### 2. Start the full stack
 
 ```bash
-# Required: Set secure passwords
-POSTGRES_PASSWORD=your-secure-database-password
-ICECAST_SOURCE_PASSWORD=your-secure-source-password
-ICECAST_ADMIN_PASSWORD=your-secure-admin-password
-ICECAST_RELAY_PASSWORD=your-secure-relay-password
-
-# Required: AI service API keys
-OPENAI_API_KEY=sk-...
-REPLICATE_API_TOKEN=r8_...
-
-# Optional: Additional AI services
-ELEVENLABS_API_KEY=...
+make dev
 ```
 
-**Security Note**: Generate secure passwords using:
-```bash
-openssl rand -base64 32
-```
+`make dev` wraps `docker compose up --build` and keeps logs attached. Use `make dev-hot` if you want the development override (`docker-compose.dev.yml`) with bind mounts and hot reload.
 
-### 2. Production Deployment
-
-Build and start all services:
+Prefer detached mode?
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
-This will start:
-- PostgreSQL database (port 5432)
-- Icecast streaming server (port 8000)
-- Web application (port 3000)
-- Scheduler service (background)
-- Playout/streaming service (background)
-
-To include Nginx reverse proxy:
+### 3. Initialize the database
 
 ```bash
-docker-compose --profile production up --build -d
+make migrate
+make seed
 ```
 
-### 3. Development Mode
-
-For local development with hot reload:
+Equivalent raw commands:
 
 ```bash
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+docker compose exec web npx prisma migrate deploy
+docker compose exec web npx tsx prisma/seed/seed.ts
 ```
 
-This mounts your source code as volumes, enabling live code updates without rebuilding containers.
-
-### 4. Access the Application
+### 4. Access the application
 
 - **Web UI**: http://localhost:3000
 - **Live Stream**: http://localhost:8000/lofield (via Icecast)
@@ -129,22 +124,22 @@ Migrations run automatically when the scheduler and playout services start. To r
 
 ```bash
 # Using web service
-docker-compose exec web npx prisma migrate deploy
+docker compose exec web npx prisma migrate deploy
 
 # Or directly
-docker-compose exec scheduler npx prisma migrate deploy --schema=../web/prisma/schema.prisma
+docker compose exec scheduler npx prisma migrate deploy --schema=../web/prisma/schema.prisma
 ```
 
 ### Seeding the Database
 
 ```bash
-docker-compose exec web npx tsx prisma/seed/seed.ts
+docker compose exec web npx tsx prisma/seed/seed.ts
 ```
 
 ### Accessing Prisma Studio
 
 ```bash
-docker-compose exec web npx prisma studio
+docker compose exec web npx prisma studio
 ```
 
 Then open http://localhost:5555
@@ -154,13 +149,13 @@ Then open http://localhost:5555
 Backup the PostgreSQL database:
 
 ```bash
-docker-compose exec postgres pg_dump -U lofield lofield_fm > backup.sql
+docker compose exec postgres pg_dump -U lofield lofield_fm > backup.sql
 ```
 
 Restore from backup:
 
 ```bash
-cat backup.sql | docker-compose exec -T postgres psql -U lofield lofield_fm
+cat backup.sql | docker compose exec -T postgres psql -U lofield lofield_fm
 ```
 
 ## Service Management
@@ -169,38 +164,38 @@ cat backup.sql | docker-compose exec -T postgres psql -U lofield lofield_fm
 
 ```bash
 # All services
-docker-compose logs -f
+docker compose logs -f
 
 # Specific service
-docker-compose logs -f web
-docker-compose logs -f scheduler
-docker-compose logs -f playout
+docker compose logs -f web
+docker compose logs -f scheduler
+docker compose logs -f playout
 ```
 
 ### Restart Services
 
 ```bash
 # All services
-docker-compose restart
+docker compose restart
 
 # Specific service
-docker-compose restart scheduler
+docker compose restart scheduler
 ```
 
 ### Stop Services
 
 ```bash
 # Stop all
-docker-compose down
+docker compose down
 
 # Stop and remove volumes (WARNING: deletes data)
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Check Service Health
 
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 ## Volumes and Data Persistence
@@ -266,7 +261,7 @@ The optional Nginx service provides:
 To enable:
 
 ```bash
-docker-compose --profile production up -d
+docker compose --profile production up -d
 ```
 
 ### SSL/TLS Configuration
@@ -287,13 +282,13 @@ Create separate env files for different environments:
 
 ```bash
 # Development
-docker-compose --env-file .env.dev up
+docker compose --env-file .env.dev up
 
 # Staging
-docker-compose --env-file .env.staging up
+docker compose --env-file .env.staging up
 
 # Production
-docker-compose --env-file .env.prod up
+docker compose --env-file .env.prod up
 ```
 
 ### Resource Limits
@@ -320,7 +315,7 @@ services:
 Check logs for errors:
 
 ```bash
-docker-compose logs
+docker compose logs
 ```
 
 Common issues:
@@ -333,14 +328,14 @@ Common issues:
 Verify PostgreSQL is healthy:
 
 ```bash
-docker-compose ps postgres
-docker-compose logs postgres
+docker compose ps postgres
+docker compose logs postgres
 ```
 
 Test connection:
 
 ```bash
-docker-compose exec postgres psql -U lofield -d lofield_fm -c "SELECT 1;"
+docker compose exec postgres psql -U lofield -d lofield_fm -c "SELECT 1;"
 ```
 
 ### Migration Failures
@@ -348,8 +343,8 @@ docker-compose exec postgres psql -U lofield -d lofield_fm -c "SELECT 1;"
 Reset and re-run migrations:
 
 ```bash
-docker-compose exec web npx prisma migrate reset
-docker-compose exec web npx prisma migrate deploy
+docker compose exec web npx prisma migrate reset
+docker compose exec web npx prisma migrate deploy
 ```
 
 ### Icecast Connection Issues
@@ -374,7 +369,7 @@ Services run as non-root users. If volume permissions fail:
 
 ```bash
 # Fix ownership (adjust UID/GID as needed)
-docker-compose exec web chown -R nextjs:nodejs /app
+docker compose exec web chown -R nextjs:nodejs /app
 ```
 
 ## Building for Production
@@ -384,13 +379,13 @@ docker-compose exec web chown -R nextjs:nodejs /app
 Build without starting:
 
 ```bash
-docker-compose build
+docker compose build
 ```
 
 Build specific service:
 
 ```bash
-docker-compose build web
+docker compose build web
 ```
 
 ### Push to Registry
@@ -421,7 +416,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t your-registry.com/lofi
 Use the development compose file:
 
 ```bash
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 ```
 
 Changes to source code will automatically reload the services.
@@ -430,13 +425,13 @@ Changes to source code will automatically reload the services.
 
 ```bash
 # Web tests
-docker-compose exec web npm test
+docker compose exec web npm test
 
 # Scheduler tests
-docker-compose exec scheduler npm test
+docker compose exec scheduler npm test
 
 # Playout tests
-docker-compose exec playout npm test
+docker compose exec playout npm test
 ```
 
 ### Installing Dependencies
@@ -445,17 +440,17 @@ After adding dependencies to `package.json`:
 
 ```bash
 # Rebuild the service
-docker-compose build web
+docker compose build web
 
 # Or in dev mode, just restart
-docker-compose restart web
+docker compose restart web
 ```
 
 ### Code Linting
 
 ```bash
-docker-compose exec web npm run lint
-docker-compose exec web npm run format
+docker compose exec web npm run lint
+docker compose exec web npm run format
 ```
 
 ## CI/CD Integration
@@ -476,17 +471,17 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Build images
-        run: docker-compose build
+        run: docker compose build
       
       - name: Run tests
         run: |
-          docker-compose up -d postgres
-          docker-compose run web npm test
+          docker compose up -d postgres
+          docker compose run web npm test
       
       - name: Push to registry
         run: |
           echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login -u "${{ secrets.REGISTRY_USERNAME }}" --password-stdin
-          docker-compose push
+          docker compose push
 ```
 
 ## Additional Resources

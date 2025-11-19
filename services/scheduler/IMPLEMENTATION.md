@@ -348,9 +348,9 @@ docs/
 
 2. **Configure environment**
    ```bash
-   cd services/scheduler
-   cp .env.example .env
-   # Edit .env with actual values
+   # From repo root
+   make env-sync        # copies .env into services/scheduler/.env
+   # Ensure DATABASE_URL + AI keys are set in the root .env first
    ```
 
 3. **Install dependencies**

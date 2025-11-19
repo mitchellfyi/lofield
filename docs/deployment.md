@@ -48,7 +48,7 @@ sudo apt update
 sudo apt upgrade -y
 
 # Install Docker
-sudo apt install -y docker.io docker-compose
+sudo apt install -y docker.io docker compose
 
 # Add your user to the docker group (replace 'deploy' with your username)
 sudo usermod -aG docker deploy
@@ -58,7 +58,7 @@ newgrp docker
 
 # Verify installation
 docker --version
-docker-compose --version
+docker compose --version
 ```
 
 ### 3. Application Setup on Droplet
@@ -78,12 +78,13 @@ sudo chown -R 1001:1001 /data/postgres /data/audio /data/cache
 sudo chown -R deploy:deploy /data/archive /data/stream
 
 # Create environment file
-cp .env.example .env
+cp .env.docker .env
+# (Optional) run 'make env-sync' to copy .env into web/ and services/
 ```
 
 ### 4. Environment Configuration
 
-Edit the `.env` file and configure all required variables:
+Edit the `.env` file and configure all required variables (then run `make env-sync` so the service directories pick up your changes):
 
 ```bash
 nano .env
@@ -172,7 +173,7 @@ docker compose logs -f
 
 ### 1. Generate SSH Key Pair
 
-On your **local machine**, generate an SSH key pair for deployment:
+On your **local machine**, generate a deployment-only SSH key pair. Use Ed25519 (faster, smaller) and either supply a passphrase or leave blank if your workflow automation needs non-interactive access.
 
 ```bash
 # Generate SSH key (use a strong passphrase or leave empty for CI/CD)
@@ -181,11 +182,17 @@ ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/lofield_deploy
 # This creates two files:
 # - ~/.ssh/lofield_deploy (private key - DO NOT SHARE)
 # - ~/.ssh/lofield_deploy.pub (public key)
+
+# Lock down permissions (required for OpenSSH)
+chmod 600 ~/.ssh/lofield_deploy ~/.ssh/lofield_deploy.pub
+
+# (Optional) Add it to your ssh-agent for manual testing
+ssh-add ~/.ssh/lofield_deploy
 ```
 
 ### 2. Add Public Key to Droplet
 
-Copy the **public key** to your droplet:
+Copy the **public key** to your droplet and pre-authorize GitHub Actions by adding the host fingerprint to `known_hosts`. Either copy/paste manually or use `ssh-copy-id`.
 
 ```bash
 # Display the public key
@@ -201,12 +208,18 @@ chmod 700 ~/.ssh
 nano ~/.ssh/authorized_keys
 # Paste the public key content
 chmod 600 ~/.ssh/authorized_keys
+
+# Capture the droplet fingerprint for Actions workflows
+ssh-keyscan -H 165.22.114.81 >> ~/.ssh/known_hosts
 ```
 
 Or use `ssh-copy-id`:
 
 ```bash
 ssh-copy-id -i ~/.ssh/lofield_deploy.pub deploy@165.22.114.81
+
+# Double-check that you can log in non-interactively
+ssh -i ~/.ssh/lofield_deploy deploy@165.22.114.81 exit
 ```
 
 ### 3. Configure GitHub Secrets
@@ -224,6 +237,13 @@ Add the following secrets to your GitHub repository:
 | `REGISTRY_PASSWORD` | `<personal-access-token>` | GitHub PAT with `write:packages` and `delete:packages` scopes |
 | `REGISTRY` | `ghcr.io/mitchellfyi/lofield` | Container registry URL |
 
+Recommended optional secrets:
+
+| Secret | Description |
+|--------|-------------|
+| `DEPLOY_HOST_KEY` | Output of `ssh-keyscan -H <droplet-ip>` (avoids host authenticity prompts in CI) |
+| `GHCR_TOKEN` | Short-lived PAT restricted to packages scope (if you prefer not to reuse your main PAT) |
+
 **Creating a GitHub Personal Access Token (PAT):**
 
 1. Go to GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)
@@ -237,7 +257,30 @@ Add the following secrets to your GitHub repository:
 7. **Copy the token immediately** (you won't be able to see it again)
 8. Save it as `REGISTRY_PASSWORD` secret in GitHub
 
-### 4. Workflow Configuration
+### 4. Registry & Container Access Checklist
+
+Configure the GitHub Container Registry (GHCR) once before the first deployment:
+
+1. **Enable GHCR for the repo/org**: confirm the Packages settings allow your org members to pull images (either public or private with authentication).
+2. **Log in locally** (sanity check):
+   ```bash
+   echo $REGISTRY_PASSWORD | docker login ghcr.io -u $REGISTRY_USERNAME --password-stdin
+   docker pull ghcr.io/mitchellfyi/lofield/web:latest || true
+   ```
+3. **Log in on the droplet** (store credentials once so `docker compose pull` works even outside the workflow):
+   ```bash
+   export GHCR_USERNAME=<github-username>
+   export GHCR_PAT=<pat-with-packages-scope>
+   echo $GHCR_PAT | docker login ghcr.io -u $GHCR_USERNAME --password-stdin
+   ```
+4. **Whitelist the registry in `.env`**: the workflow expects `REGISTRY`, `REGISTRY_USERNAME`, and `REGISTRY_PASSWORD` to be available at runtime.
+5. **Confirm image tags**: list available tags before cutting over.
+   ```bash
+   gh api /users/mitchellfyi/packages/container/lofield%2Fweb/versions --paginate | jq '.[].metadata.container.tags'
+   ```
+6. **Lock down PATs**: when possible, generate short-lived PATs exclusively for CI and rotate them quarterly.
+
+### 5. Workflow Configuration
 
 The deployment workflow is defined in `.github/workflows/deploy.yml`. It consists of two jobs:
 
@@ -260,33 +303,49 @@ The deployment workflow is defined in `.github/workflows/deploy.yml`. It consist
 - Cleans up old images
 - Runs health checks to verify deployment
 
-### 5. Testing the Workflow
+### 6. Triggering & Testing the Workflow
 
-You can test the workflow in several ways:
+You can trigger the deployment pipeline three different ways:
 
-**Method 1: Push to main**
-```bash
-git checkout main
-git pull origin main
-# Make a change
-git add .
-git commit -m "Test deployment workflow"
-git push origin main
-```
+1. **Push to `main`** (standard path)
+   ```bash
+   git checkout main
+   git pull origin main
+   # Make a change
+   git add .
+   git commit -m "Deploy feature X"
+   git push origin main
+   # GitHub Actions auto-deploys the new commit
+   ```
 
-**Method 2: Manual dispatch**
-1. Go to GitHub → Actions → "Build and Deploy to DigitalOcean"
-2. Click "Run workflow" → Select `main` branch → "Run workflow"
+2. **Manual dispatch** (great for hotfixes or replays)
+   1. Go to GitHub → Actions → "Build and Deploy to DigitalOcean".
+   2. Click **Run workflow**.
+   3. Select the branch and (optionally) a specific commit SHA.
+   4. Provide custom inputs if the workflow exposes them (e.g., `force-redeploy=true`).
+   5. Click **Run workflow** and monitor the live logs.
 
-**Method 3: Create a deployment branch**
-```bash
-git checkout -b deploy/test-deployment
-# Make changes
-git push origin deploy/test-deployment
-# Create PR to main
-```
+3. **Pull request dry run**
+   ```bash
+   git checkout -b deploy/test-deployment
+   # Make changes
+   git push origin deploy/test-deployment
+   # Open a PR targeting main; CI runs without touching production until merged
+   ```
+
+Tip: pin the workflow to your GitHub sidebar and enable "Send notifications" so failures surface immediately.
 
 ## Monitoring and Verification
+
+### 0. Quick Observability Commands
+
+| Task | Command |
+| --- | --- |
+| Tail application logs | `make logs` (locally) or `docker compose logs -f` (on the droplet) |
+| Inspect service state | `make status` locally, `docker compose ps` remotely |
+| Check container resource usage | `docker stats` |
+| Watch system metrics | `htop`, `free -h`, `df -h` |
+| Hit health endpoints | `curl http://localhost:3000/api/health` |
 
 ### 1. GitHub Actions Logs
 
@@ -297,7 +356,7 @@ Monitor the deployment in real-time:
 3. Click on individual jobs to see logs
 4. Check for green checkmarks ✅ or red X marks ❌
 
-### 2. Server Logs
+### 2. Server Logs & Metrics
 
 SSH into the droplet and check service logs:
 
@@ -314,6 +373,11 @@ docker compose logs -f playout
 
 # Check service status
 docker compose ps
+
+# System-level monitoring
+htop                     # CPU / memory
+df -h                    # Disk usage
+sudo journalctl -u docker --since "10 min ago"
 ```
 
 ### 3. Health Checks
@@ -345,6 +409,11 @@ curl http://localhost:3000/api/health
 ```
 
 ### 4. Stream Testing
+### 5. External Monitoring
+
+- Add `https://<domain>/api/health` and `https://<domain>/api/health/stream` to UptimeRobot (or similar) at 5-minute intervals.
+- Configure alerts for Icecast availability (`http://<domain>:8000/lofield`).
+- Track long-running resource trends with DigitalOcean Monitoring or Datadog. Alarms for >80% CPU, <2GB free disk, or >85% memory keep the stream stable.
 
 Test the live stream:
 
@@ -537,37 +606,43 @@ docker exec lofield_web wget --quiet --tries=1 --spider http://localhost:3000/ap
 
 If a deployment fails, you can quickly rollback:
 
-**Method 1: Revert the commit**
+**Method 1: Revert the commit (preferred)**
 ```bash
-# On your local machine
 git revert <bad-commit-sha>
 git push origin main
-# GitHub Actions will deploy the reverted state
+# GitHub Actions deploys the reverted state automatically
 ```
 
-**Method 2: Deploy a specific commit**
+**Method 2: Pin containers to a previous image tag**
 ```bash
-# SSH into the droplet
+# On the droplet
 ssh deploy@165.22.114.81
 cd /home/deploy/lofield
 
-# Pull a specific image tag (use commit SHA)
+# List available tags (replace SERVICE with web/scheduler/playout/nginx)
+crictl images | grep ghcr.io/mitchellfyi/lofield/SERVICE
+# or pull by SHA from GHCR
 docker pull ghcr.io/mitchellfyi/lofield/web:<previous-commit-sha>
 
-# Update docker-compose.yml to use specific tags
-# Then restart
-docker compose up -d
+# Export tags via env file or override compose
+export WEB_TAG=<previous-commit-sha>
+export SCHEDULER_TAG=<previous-commit-sha>
+export PLAYOUT_TAG=<previous-commit-sha>
+
+# Temporarily pin the tags
+docker compose pull
+docker compose up -d --no-deps web scheduler playout
 ```
 
-**Method 3: Restore from backup**
+**Method 3: Force a redeploy of the last known-good workflow run**
+1. Open GitHub → Actions → choose the last green deployment.
+2. Click **Re-run all jobs** → confirm.
+3. The pipeline rebuilds (or reuses cache) and redeploys the previous commit with no local intervention.
+
+**Method 4: Restore from backup**
 ```bash
-# Stop services
 docker compose down
-
-# Restore database backup
 cat backup.sql | docker compose exec -T postgres psql -U lofield lofield_fm
-
-# Start services
 docker compose up -d
 ```
 

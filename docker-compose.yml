@@ -106,12 +106,15 @@ services:
       TTS_STABILITY: ${TTS_STABILITY:-0.5}
       TTS_SIMILARITY_BOOST: ${TTS_SIMILARITY_BOOST:-0.75}
       AUDIO_STORAGE_PATH: ${AUDIO_STORAGE_PATH:-/var/lofield/audio}
+      ARCHIVE_PATH: ${ARCHIVE_PATH:-/var/lofield/archive}
       CACHE_DIR: ${CACHE_DIR:-/var/lofield/cache}
       RETRY_MAX_ATTEMPTS: ${RETRY_MAX_ATTEMPTS:-3}
       RETRY_BASE_DELAY: ${RETRY_BASE_DELAY:-1000}
       RETRY_MAX_DELAY: ${RETRY_MAX_DELAY:-10000}
       SCHEDULER_BUFFER_MINUTES: ${SCHEDULER_BUFFER_MINUTES:-45}
       SCHEDULER_CHECK_INTERVAL: ${SCHEDULER_CHECK_INTERVAL:-60}
+      MIN_QUEUE_DEPTH_MINUTES: ${MIN_QUEUE_DEPTH_MINUTES:-15}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
       - audio_storage:/var/lofield/audio
       - cache_storage:/var/lofield/cache
@@ -138,6 +141,7 @@ services:
       ICECAST_PORT: ${ICECAST_PORT:-8000}
       ICECAST_MOUNT_POINT: ${ICECAST_MOUNT_POINT:-/lofield}
       ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD:?ICECAST_SOURCE_PASSWORD must be set in .env file}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
       - stream_output:/var/lofield/stream
       - archive_output:/var/lofield/archive

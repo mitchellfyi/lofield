@@ -1,6 +1,6 @@
 # Copilot Instructions for Lofield FM
 
-This document provides context and guidelines for GitHub Copilot when working on the Lofield FM repository.
+This document provides context and guidelines for GitHub Copilot when working on the Lofield FM repository. **Always read `AGENTS.md` first**—it links to every other runbook and explains the required workflow for AI collaborators.
 
 ## Project Overview
 
@@ -33,6 +33,22 @@ lofield/
 ```
 
 ## Development Setup
+
+### Make Targets (repo root)
+
+Prefer the top-level `Makefile` whenever possible:
+
+| Target | Purpose |
+| --- | --- |
+| `make setup` | Copy `.env.docker → .env` and sync service env files |
+| `make env-sync` | Re-copy the root `.env` into `web/` + services |
+| `make dev` / `make dev-hot` | Start the full stack (optionally with bind mounts) |
+| `make stop` / `make clean` | Stop containers (optionally remove volumes) |
+| `make migrate`, `make seed`, `make studio`, `make db-shell` | Prisma / Postgres helpers |
+| `make logs`, `make status` | Tail container logs or view status |
+| `make lint`, `make format`, `make format-check`, `make typecheck`, `make test` | Code quality gates |
+| `make quick-ci` | Runs lint + typecheck + tests + build + config validation (mirrors CI) |
+| `make validate-config` | Validates JSON in `config/` via `scripts/validate_config.py` |
 
 ### Frontend Development (Next.js)
 
@@ -124,6 +140,15 @@ This validates:
 - **Structure**: Use clear headings and bullet points
 - **Style**: Short paragraphs, scannable format
 - **Examples**: Provide examples where helpful
+
+### Docs-as-code Expectations
+
+Industry best practices (e.g., GitHub’s “Docs-as-Code” guidance) apply here:
+
+- Update docs *with* the code change—never leave instructions stale.
+- When you add or change a command/flag/env var, touch the most visible doc (`README`, `QUICKSTART`, `DOCKER`, or `docs/deployment`) plus any relevant runbooks.
+- Run `make quick-ci` before handing off; it validates both code and configuration docs.
+- Treat docs like code: use the same review rigor, keep paragraphs short, and cite concrete commands (`make dev`, `docker compose logs -f web`, etc.).
 
 ## Voice and Tone Guidelines
 

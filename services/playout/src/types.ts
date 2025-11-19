@@ -19,7 +19,7 @@ export interface PlayoutConfig {
 export interface SegmentInfo {
   id: string;
   filePath: string;
-  type: 'music' | 'talk' | 'ident' | 'handover';
+  type: "music" | "talk" | "ident" | "handover";
   startTime: Date;
   endTime: Date;
   showId: string;
@@ -50,8 +50,8 @@ export interface HLSSegment {
 }
 
 export interface StreamHealth {
-  status: 'healthy' | 'degraded' | 'unhealthy';
-  playoutService: 'running' | 'stopped' | 'error';
+  status: "healthy" | "degraded" | "unhealthy";
+  playoutService: "running" | "stopped" | "error";
   liveStreamAge: number;
   queueDepth: number;
   lastSegmentAt: string | null;

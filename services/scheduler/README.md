@@ -153,13 +153,18 @@ The scheduler is organized into modular components:
 # Install dependencies
 npm install
 
-# Configure environment variables
-cp .env.example .env
-# Edit .env and set your DATABASE_URL and other settings
+# Sync environment variables from the repo root (preferred)
+cd ../..
+make env-sync          # copies the root .env into services/scheduler/.env
+cd services/scheduler
+
+# (Or) copy the root .env manually if you're avoiding Make:
+# cp ../../.env .env
+# and update DATABASE_URL / paths if needed
 
 # Make sure database is running
 cd ../..
-docker-compose up -d postgres
+docker compose up -d postgres
 
 # Make sure migrations are applied
 cd web
@@ -372,7 +377,7 @@ Or use structured logging with tools like Winston or Pino.
 Ensure `DATABASE_URL` is correct and PostgreSQL is running:
 
 ```bash
-docker-compose up -d postgres
+docker compose up -d postgres
 ```
 
 ### Queue not generating content

@@ -470,9 +470,11 @@ ffmpeg -version
 
 3. **Configure environment**:
 ```bash
-cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
+cd ../../        # repo root
+make env-sync    # copies the root .env into services/scheduler/.env
+cd services/scheduler
 ```
+Make sure `OPENAI_API_KEY`, `REPLICATE_API_TOKEN`, and other AI-related secrets are present in the root `.env` before syncing.
 
 4. **Test the integration**:
 ```bash

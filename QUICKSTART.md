@@ -1,249 +1,162 @@
-# Lofield FM Backend Quick Start Guide
+# Lofield FM Quick Start
 
-This guide will help you get the Lofield FM backend running locally in just a few minutes.
+Spin up the full stack (web app, scheduler, playout, Icecast, and PostgreSQL) entirely through Docker Compose and the repo’s Makefile helpers.
 
-## Prerequisites
+## TL;DR
+```bash
+git clone https://github.com/mitchellfyi/lofield.git
+cd lofield
+make setup          # copies .env.docker -> .env and syncs service env files
+# edit .env with real passwords + API keys
+make dev            # start every container
+make migrate        # run Prisma migrations
+make seed           # seed the database
+```
 
-- Node.js 20+ installed
-- Docker and Docker Compose installed (recommended)
+## 0. Prerequisites
+- Docker Desktop 4.7+ (or Docker Engine 20.10+) with Compose v2
+- GNU Make 3.8+
 - Git
+- API keys for OpenAI + Replicate (optional: ElevenLabs, Stability)
 
-## Step-by-Step Setup
-
-### 1. Clone and Navigate
-
+## 1. Clone the repo
 ```bash
 git clone https://github.com/mitchellfyi/lofield.git
 cd lofield
 ```
 
-### 2. Configure Secure Credentials
-
-**IMPORTANT**: Set up secure credentials before starting services.
-
+## 2. Configure environment variables
 ```bash
-# Copy environment variable templates
-cp .env.example .env
-cd web
-cp .env.example .env
-cd ..
+make setup
 ```
 
-**Edit both `.env` files** and replace all `CHANGE_ME_*` placeholders with secure passwords:
+`make setup` copies `.env.docker → .env` (if needed) and duplicates the root `.env` into `web/.env`, `web/.env.local`, `services/scheduler/.env`, and `services/playout/.env`. Edit `.env` once and set at least:
 
-- **Root `.env`**: Contains credentials for Docker services (PostgreSQL, Icecast)
-- **`web/.env`**: Contains credentials for the Next.js application
+| Variable | Why it matters |
+| --- | --- |
+| `POSTGRES_PASSWORD` | Database password shared by all services |
+| `ICECAST_SOURCE_PASSWORD`, `ICECAST_ADMIN_PASSWORD`, `ICECAST_RELAY_PASSWORD` | Icecast authentication (source + admin + relays) |
+| `OPENAI_API_KEY` | Script/TTS generation + moderation |
+| `REPLICATE_API_TOKEN` | Music generation via MusicGen |
 
-**For development**, you can use simple passwords like:
+Whenever you update `.env`, run `make env-sync` so every service picks up the change.
+
+## 3. Start the Docker stack
 ```bash
-# In root .env
-POSTGRES_PASSWORD=dev_password_123
-ICECAST_SOURCE_PASSWORD=dev_source_123
-ICECAST_RELAY_PASSWORD=dev_relay_123
-ICECAST_ADMIN_PASSWORD=dev_admin_123
+make dev
 ```
 
-**For production**, generate strong passwords:
+This command builds (if necessary) and runs:
+- PostgreSQL (`localhost:5432`)
+- Icecast (`localhost:8000`)
+- Next.js web app (`localhost:3000`)
+- Scheduler and playout services
+
+Need live reload + local volume mounts? Use `make dev-hot` to include `docker-compose.dev.yml`.
+
+## 4. Initialize the database
 ```bash
-# Generate secure random passwords
-openssl rand -base64 32
+make migrate
+make seed
 ```
 
-⚠️ **Security Warning**: Never commit `.env` files or use default/example passwords in production!
+Both commands execute inside the `web` container, so you never need a local Node/Prisma toolchain.
 
-### 3. Start the Database
+## 5. Verify everything
 
-Using Docker Compose (easiest):
+| Component | URL | Notes |
+| --- | --- | --- |
+| Web UI & API | http://localhost:3000 | Frontend, Prisma-backed API routes |
+| Health check | http://localhost:3000/api/health | Should return `{ "status": "ok" }` |
+| SSE stream | http://localhost:3000/api/events | Firehose of queue + request events |
+| Live audio | http://localhost:8000/lofield | Icecast MP3 mount |
+| Icecast admin | http://localhost:8000/admin/ | User `admin`, password from `ICECAST_ADMIN_PASSWORD` |
 
+## 6. Smoke-test the API
 ```bash
-docker-compose up -d
-```
-
-This starts:
-- PostgreSQL on `localhost:5432`
-- Icecast streaming server on `localhost:8000`
-
-**Note**: Docker Compose will now require the `.env` file to be configured. If you see errors about missing environment variables, make sure you completed step 2.
-
-**Alternative:** If you have PostgreSQL installed locally, skip this step and update the `DATABASE_URL` in `web/.env` with your local database credentials.
-
-### 3. Install Dependencies
-
-```bash
-cd web
-npm install
-```
-
-### 4. Configure Environment
-
-The `.env` files were already created in step 2. Verify that:
-- Root `.env` has secure passwords for POSTGRES_PASSWORD and ICECAST_* variables
-- `web/.env` has a DATABASE_URL with the same POSTGRES_PASSWORD you set in root `.env`
-- `web/.env` has ICECAST_SOURCE_PASSWORD and ICECAST_ADMIN_PASSWORD matching root `.env`
-
-If using local PostgreSQL instead of Docker, edit `web/.env` and update `DATABASE_URL` to point to your local instance.
-
-### 5. Set Up Database
-
-```bash
-# Generate Prisma client
-npx prisma generate
-
-# Run migrations to create tables
-npx prisma migrate dev --name init
-
-# Seed with initial data
-npx tsx prisma/seed/seed.ts
-```
-
-### 6. Start the API Server
-
-```bash
-npm run dev
-```
-
-The server will start at `http://localhost:3000`
-
-### 7. Test the API
-
-Open a new terminal and try these commands:
-
-**Get all requests:**
-```bash
+# list requests
 curl http://localhost:3000/api/requests
-```
 
-**Submit a new request:**
-```bash
+# submit a request
 curl -X POST http://localhost:3000/api/requests \
-  -H "Content-Type: application/json" \
-  -d '{"type": "music", "text": "Calm evening vibes with gentle piano"}'
-```
+  -H 'Content-Type: application/json' \
+  -d '{"type":"music","text":"Calm evening vibes with gentle piano"}'
 
-**Upvote a request (replace {id} with an actual ID from the first request):**
-```bash
-curl -X POST http://localhost:3000/api/requests/{id}/vote
-```
+# vote on a request (replace <id>)
+curl -X POST http://localhost:3000/api/requests/<id>/vote
 
-**Check now playing (will return 404 until segments are created):**
-```bash
+# check queue + now playing
+curl http://localhost:3000/api/queue
 curl http://localhost:3000/api/now-playing
 ```
 
-**View queue:**
+## 7. Helpful Makefile targets
+
+| Target | Description |
+| --- | --- |
+| `make setup` | Copy `.env.docker → .env` + sync service env files |
+| `make env-sync` | Re-copy the root `.env` without rebuilding containers |
+| `make dev` / `make dev-hot` | Run the full stack (optionally with hot reload mounts) |
+| `make stop` | Stop containers but keep volumes |
+| `make clean` | Stop containers and remove volumes (wipes DB/audio/cache) |
+| `make logs` | Follow all container logs (`docker compose logs -f`) |
+| `make status` | Show container status and port mappings |
+| `make migrate` | Run `npx prisma migrate deploy` inside the web container |
+| `make seed` | Run `npx tsx prisma/seed/seed.ts` inside the web container |
+| `make studio` | Launch Prisma Studio inside the web container |
+| `make db-shell` | Open `psql` inside the postgres container |
+
+## 8. Stopping & cleanup
 ```bash
-curl http://localhost:3000/api/queue
+# stop containers, keep volumes
+make stop
+
+# stop containers and remove postgres/audio/cache volumes
+make clean
 ```
-
-### 8. (Optional) Start the Scheduler
-
-In a new terminal:
-
-```bash
-cd services/scheduler
-
-# Install dependencies (if not already done)
-npm install
-
-# Configure environment
-cp .env.example .env
-# Edit .env and set DATABASE_URL to match your web/.env
-
-# Start the scheduler
-npm start
-```
-
-The scheduler will monitor the queue and log its activity. Currently, it's a skeleton that monitors but doesn't generate content yet (AI integration pending).
-
-**Configuration**: The scheduler can be configured via environment variables in `services/scheduler/.env`:
-- `SCHEDULER_BUFFER_MINUTES`: How far ahead to maintain the queue (default: 45 minutes)
-- `SCHEDULER_CHECK_INTERVAL`: How often to check the queue (default: 60 seconds)
-- `AUDIO_STORAGE_PATH`: Where to store generated audio files (default: /tmp/lofield/audio)
-
-### 9. (Optional) View Database
-
-To see the data in a nice UI:
-
-```bash
-cd web
-npx prisma studio
-```
-
-This opens a web interface at `http://localhost:5555` where you can browse and edit database records.
-
-## What's Working
-
-✅ **API Endpoints:**
-- Submit and list requests
-- Upvote requests
-- Real-time updates via Server-Sent Events
-- Queue and archive endpoints
-
-✅ **Database:**
-- PostgreSQL with all tables created
-- Sample data seeded
-- ORM queries working
-
-✅ **Scheduler Service:**
-- Queue monitoring
-- Database integration
-
-⏳ **Not Yet Implemented:**
-- AI content generation (LLM, text-to-music, TTS)
-- Actual audio file generation
-- Streaming to Icecast
-- User authentication
 
 ## Troubleshooting
 
-### Database connection error
+### “Missing environment variable” on startup
+- Ensure `.env` exists and contains the required values
+- Run `make env-sync` so every service sees the same `.env`
 
-If you get `PrismaClientInitializationError`:
-
-1. Make sure Docker Compose is running: `docker-compose ps`
-2. Check database is accessible: `docker-compose logs postgres`
-3. Verify `DATABASE_URL` in `.env`
-
-### Port already in use
-
-If port 3000 or 5432 is already in use:
-
-- For port 3000: Use `PORT=3001 npm run dev`
-- For port 5432: Stop other PostgreSQL instances or change port in `docker-compose.yml`
-
-### Prisma client not found
-
-Run:
+### Database connection errors (`PrismaClientInitializationError`)
 ```bash
-npx prisma generate
+make status             # postgres should be "running"
+docker compose logs postgres
+```
+Verify that `POSTGRES_PASSWORD` in `.env` matches the auto-generated `DATABASE_URL` used inside Docker.
+
+### Ports already in use
+- Change the published port in `docker-compose.yml` (e.g., `3000:3000` → `3001:3000`)
+- Or stop the conflicting local service
+
+### Scheduler or playout logs missing
+```bash
+make logs | grep scheduler
+make logs | grep playout
 ```
 
-## Next Steps
+### Prisma client not found (when running `npm` outside Docker)
+All migrations/seeds run inside containers. If you *must* run Prisma locally, execute `npm install && npx prisma generate` inside `web/` first.
 
-- Read [BACKEND.md](../BACKEND.md) for comprehensive documentation
-- Explore the API endpoints in the browser at `http://localhost:3000`
-- Check out the Icecast admin UI at `http://localhost:8000/admin/` (username: `admin`, password: the value you set for `ICECAST_ADMIN_PASSWORD` in your `.env` file)
-- Review the scheduler code in `services/scheduler/index.ts` to see where AI integration will happen
+## Optional: manual service hacking
+Prefer raw Node processes for debugging?
+1. Keep Docker running for stateful dependencies: `docker compose up -d postgres icecast`
+2. Sync env files after editing `.env`: `make env-sync`
+3. Start the service you care about, e.g.:
+   ```bash
+   cd web && npm run dev
+   # or
+   cd services/scheduler && npm run dev
+   ```
 
-## Stopping Everything
-
-```bash
-# Stop the dev server (Ctrl+C in the terminal)
-
-# Stop Docker services
-docker-compose down
-
-# To completely remove data volumes:
-docker-compose down -v
-```
-
-## Getting Help
-
-- Check the [main README](../README.md)
-- Review [architecture documentation](../docs/architecture.md)
-- Read the comprehensive [BACKEND.md](../BACKEND.md)
-- Open an issue on GitHub
+## Getting help
+- Main [README](README.md) for the big picture
+- [BACKEND.md](BACKEND.md) for architecture details
+- [DOCKER.md](DOCKER.md) for advanced Compose usage
+- Open an issue on GitHub if you’re stuck
 
 ---
-
-*Happy coding! The station will be on the air soon.*
+*Happy coding! The station is almost on air.*

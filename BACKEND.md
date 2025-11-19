@@ -271,52 +271,32 @@ eventSource.addEventListener('now-playing', (e) => {
 - Node.js 20+
 - Docker and Docker Compose (recommended) OR PostgreSQL installed locally
 
-### Quick Start with Docker Compose
+### Quick start (Docker + Make)
 
-The easiest way to get started is using Docker Compose:
+The repo includes a `Makefile` that wraps every Docker Compose command:
 
-1. **Start the database and streaming server:**
+1. **Bootstrap environment variables**
    ```bash
-   docker-compose up -d
+   make setup
+   # edit .env with real secrets + API keys
+   ```
+   `make setup` copies `.env.docker → .env` (if needed) and syncs the root `.env` into `web/.env`, `web/.env.local`, `services/scheduler/.env`, and `services/playout/.env`. Re-run `make env-sync` whenever you change `.env`.
+
+2. **Launch the full stack**
+   ```bash
+   make dev        # or: make dev-hot for bind mounts + hot reload
+   ```
+   This starts PostgreSQL (5432), Icecast (8000), the Next.js app (3000), the scheduler, and playout services.
+
+3. **Apply migrations & seed data**
+   ```bash
+   make migrate
+   make seed
    ```
 
-   This starts:
-   - PostgreSQL database on port 5432
-   - Icecast streaming server on port 8000
+The API is now reachable at `http://localhost:3000/api/` and the live stream at `http://localhost:8000/lofield`.
 
-2. **Install dependencies:**
-   ```bash
-   cd web
-   npm install
-   ```
-
-3. **Set up environment variables:**
-   ```bash
-   cp .env.example .env
-   # Edit .env if needed (defaults work with Docker Compose)
-   ```
-
-4. **Generate Prisma client:**
-   ```bash
-   npx prisma generate
-   ```
-
-5. **Run database migrations:**
-   ```bash
-   npx prisma migrate dev --name init
-   ```
-
-6. **Seed the database:**
-   ```bash
-   npx tsx prisma/seed/seed.ts
-   ```
-
-7. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-
-The API will be available at `http://localhost:3000/api/`
+Need detached containers or raw commands? Use `docker compose up --build -d`, `docker compose exec web npx prisma migrate deploy`, etc.—the Make targets simply wrap those calls.
 
 ### Alternative: Local PostgreSQL
 
@@ -331,13 +311,14 @@ If you prefer not to use Docker:
    ```
    DATABASE_URL="postgresql://yourusername:yourpassword@localhost:5432/lofield_fm"
    ```
-4. **Follow steps 2-7 above**
+4. **Run `make env-sync`** so the service-specific `.env` files match
+5. **Use the usual npm workflows** inside `web/` and `services/*/`
 
 ### Database Management
 
 **View database in Prisma Studio:**
 ```bash
-npx prisma studio
+make studio
 ```
 
 **Create a new migration:**

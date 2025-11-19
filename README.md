@@ -73,149 +73,100 @@ See [BACKEND.md](BACKEND.md) for comprehensive backend documentation.
 
 ## Getting Started
 
-This project is currently in development.
+The repo ships with a `Makefile` that wraps every Docker Compose command. Unless you're debugging a single service, follow the automated flow below.
 
-### Docker Setup (Recommended)
+### 1. Install prerequisites
+- [Docker Desktop 4.7+](https://docs.docker.com/get-docker/) (ships with Compose v2)
+- GNU Make 3.8+
+- Git
+- API keys: OpenAI + Replicate (optional: ElevenLabs, Stability)
 
-The easiest way to run Lofield FM is using Docker. This approach handles all dependencies and services automatically.
+### 2. Bootstrap environment variables
 
-**Prerequisites**:
-- [Docker](https://docs.docker.com/get-docker/) (version 20.10+)
-- [Docker Compose](https://docs.docker.com/compose/install/) (version 2.0+)
-- API keys for AI services (OpenAI, Replicate)
-
-**Quick start**:
 ```bash
-# 1. Set up environment
-cp .env.docker .env
-
-# 2. Edit .env and set required values:
-#    - POSTGRES_PASSWORD
-#    - ICECAST_*_PASSWORD (3 passwords)
-#    - OPENAI_API_KEY
-#    - REPLICATE_API_TOKEN
-
-# 3. Start all services
-docker-compose up --build -d
-
-# 4. Run database migrations
-docker-compose exec web npx prisma migrate deploy
-
-# 5. Seed the database
-docker-compose exec web npx tsx prisma/seed/seed.ts
+make setup
 ```
 
-Access the application:
-- **Web UI**: http://localhost:3000
-- **Live Stream**: http://localhost:8000/lofield
-- **Icecast Admin**: http://localhost:8000/admin/
+`make setup` copies `.env.docker → .env` (if needed) and syncs the root `.env` into `web/.env`, `web/.env.local`, `services/scheduler/.env`, and `services/playout/.env`. Edit `.env` once and fill in:
+- `POSTGRES_PASSWORD`
+- `ICECAST_SOURCE_PASSWORD`, `ICECAST_ADMIN_PASSWORD`, `ICECAST_RELAY_PASSWORD`
+- `OPENAI_API_KEY`
+- `REPLICATE_API_TOKEN`
 
-For comprehensive Docker documentation, see [DOCKER.md](DOCKER.md).
+Whenever you change `.env`, run `make env-sync` to re-copy it everywhere.
 
-### Manual Setup (Alternative)
+### 3. Launch all services
 
-If you prefer to run services manually without Docker:
-
-#### Frontend Development
-
-The web frontend is built with Next.js 16 and lives in the `web/` directory.
-
-**Installation**:
 ```bash
-cd web
-npm install
+make dev
 ```
 
-**Development**:
-```bash
-npm run dev
-```
-Then open [http://localhost:3000](http://localhost:3000) in your browser.
+This builds (if necessary) and runs PostgreSQL, Icecast, Next.js, the scheduler, and the playout engine. Use `CTRL+C` to stop, or `make stop` from another terminal. For live code reload, use:
 
-**Building for production**:
 ```bash
-npm run build
-npm start
+make dev-hot
 ```
 
-**Linting and formatting**:
+### 4. Apply migrations & seed data
+
 ```bash
-npm run lint
-npm run format
+make migrate
+make seed
 ```
 
-#### Backend Development
+### 5. Visit the stack
 
-The backend uses Next.js API Routes with Prisma and PostgreSQL. See [BACKEND.md](BACKEND.md) for full documentation.
+| Service | URL | Notes |
+| --- | --- | --- |
+| Web UI + API | http://localhost:3000 | Next.js app + API routes |
+| Health check | http://localhost:3000/api/health | Basic uptime probe |
+| SSE events | http://localhost:3000/api/events | Stream of request + now playing events |
+| Live stream | http://localhost:8000/lofield | MP3 mount served by Icecast |
+| Icecast admin | http://localhost:8000/admin/ | User: `admin`, Pass: `ICECAST_ADMIN_PASSWORD` |
 
-**Quick start**:
+### Helpful commands
+
 ```bash
-# Set up secure credentials first (IMPORTANT!)
-# Copy the example files and set secure passwords
-cp .env.example .env
-cd web
-cp .env.example .env
-
-# Edit both .env files with secure credentials
-# For development, you can use simple passwords, but NEVER use defaults in production
-# Generate secure passwords with: openssl rand -base64 32
-
-# Start database services
-cd ..
-docker-compose up -d postgres icecast
-
-cd web
-# Install dependencies
-npm install
-
-# Generate Prisma client
-npx prisma generate
-
-# Run migrations
-npx prisma migrate dev
-
-# Seed the database
-npx tsx prisma/seed/seed.ts
-
-# Start development server (includes API)
-npm run dev
+make logs        # Tail all container logs
+make status      # Show container status/ports
+make stop        # Stop containers, keep volumes/data
+make clean       # Stop and remove volumes (wipes DB/audio)
+make restart     # Restart all running services
+make env-sync    # Re-copy root .env into each service directory
 ```
 
-**⚠️ Security Note**: Never commit `.env` files with real credentials. The `.env.example` files contain placeholder values that MUST be changed before use. Always use strong, unique passwords in production environments.
+See [DOCKER.md](DOCKER.md) for production profiles, overrides, and CI/CD usage.
 
-**API Endpoints**:
-- `GET/POST /api/requests` - Submit and list requests
-- `POST /api/requests/{id}/vote` - Upvote requests
-- `GET /api/now-playing` - Current segment metadata
-- `GET /api/queue` - Upcoming segments
-- `GET /api/archive` - Past broadcasts
-- `GET /api/events` - Real-time updates via SSE
+### Manual setup (advanced)
 
-**Database Management**:
-```bash
-# View/edit data in Prisma Studio
-npx prisma studio
+You can still run services outside Docker for deep debugging, but keep `.env` as the single source of truth:
 
-# Create new migration
-npx prisma migrate dev --name <migration_name>
-```
+1. Run `make env-sync` whenever you change `.env` so `web/.env.local` and `services/*/.env` stay aligned.
+2. Use Docker only for stateful dependencies:
+   ```bash
+   docker compose up -d postgres icecast
+   ```
+3. Start the frontend manually:
+   ```bash
+   cd web
+   npm install
+   npm run dev
+   ```
+4. Start backend services the same way (inside `services/scheduler` or `services/playout`) if you genuinely need local Node processes.
 
-**Scheduler Service**:
-```bash
-cd services/scheduler
-npx tsx index.ts
-```
+Direct Node workflows are not officially supported for onboarding; expect to wire up Prisma + caching yourself. For everything else, lean on the Makefile targets above.
 
-**Dynamic Show Pages**: The app includes dynamic routes for each show at `/[slug]` (e.g., `/morning_commute`, `/afternoon_push`). These pages use:
-- **`generateStaticParams`** to pre-generate pages for all 8 shows at build time
-- **`generateMetadata`** for SEO-optimized titles and descriptions per show
-- **`notFound()`** to display a friendly 404 page for invalid show slugs
+### Local tooling & quality checks
 
-**Error Handling**: Custom error pages provide a polished experience:
-- **`app/not-found.tsx`** - Friendly 404 page with Lofield FM humor
-- **`app/error.tsx`** - Error boundary for unexpected runtime errors
+The repo root now owns shared automation so you can run every safety check without cd-ing into subprojects:
 
-**Styling**: The app uses Tailwind CSS v4 with the `@tailwindcss/postcss` plugin configured in `postcss.config.mjs`.
+- `npm install` (run once in the repo root) installs Husky + shared dev tooling
+- `make lint`, `make format`, `make format-check`, `make typecheck`, `make test` proxy straight to the corresponding npm scripts
+- `npm run ci:quick` / `make quick-ci` runs lint → format check → typecheck → Jest (in-band) → `next build` → `python3 scripts/validate_config.py`
+- `npm run config:validate` / `make validate-config` wraps the JSON validator
+
+> **Pre-push hook**  
+> Husky now blocks pushes unless `npm run ci:quick` succeeds. After pulling this change (or cloning fresh), run `npm install` at the repo root once so `.husky/pre-push` is installed locally.
 
 ### Configuration
 

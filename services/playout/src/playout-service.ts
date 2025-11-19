@@ -1,14 +1,14 @@
 /**
  * Main Playout Service
- * 
+ *
  * Orchestrates HLS streaming and archiving
  */
 
-import { PrismaClient } from '@prisma/client';
-import logger from './logger';
-import { HLSStreamManager } from './hls-manager';
-import { ArchiveManager } from './archive-manager';
-import type { PlayoutConfig, SegmentInfo } from './types';
+import { PrismaClient } from "@prisma/client";
+import logger from "./logger";
+import { HLSStreamManager } from "./hls-manager";
+import { ArchiveManager } from "./archive-manager";
+import type { PlayoutConfig, SegmentInfo } from "./types";
 
 const prisma = new PrismaClient();
 
@@ -29,8 +29,8 @@ export class PlayoutService {
    * Start the playout service
    */
   async start(): Promise<void> {
-    logger.info('Starting Lofield FM Playout Service...');
-    logger.info('Configuration', {
+    logger.info("Starting Lofield FM Playout Service...");
+    logger.info("Configuration", {
       streamPath: this.config.streamOutputPath,
       archivePath: this.config.archiveOutputPath,
       pollInterval: this.config.pollInterval,
@@ -51,7 +51,7 @@ export class PlayoutService {
    * Stop the playout service
    */
   async stop(): Promise<void> {
-    logger.info('Stopping playout service...');
+    logger.info("Stopping playout service...");
     this.isRunning = false;
     await this.hlsManager.stopStream();
     await prisma.$disconnect();
@@ -65,7 +65,7 @@ export class PlayoutService {
       try {
         await this.processPendingSegments();
       } catch (error) {
-        logger.error('Error in main loop', { error });
+        logger.error("Error in main loop", { error });
       }
 
       // Wait before next iteration
@@ -81,7 +81,7 @@ export class PlayoutService {
   private async processPendingSegments(): Promise<void> {
     try {
       const now = new Date();
-      
+
       // Query for segments that should be playing now or soon
       // We look ahead by the HLS list size * segment duration to ensure smooth playback
       const lookAheadMs =
@@ -103,22 +103,22 @@ export class PlayoutService {
           track: true,
         },
         orderBy: {
-          startTime: 'asc',
+          startTime: "asc",
         },
       });
 
       if (segments.length === 0) {
-        logger.debug('No pending segments to process');
+        logger.debug("No pending segments to process");
         return;
       }
 
-      logger.info('Processing segments', { count: segments.length });
+      logger.info("Processing segments", { count: segments.length });
 
       // Convert to SegmentInfo format
       const segmentInfos: SegmentInfo[] = segments.map((seg: any) => ({
         id: seg.id,
         filePath: seg.filePath!,
-        type: seg.type as 'music' | 'talk' | 'ident' | 'handover',
+        type: seg.type as "music" | "talk" | "ident" | "handover",
         startTime: seg.startTime,
         endTime: seg.endTime,
         showId: seg.showId,
@@ -149,9 +149,9 @@ export class PlayoutService {
               segment.trackId
             );
           } catch (error) {
-            logger.error('Failed to archive segment, continuing with next', { 
+            logger.error("Failed to archive segment, continuing with next", {
               error: error instanceof Error ? error.message : String(error),
-              segmentId: segment.id 
+              segmentId: segment.id,
             });
             // Continue with next segment - archiving failure shouldn't stop playback
           }
@@ -163,8 +163,8 @@ export class PlayoutService {
         this.lastProcessedTime = segments[segments.length - 1].endTime;
       }
     } catch (error) {
-      logger.error('Failed to process pending segments', { 
-        error: error instanceof Error ? error.message : String(error) 
+      logger.error("Failed to process pending segments", {
+        error: error instanceof Error ? error.message : String(error),
       });
       // Don't re-throw - let the main loop continue
     }
@@ -187,7 +187,7 @@ export class PlayoutService {
     const archiveStats = await this.archiveManager.getStats();
 
     return {
-      status: this.isRunning ? 'running' : 'stopped',
+      status: this.isRunning ? "running" : "stopped",
       isStreaming: this.hlsManager.isStreaming(),
       lastProcessedTime: this.lastProcessedTime?.toISOString() || null,
       archiveStats,
@@ -198,7 +198,7 @@ export class PlayoutService {
    * Run archive cleanup
    */
   async runArchiveCleanup(): Promise<void> {
-    logger.info('Running archive cleanup...');
+    logger.info("Running archive cleanup...");
     await this.archiveManager.cleanupOldArchives();
   }
 

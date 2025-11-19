@@ -20,17 +20,9 @@ Lofield FM uses environment variables to manage sensitive credentials. **Never c
 
 1. **Copy the example files:**
    ```bash
-   # Root directory (for Docker services)
-   cp .env.example .env
-   
-   # Web application
-   cd web
-   cp .env.example .env
-   
-   # Scheduler service
-   cd ../services/scheduler
-   cp .env.example .env
+   make setup        # copies .env.docker -> .env and syncs web/ + services/
    ```
+   If you cannot use `make`, copy `.env.docker → .env` manually and run `make env-sync` (or `cp .env web/.env` etc.) so every service shares the same values.
 
 2. **Generate secure passwords:**
    ```bash
@@ -45,7 +37,7 @@ Lofield FM uses environment variables to manage sensitive credentials. **Never c
    - `ICECAST_SOURCE_PASSWORD`: Password for streaming sources
    - `ICECAST_RELAY_PASSWORD`: Password for relay servers
    - `ICECAST_ADMIN_PASSWORD`: Admin interface password
-   - Update `DATABASE_URL` in `web/.env` and `services/scheduler/.env` with the same `POSTGRES_PASSWORD`
+   - Update `DATABASE_URL` in the root `.env` (and re-run `make env-sync`) so every service shares the same `POSTGRES_PASSWORD`
 
 #### What NOT to Do
 

@@ -48,7 +48,7 @@ ffmpeg -version
 Using Docker Compose (recommended):
 ```bash
 cd /path/to/lofield
-docker-compose up -d postgres
+docker compose up -d postgres
 ```
 
 Or use your own PostgreSQL installation.
@@ -74,29 +74,28 @@ This creates:
 
 ## Step 2: Configure Environment Variables
 
-### Scheduler Service
+Use the Makefile target to copy the root `.env` everywhere:
 
 ```bash
-cd services/scheduler
-cp .env.example .env
+make env-sync
 ```
 
-Edit `.env`:
+`make env-sync` copies `.env` into `web/.env`, `web/.env.local`, `services/scheduler/.env`, and `services/playout/.env`. Update the root `.env` first (passwords, API keys, cache paths) and re-run the sync anytime you change it.
+
+If you need service-specific overrides, edit the copied files after syncing:
+
+### Scheduler Service (optional overrides)
+
 ```bash
 DATABASE_URL="postgresql://lofield:password@localhost:5432/lofield_fm"
 SCHEDULER_BUFFER_MINUTES=45
 MIN_QUEUE_DEPTH_MINUTES=15
 AUDIO_STORAGE_PATH="/var/lofield/audio"
+ARCHIVE_PATH="/var/lofield/archive"
 ```
 
-### Playout Service
+### Playout Service (optional overrides)
 
-```bash
-cd services/playout
-cp .env.example .env
-```
-
-Edit `.env`:
 ```bash
 DATABASE_URL="postgresql://lofield:password@localhost:5432/lofield_fm"
 STREAM_OUTPUT_PATH="/var/lofield/stream"
@@ -108,14 +107,8 @@ POLL_INTERVAL=5
 ARCHIVE_RETENTION_DAYS=30
 ```
 
-### Next.js Frontend
+### Next.js Frontend (optional overrides)
 
-```bash
-cd web
-cp .env.example .env
-```
-
-Edit `.env`:
 ```bash
 DATABASE_URL="postgresql://lofield:password@localhost:5432/lofield_fm"
 STREAM_OUTPUT_PATH="/var/lofield/stream"

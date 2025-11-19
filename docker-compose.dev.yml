@@ -1,6 +1,6 @@
 # docker-compose.dev.yml
 # Development-specific overrides for hot reload and debugging
-# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 version: '3.8'
 

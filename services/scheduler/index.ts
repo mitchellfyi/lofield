@@ -1,6 +1,6 @@
 /**
  * Scheduler Service for Lofield FM
- * 
+ *
  * Main entry point for the scheduler service.
  * Initializes and runs the scheduler with all modules.
  */
@@ -21,7 +21,10 @@ async function main() {
   // Load configuration from environment variables with defaults
   const config: SchedulerConfig = {
     bufferMinutes: parseInt(process.env.SCHEDULER_BUFFER_MINUTES || "45", 10),
-    checkIntervalSeconds: parseInt(process.env.SCHEDULER_CHECK_INTERVAL || "60", 10),
+    checkIntervalSeconds: parseInt(
+      process.env.SCHEDULER_CHECK_INTERVAL || "60",
+      10
+    ),
     audioStoragePath: process.env.AUDIO_STORAGE_PATH || "/tmp/lofield/audio",
     archivePath: process.env.ARCHIVE_PATH || "/tmp/lofield/archive",
     minQueueDepthMinutes: parseInt(
@@ -32,12 +35,16 @@ async function main() {
 
   // Validate configuration
   if (isNaN(config.bufferMinutes) || config.bufferMinutes < 1) {
-    console.error("Invalid SCHEDULER_BUFFER_MINUTES: must be a positive number");
+    console.error(
+      "Invalid SCHEDULER_BUFFER_MINUTES: must be a positive number"
+    );
     process.exit(1);
   }
 
   if (isNaN(config.checkIntervalSeconds) || config.checkIntervalSeconds < 1) {
-    console.error("Invalid SCHEDULER_CHECK_INTERVAL: must be a positive number");
+    console.error(
+      "Invalid SCHEDULER_CHECK_INTERVAL: must be a positive number"
+    );
     process.exit(1);
   }
 
